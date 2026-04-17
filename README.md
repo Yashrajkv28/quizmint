@@ -1,4 +1,4 @@
-# CyberIntel MCQ
+# QuizMint
 
 AI-powered quiz generator that parses multiple-choice questions from text or documents (TXT, DOCX, PDF) and turns them into an interactive quiz experience.
 
@@ -10,7 +10,8 @@ Built with React, Vite, Tailwind CSS, and Google's Gemini API. Deployed on Verce
 - AI parses questions, options, answer keys, and generates explanations
 - Interactive quiz player with instant answer verification
 - Score tracking with retry and reset
-- Backup API key rotation (up to 5 keys) for rate limit resilience
+- Hybrid API key: use your own or fall back to server-provided keys
+- Backup key rotation (up to 5 keys) for rate limit resilience
 
 ## Setup
 

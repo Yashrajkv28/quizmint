@@ -12,7 +12,7 @@ export default function App() {
       <aside className="hidden lg:flex w-[280px] bg-[#15161A] border-r border-[#2D2E35] p-6 flex-col gap-8 shrink-0">
         <div className="text-[18px] font-bold tracking-tight flex items-center gap-2.5">
           <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-          CyberIntel MCQ
+          QuizMint
         </div>
 
         <div className="flex flex-col gap-4">
