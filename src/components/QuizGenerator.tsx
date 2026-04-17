@@ -10,7 +10,7 @@ interface QuizGeneratorProps {
 
 export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
   const [rawText, setRawText] = useState('');
-  const [pdfFile, setPdfFile] = useState<{ name: string; data: string } | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; type: 'text' | 'pdf'; data: string } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -21,21 +21,31 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
   const processFile = async (file: File) => {
     setError(null);
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError("File too large. Maximum size is 10MB.");
+      return;
+    }
+
     try {
       if (file.type === 'text/plain') {
         const text = await file.text();
-        setRawText(prev => prev ? prev + '\n' + text : text);
+        setRawText(text);
+        setUploadedFile({ name: file.name, type: 'text', data: '' });
       } else if (file.name.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
-        setRawText(prev => prev ? prev + '\n' + result.value : result.value);
+        setRawText(result.value);
+        setUploadedFile({ name: file.name, type: 'text', data: '' });
       } else if (file.type === 'application/pdf') {
         const reader = new FileReader();
         reader.onload = (e) => {
           const base64 = (e.target?.result as string).split(',')[1];
-          setPdfFile({ name: file.name, data: base64 });
+          setUploadedFile({ name: file.name, type: 'pdf', data: base64 });
         };
         reader.readAsDataURL(file);
       } else {
@@ -71,7 +81,7 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
   };
 
   const handleGenerate = async () => {
-    if (!rawText.trim() && !pdfFile) {
+    if (!rawText.trim() && !uploadedFile) {
       setError("Please enter text or upload a document containing MCQs.");
       return;
     }
@@ -90,7 +100,7 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
     }, 500);
 
     try {
-      const filePart = pdfFile ? { mimeType: 'application/pdf', data: pdfFile.data } : undefined;
+      const filePart = uploadedFile?.type === 'pdf' ? { mimeType: 'application/pdf', data: uploadedFile.data } : undefined;
       setProgressText("Analyzing document structure...");
       const quizData = await parseMCQs(rawText, filePart, userApiKey || undefined);
       
@@ -117,8 +127,11 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
     }
   };
 
-  const removePdf = () => {
-    setPdfFile(null);
+  const removeFile = () => {
+    if (uploadedFile?.type === 'text') {
+      setRawText('');
+    }
+    setUploadedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -147,7 +160,7 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
               DOCUMENT UPLOAD
             </label>
             <div 
-              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-[#2D2E35] bg-[#0A0A0C] hover:border-slate-500'} ${pdfFile ? 'hidden' : 'flex'}`}
+              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-[#2D2E35] bg-[#0A0A0C] hover:border-slate-500'} ${uploadedFile ? 'hidden' : 'flex'}`}
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
               onDrop={onDrop}
@@ -166,15 +179,15 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
               />
             </div>
 
-            {/* Display uploaded PDF */}
-            {pdfFile && (
+            {/* Display uploaded file */}
+            {uploadedFile && (
               <div className="flex items-center justify-between p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl mt-4">
                 <div className="flex items-center space-x-3">
                   <FileIcon className="w-6 h-6 text-indigo-400" />
-                  <span className="text-[14px] font-medium text-indigo-200">{pdfFile.name} attached</span>
+                  <span className="text-[14px] font-medium text-indigo-200">{uploadedFile.name} attached</span>
                 </div>
                 {!isGenerating && (
-                  <button onClick={removePdf} className="p-1 hover:bg-indigo-500/20 rounded-lg text-indigo-400 transition-colors">
+                  <button onClick={removeFile} className="p-1 hover:bg-indigo-500/20 rounded-lg text-indigo-400 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 )}
@@ -267,7 +280,7 @@ Answer Key:
           <div className="flex justify-end pt-2">
             <button
               onClick={handleGenerate}
-              disabled={isGenerating || (!rawText.trim() && !pdfFile)}
+              disabled={isGenerating || (!rawText.trim() && !uploadedFile)}
               className="inline-flex items-center px-6 py-3 border border-transparent text-[14px] font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isGenerating ? (

@@ -83,6 +83,46 @@ export async function POST(request: Request) {
     return Response.json({ error: "No input provided." }, { status: 400 });
   }
 
+  // Server-side file validation
+  if (filePart) {
+    const allowedMimeTypes = [
+      "application/pdf",
+      "text/plain",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!filePart.mimeType || !allowedMimeTypes.includes(filePart.mimeType)) {
+      return Response.json(
+        { error: "Invalid file type. Only PDF, TXT, and DOCX are allowed." },
+        { status: 400 }
+      );
+    }
+
+    if (!filePart.data || typeof filePart.data !== "string") {
+      return Response.json(
+        { error: "Invalid file data." },
+        { status: 400 }
+      );
+    }
+
+    // Check base64 size (~10MB limit, base64 is ~4/3 of original)
+    const maxBase64Size = 14 * 1024 * 1024;
+    if (filePart.data.length > maxBase64Size) {
+      return Response.json(
+        { error: "File too large. Maximum size is 10MB." },
+        { status: 400 }
+      );
+    }
+
+    // Validate base64 encoding
+    if (!/^[A-Za-z0-9+/=]+$/.test(filePart.data)) {
+      return Response.json(
+        { error: "Invalid file encoding." },
+        { status: 400 }
+      );
+    }
+  }
+
   // Build key list: user-provided key first, then server keys as fallback
   const keys: string[] = [];
   if (userApiKey?.trim()) {
