@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { Question } from '../types';
 
 interface QuizPlayerProps {
@@ -35,16 +36,23 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
         <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div>
       </div>
       
-      {Object.keys(answers).length > 0 && Object.keys(answers).length < questions.length && (
-        <div className="absolute top-8 right-8">
+      <div className="absolute top-8 right-8 flex items-center gap-3">
+        {Object.keys(answers).length > 0 && Object.keys(answers).length < questions.length && (
           <button
             onClick={handleRetry}
             className="px-4 py-2 text-[13px] font-medium text-slate-400 hover:text-white bg-[#15161A] hover:bg-[#2D2E35] border border-[#2D2E35] hover:border-slate-500 rounded-lg transition-colors"
           >
             Restart Output
           </button>
-        </div>
-      )}
+        )}
+        <button
+          onClick={onReset}
+          className="px-4 py-2 text-[13px] font-medium text-slate-400 hover:text-white bg-[#15161A] hover:bg-[#2D2E35] border border-[#2D2E35] hover:border-slate-500 rounded-lg transition-colors flex items-center gap-2"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Exit Quiz
+        </button>
+      </div>
 
       <div className="max-w-[600px] w-full mx-auto space-y-24 pb-20">
         {questions.map((q, index) => {
