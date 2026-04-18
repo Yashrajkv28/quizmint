@@ -117,6 +117,15 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 18: Brand handoff v2 (universal vein + light splash)
+Applied the v2 diff from `QuizMint Logo Handoff v2.html`:
+- Mark vein + dot now slate `#334155` (was `#FFFFFF` / `#059669`) so the Leaf Q reads on any background — paper, app-light, or dark sidebar. Opacity dropped `0.92 → 0.85`.
+- `QuizMintLogo.tsx`, `public/favicon.svg` updated accordingly.
+- Added `--c-vein: #334155` to `src/index.css` brand tokens.
+- **Splash** flipped to a universal light treatment: backdrop `#0A0A0C → #F6F7F9`, wordmark `#FFFFFF → #0A0A0C`, loader track alpha re-keyed to ink, ambient gradient bumped `0.08 → 0.10` / `50% → 55%`. Same 2.6s timing, same reduced-motion behavior.
+
+Design intent per the handoff: one splash for both themes. Dark-mode users see the light splash briefly before the app fades in — intentional, not a bug.
+
 #### Task 17: Leaf Q brand identity (v1.1 handoff)
 Implemented the checklist from `QuizMint Logo Handoff.html`:
 - New `src/components/QuizMintLogo.tsx` — React component with `default`/`mono-ink`/`mono-white` variants

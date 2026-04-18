@@ -19,9 +19,9 @@ export function QuizMintLogo({
   const leafB = variant === 'default' ? '#059669' : leafA;
   const vein  = variant === 'mono-ink' ? '#FFFFFF'
               : variant === 'mono-white' ? '#0A0A0C'
-              : '#FFFFFF';
-  const dot   = variant === 'default' ? '#059669' : leafA;
-  const veinOpacity = variant === 'default' ? 0.92 : 1;
+              : '#334155';
+  const dot   = variant === 'default' ? '#334155' : leafA;
+  const veinOpacity = variant === 'default' ? 0.85 : 1;
 
   return (
     <svg
