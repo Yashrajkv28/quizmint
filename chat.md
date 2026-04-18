@@ -117,6 +117,17 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 17: Leaf Q brand identity (v1.1 handoff)
+Implemented the checklist from `QuizMint Logo Handoff.html`:
+- New `src/components/QuizMintLogo.tsx` — React component with `default`/`mono-ink`/`mono-white` variants
+- New `public/favicon.svg` (mint Leaf Q); wired via `<link rel="icon">` + `theme-color` in `index.html`
+- Added brand tokens to `src/index.css`: `--c-brand`, `--c-brand-deep`, `--c-brand-soft`, `--c-brand-wash`
+- Sidebar header in `App.tsx`: dot replaced with `<QuizMintLogo size={22} />`; "Mint" wrapped in `text-[var(--c-brand)]`
+- Splash: `QuizMintSplash.tsx` + `QuizMintSplash.css` — stroke-draws the leaf, writes the vein, pops the dot, fades wordmark; ~2.8s, respects `prefers-reduced-motion`
+- `main.tsx` now renders a `Root` that mounts the splash on first load per session (`sessionStorage` flag `qm-splash-seen`)
+
+Brand mint (`#10B981` / `#059669`) is identical to Tailwind's `emerald-500`/`600`, so the earlier indigo→emerald sweep already matches the brand palette — no further chrome color changes needed.
+
 #### Task 16: Mint rebrand
 - Swapped all `indigo-*` accent classes to `emerald-*` across `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` so both themes match the "QuizMint" name
 - Correct-answer highlights were already emerald and now share the brand hue; incorrect remains red so feedback still reads

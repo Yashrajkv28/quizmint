@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { QuizGenerator } from './components/QuizGenerator';
 import { QuizPlayer } from './components/QuizPlayer';
+import { QuizMintLogo } from './components/QuizMintLogo';
 import { QuizData } from './types';
 
 type Theme = 'light' | 'dark';
@@ -25,8 +26,8 @@ export default function App() {
       <aside className="hidden lg:flex w-[280px] bg-[var(--c-surface)] border-r border-[var(--c-border)] p-6 flex-col gap-8 shrink-0">
         <div className="flex items-center justify-between">
           <div className="text-[18px] font-bold tracking-tight flex items-center gap-2.5">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-            QuizMint
+            <QuizMintLogo size={22} />
+            Quiz<span className="text-[var(--c-brand)]">Mint</span>
           </div>
           <button
             onClick={toggleTheme}

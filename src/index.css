@@ -14,6 +14,11 @@
   --c-text-muted: #CBD5E1;
   --c-text-subtle: #94A3B8;
   --c-text-faint: #64748B;
+
+  --c-brand: #10B981;
+  --c-brand-deep: #059669;
+  --c-brand-soft: #A7F3D0;
+  --c-brand-wash: #ECFDF5;
 }
 
 :root.light {
