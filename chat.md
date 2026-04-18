@@ -16,7 +16,7 @@ User wanted to analyze the quiz generator codebase, verify everything works, and
 8. **Express dependency** — unnecessary for Vercel deployment
 
 ### Architecture Decisions
-- **Hosting:** Vercel (manual deploy via CLI, no auto-deploy)
+- **Hosting:** Vercel (manual deploy via CLI, no auto-deploy). The GitHub repo is intentionally NOT linked to Vercel — pushing to `main` does not trigger a production deploy. Redeploys are always run manually with `vercel --prod`.
 - **API Key approach:** Hybrid — server keys as default, users can optionally provide their own
 - **Backend:** Vercel Serverless Functions (removed Express entirely)
 - **Backup keys:** Up to 5 Gemini API keys with automatic rotation on rate limits (429) or auth errors (401/403)
@@ -116,6 +116,13 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Introduced CSS variables in `src/index.css` (`--c-app`, `--c-surface`, `--c-border`, `--c-hover`, `--c-text`, `--c-text-muted`, `--c-text-subtle`, `--c-text-faint`) with dark defaults on `:root` and a `.light` override on `<html>`
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
+
+#### Task 16: Mint rebrand
+- Swapped all `indigo-*` accent classes to `emerald-*` across `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` so both themes match the "QuizMint" name
+- Correct-answer highlights were already emerald and now share the brand hue; incorrect remains red so feedback still reads
+
+### Deploy policy
+Deploys are **always manual** via `vercel --prod`. The GitHub repo is intentionally not connected to Vercel — `git push` to `main` does nothing on the hosting side. After pushing, run `vercel --prod` locally to ship.
 
 ### URLs
 - **Production:** https://quizmint-blue.vercel.app
