@@ -117,6 +117,9 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 20: Splash duration locked to 5s on every load
+Dropped the `isFirstEver` branching in `main.tsx` and removed the `qm-splash-first-done` localStorage flag. `minDurationMs={5000}` on every load — user wanted the full animation every time.
+
 #### Task 19: Theme-aware splash + always-on-reload + longer first-visit
 - Splash is now theme-aware. `QuizMintSplash` reads `localStorage.theme` (or accepts a `theme` prop) and applies a `.dark` / `.light` class. Dark mode: `#0A0A0C` backdrop, white wordmark, ink-alpha loader track, ambient `rgba(16,185,129,0.08)` at 50%. Light mode: `#F6F7F9` backdrop, ink wordmark, ink-alpha loader track, ambient `0.10` at 55%. The leaf itself is identical in both (v2 slate vein + dot).
 - Removed the `sessionStorage('qm-splash-seen')` gate — splash now plays on every page load / reload.
