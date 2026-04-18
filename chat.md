@@ -117,6 +117,11 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 19: Theme-aware splash + always-on-reload + longer first-visit
+- Splash is now theme-aware. `QuizMintSplash` reads `localStorage.theme` (or accepts a `theme` prop) and applies a `.dark` / `.light` class. Dark mode: `#0A0A0C` backdrop, white wordmark, ink-alpha loader track, ambient `rgba(16,185,129,0.08)` at 50%. Light mode: `#F6F7F9` backdrop, ink wordmark, ink-alpha loader track, ambient `0.10` at 55%. The leaf itself is identical in both (v2 slate vein + dot).
+- Removed the `sessionStorage('qm-splash-seen')` gate — splash now plays on every page load / reload.
+- First-ever visit gets a longer run: `main.tsx` reads `localStorage.qm-splash-first-done`; if absent, `minDurationMs = 5000` (otherwise 2800). Flag is set in `onDone` so subsequent loads use the shorter duration.
+
 #### Task 18: Brand handoff v2 (universal vein + light splash)
 Applied the v2 diff from `QuizMint Logo Handoff v2.html`:
 - Mark vein + dot now slate `#334155` (was `#FFFFFF` / `#059669`) so the Leaf Q reads on any background — paper, app-light, or dark sidebar. Opacity dropped `0.92 → 0.85`.

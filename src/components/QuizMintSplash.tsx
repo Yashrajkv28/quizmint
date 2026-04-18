@@ -3,11 +3,18 @@ import './QuizMintSplash.css';
 
 interface Props {
   minDurationMs?: number;
+  theme?: 'light' | 'dark';
   onDone?: () => void;
 }
 
-export function QuizMintSplash({ minDurationMs = 2800, onDone }: Props) {
+function detectTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'dark';
+  return localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+}
+
+export function QuizMintSplash({ minDurationMs = 2800, theme, onDone }: Props) {
   const [phase, setPhase] = useState<'playing' | 'fading' | 'done'>('playing');
+  const resolvedTheme = theme ?? detectTheme();
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('fading'), minDurationMs);
@@ -18,7 +25,7 @@ export function QuizMintSplash({ minDurationMs = 2800, onDone }: Props) {
   if (phase === 'done') return null;
 
   return (
-    <div className={`qm-splash play ${phase === 'fading' ? 'fade-out' : ''}`} aria-hidden="true">
+    <div className={`qm-splash play ${resolvedTheme} ${phase === 'fading' ? 'fade-out' : ''}`} aria-hidden="true">
       <div className="qm-ambient" />
       <div className="qm-logo">
         <svg viewBox="0 0 100 100" width={140} height={140} style={{ overflow: 'visible' }} aria-label="QuizMint">

@@ -1,15 +1,18 @@
 .qm-splash {
   position: fixed; inset: 0; z-index: 9999;
   display: flex; align-items: center; justify-content: center;
-  background: #F6F7F9;
   transition: opacity 0.4s ease;
 }
 .qm-splash.fade-out { opacity: 0; pointer-events: none; }
 
+.qm-splash.dark  { background: #0A0A0C; }
+.qm-splash.light { background: #F6F7F9; }
+
 .qm-ambient {
   position: absolute; inset: 0; pointer-events: none; opacity: 0;
-  background: radial-gradient(ellipse at center, rgba(16,185,129,0.10) 0%, transparent 55%);
 }
+.qm-splash.dark  .qm-ambient { background: radial-gradient(ellipse at center, rgba(16,185,129,0.08) 0%, transparent 50%); }
+.qm-splash.light .qm-ambient { background: radial-gradient(ellipse at center, rgba(16,185,129,0.10) 0%, transparent 55%); }
 .qm-splash.play .qm-ambient { animation: qm-ambient-in 1.5s ease-out 0.2s forwards; }
 @keyframes qm-ambient-in { to { opacity: 1; } }
 
@@ -45,8 +48,10 @@
 .qm-word {
   opacity: 0; transform: translateY(8px);
   font: 700 36px 'Inter', system-ui, sans-serif;
-  letter-spacing: -1.5px; color: #0A0A0C;
+  letter-spacing: -1.5px;
 }
+.qm-splash.dark  .qm-word { color: #FFFFFF; }
+.qm-splash.light .qm-word { color: #0A0A0C; }
 .qm-splash.play .qm-word {
   animation: qm-word-in 0.7s cubic-bezier(0.4,0,0.2,1) 2.0s forwards;
 }
@@ -54,9 +59,10 @@
 
 .qm-loader {
   margin-top: -4px; width: 120px; height: 2px;
-  background: rgba(10,10,12,0.08); border-radius: 2px;
-  overflow: hidden; opacity: 0;
+  border-radius: 2px; overflow: hidden; opacity: 0;
 }
+.qm-splash.dark  .qm-loader { background: rgba(255,255,255,0.08); }
+.qm-splash.light .qm-loader { background: rgba(10,10,12,0.08); }
 .qm-splash.play .qm-loader { animation: qm-loader-fade 0.4s ease 2.6s forwards; }
 @keyframes qm-loader-fade { to { opacity: 1; } }
 .qm-loader-bar {

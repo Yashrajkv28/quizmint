@@ -5,18 +5,18 @@ import { QuizMintSplash } from './components/QuizMintSplash';
 import './index.css';
 
 function Root() {
-  const [showSplash, setShowSplash] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !sessionStorage.getItem('qm-splash-seen');
-  });
+  const [showSplash, setShowSplash] = useState(true);
+  const isFirstEver = typeof window !== 'undefined' && !localStorage.getItem('qm-splash-first-done');
+  const duration = isFirstEver ? 5000 : 2800;
 
   return (
     <>
       <App />
       {showSplash && (
         <QuizMintSplash
+          minDurationMs={duration}
           onDone={() => {
-            sessionStorage.setItem('qm-splash-seen', '1');
+            if (isFirstEver) localStorage.setItem('qm-splash-first-done', '1');
             setShowSplash(false);
           }}
         />
