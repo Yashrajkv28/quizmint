@@ -23,6 +23,9 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+  const hasTypedText = rawText.trim().length > 0 && !uploadedFile;
+  const hasFile = !!uploadedFile;
+
   const processFile = async (file: File) => {
     setError(null);
 
@@ -159,23 +162,25 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
             <label className="block text-[14px] font-semibold text-indigo-500 mb-3">
               DOCUMENT UPLOAD
             </label>
-            <div 
-              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-[#2D2E35] bg-[#0A0A0C] hover:border-slate-500'} ${uploadedFile ? 'hidden' : 'flex'}`}
-              onDragOver={onDragOver}
+            <div
+              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-[#2D2E35] bg-[#0A0A0C]'} ${hasTypedText ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-slate-500'} ${uploadedFile ? 'hidden' : 'flex'}`}
+              onDragOver={hasTypedText ? undefined : onDragOver}
               onDragLeave={onDragLeave}
-              onDrop={onDrop}
-              onClick={() => fileInputRef.current?.click()}
+              onDrop={hasTypedText ? undefined : onDrop}
+              onClick={() => !hasTypedText && fileInputRef.current?.click()}
             >
               <UploadCloud className="w-10 h-10 text-slate-400 mb-4" />
               <p className="text-[14px] text-slate-300 font-medium">Drag & drop your file here</p>
-              <p className="text-[12px] text-slate-500 mt-1">Supports TXT, DOCX, and PDF</p>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={onFileChange} 
+              <p className="text-[12px] text-slate-500 mt-1">
+                {hasTypedText ? 'Clear the text below to upload a file' : 'Supports TXT, DOCX, and PDF'}
+              </p>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={onFileChange}
                 accept=".txt,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
-                className="hidden" 
-                disabled={isGenerating}
+                className="hidden"
+                disabled={isGenerating || hasTypedText}
               />
             </div>
 
@@ -202,8 +207,10 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
             <textarea
               id="rawText"
               rows={8}
-              className="w-full rounded-xl bg-[#0A0A0C] border border-[#2D2E35] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-4 font-mono text-[14px] text-slate-300 resize-y outline-none transition-colors"
-              placeholder="Or paste your text here...
+              className="w-full rounded-xl bg-[#0A0A0C] border border-[#2D2E35] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-4 font-mono text-[14px] text-slate-300 resize-y outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              placeholder={hasFile
+                ? 'Remove the attached file to paste text instead.'
+                : `Or paste your text here...
 Example:
 1. What is the capital of France?
 A) London
@@ -212,10 +219,10 @@ C) Paris
 D) Madrid
 
 Answer Key:
-1. C"
-              value={rawText}
+1. C`}
+              value={hasFile && uploadedFile?.type === 'pdf' ? '' : rawText}
               onChange={(e) => setRawText(e.target.value)}
-              disabled={isGenerating}
+              disabled={isGenerating || hasFile}
             />
           </div>
           
