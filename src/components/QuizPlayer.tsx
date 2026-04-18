@@ -33,7 +33,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
   return (
     <div className="flex-1 flex flex-col relative p-[60px]">
       <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--c-border)]">
-        <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div>
+        <div className="h-full bg-emerald-500 transition-all duration-300" style={{ width: `${progress}%` }}></div>
       </div>
       
       <div className="absolute top-8 right-8 flex items-center gap-3">
@@ -62,7 +62,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
 
           return (
             <div key={index} className="flex flex-col">
-              <div className="text-indigo-500 text-[14px] font-semibold mb-3">Question {String(index + 1).padStart(2, '0')}</div>
+              <div className="text-emerald-500 text-[14px] font-semibold mb-3">Question {String(index + 1).padStart(2, '0')}</div>
               <h1 className="text-[28px] leading-[1.3] font-medium mb-10 text-[var(--c-text)]">
                 {q.question}
               </h1>
@@ -111,8 +111,8 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
                 })}
               </div>
               {isAnswered && q.explanation && (
-                <div className="mt-6 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-[14px]">
-                  <span className="font-semibold text-indigo-400">Explanation:</span> {q.explanation}
+                <div className="mt-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 text-[14px]">
+                  <span className="font-semibold text-emerald-400">Explanation:</span> {q.explanation}
                 </div>
               )}
               
@@ -138,7 +138,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
               </button>
               <button
                 onClick={onReset}
-                className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-[var(--c-text)] font-medium rounded-xl transition-colors"
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-[var(--c-text)] font-medium rounded-xl transition-colors"
               >
                 Create Another Quiz
               </button>

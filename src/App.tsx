@@ -25,7 +25,7 @@ export default function App() {
       <aside className="hidden lg:flex w-[280px] bg-[var(--c-surface)] border-r border-[var(--c-border)] p-6 flex-col gap-8 shrink-0">
         <div className="flex items-center justify-between">
           <div className="text-[18px] font-bold tracking-tight flex items-center gap-2.5">
-            <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
             QuizMint
           </div>
           <button
@@ -60,8 +60,8 @@ export default function App() {
           )}
         </div>
 
-        <div className="mt-auto p-4 bg-indigo-500/10 border border-indigo-500/50 rounded-xl">
-          <p className="text-[12px] font-semibold text-indigo-500 mb-2">AI Engine Active</p>
+        <div className="mt-auto p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-xl">
+          <p className="text-[12px] font-semibold text-emerald-500 mb-2">AI Engine Active</p>
           <p className="text-[11px] text-[var(--c-text-subtle)] leading-relaxed">
             Dynamically parsing and adjusting difficulty based on your dataset...
           </p>

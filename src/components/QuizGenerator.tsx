@@ -144,7 +144,7 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
     <div className="flex-1 flex flex-col justify-center items-center p-[60px] w-full max-w-[800px] mx-auto">
       <div className="w-full">
         <div className="mb-10 block">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-500 mb-6 border border-indigo-500/20">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 mb-6 border border-emerald-500/20">
             <Sparkles className="w-6 h-6" />
           </div>
           <h1 className="text-[32px] font-medium text-[var(--c-text)] mb-4 leading-[1.2]">
@@ -159,11 +159,11 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
           
           {/* Upload Dropzone */}
           <div>
-            <label className="block text-[14px] font-semibold text-indigo-500 mb-3">
+            <label className="block text-[14px] font-semibold text-emerald-500 mb-3">
               DOCUMENT UPLOAD
             </label>
             <div
-              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-[var(--c-border)] bg-[var(--c-app)]'} ${hasTypedText ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-slate-500'} ${uploadedFile ? 'hidden' : 'flex'}`}
+              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-emerald-500 bg-emerald-500/5' : 'border-[var(--c-border)] bg-[var(--c-app)]'} ${hasTypedText ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-slate-500'} ${uploadedFile ? 'hidden' : 'flex'}`}
               onDragOver={hasTypedText ? undefined : onDragOver}
               onDragLeave={onDragLeave}
               onDrop={hasTypedText ? undefined : onDrop}
@@ -186,13 +186,13 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
 
             {/* Display uploaded file */}
             {uploadedFile && (
-              <div className="flex items-center justify-between p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl mt-4">
+              <div className="flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mt-4">
                 <div className="flex items-center space-x-3">
-                  <FileIcon className="w-6 h-6 text-indigo-400" />
-                  <span className="text-[14px] font-medium text-indigo-200">{uploadedFile.name} attached</span>
+                  <FileIcon className="w-6 h-6 text-emerald-400" />
+                  <span className="text-[14px] font-medium text-emerald-200">{uploadedFile.name} attached</span>
                 </div>
                 {!isGenerating && (
-                  <button onClick={removeFile} className="p-1 hover:bg-indigo-500/20 rounded-lg text-indigo-400 transition-colors">
+                  <button onClick={removeFile} className="p-1 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 )}
@@ -201,13 +201,13 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
           </div>
 
           <div>
-            <label htmlFor="rawText" className="block text-[14px] font-semibold text-indigo-500 mb-3">
+            <label htmlFor="rawText" className="block text-[14px] font-semibold text-emerald-500 mb-3">
               RAW DATA INPUT
             </label>
             <textarea
               id="rawText"
               rows={8}
-              className="w-full rounded-xl bg-[var(--c-app)] border border-[var(--c-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-4 font-mono text-[14px] text-[var(--c-text-muted)] resize-y outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-[var(--c-app)] border border-[var(--c-border)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 p-4 font-mono text-[14px] text-[var(--c-text-muted)] resize-y outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               placeholder={hasFile
                 ? 'Remove the attached file to paste text instead.'
                 : `Or paste your text here...
@@ -242,7 +242,7 @@ Answer Key:
               <div className="mt-3">
                 <input
                   type="password"
-                  className="w-full rounded-xl bg-[var(--c-app)] border border-[var(--c-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 px-4 py-3 font-mono text-[13px] text-[var(--c-text-muted)] outline-none transition-colors"
+                  className="w-full rounded-xl bg-[var(--c-app)] border border-[var(--c-border)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-4 py-3 font-mono text-[13px] text-[var(--c-text-muted)] outline-none transition-colors"
                   placeholder="Paste your Gemini API key..."
                   value={userApiKey}
                   onChange={(e) => {
@@ -253,7 +253,7 @@ Answer Key:
                 />
                 <p className="mt-2 text-[11px] text-[var(--c-text-faint)]">
                   Your key is stored locally in your browser and never saved on our server. Get one free at{' '}
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
                     aistudio.google.com
                   </a>
                 </p>
@@ -270,12 +270,12 @@ Answer Key:
           {isGenerating && (
             <div className="w-full px-2 py-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[12px] font-medium text-indigo-400 uppercase tracking-wider">{progressText}</span>
+                <span className="text-[12px] font-medium text-emerald-400 uppercase tracking-wider">{progressText}</span>
                 <span className="text-[12px] text-[var(--c-text-subtle)] font-mono">{Math.round(progress)}%</span>
               </div>
               <div className="h-2 w-full bg-[var(--c-app)] rounded-full overflow-hidden border border-[var(--c-border)]">
                 <div 
-                  className="h-full bg-indigo-500 transition-all duration-300 ease-out relative"
+                  className="h-full bg-emerald-500 transition-all duration-300 ease-out relative"
                   style={{ width: `${progress}%` }}
                 >
                   <div className="absolute inset-0 bg-white/20 w-full animate-[progress-pulse_1.5s_ease-in-out_infinite]"></div>
@@ -288,7 +288,7 @@ Answer Key:
             <button
               onClick={handleGenerate}
               disabled={isGenerating || (!rawText.trim() && !uploadedFile)}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-[14px] font-medium rounded-xl text-[var(--c-text)] bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-[14px] font-medium rounded-xl text-[var(--c-text)] bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isGenerating ? (
                 <>
