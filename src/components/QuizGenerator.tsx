@@ -147,15 +147,15 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-500 mb-6 border border-indigo-500/20">
             <Sparkles className="w-6 h-6" />
           </div>
-          <h1 className="text-[32px] font-medium text-white mb-4 leading-[1.2]">
+          <h1 className="text-[32px] font-medium text-[var(--c-text)] mb-4 leading-[1.2]">
             Initialize Knowledge Engine
           </h1>
-          <p className="text-[16px] text-slate-400">
+          <p className="text-[16px] text-[var(--c-text-subtle)]">
             Paste your raw multiple-choice questions or upload a document (TXT, DOCX, PDF). The AI will parse and construct an interactive module.
           </p>
         </div>
 
-        <div className="bg-[#15161A] rounded-xl border border-[#2D2E35] overflow-hidden flex flex-col gap-6 p-6">
+        <div className="bg-[var(--c-surface)] rounded-xl border border-[var(--c-border)] overflow-hidden flex flex-col gap-6 p-6">
           
           {/* Upload Dropzone */}
           <div>
@@ -163,15 +163,15 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
               DOCUMENT UPLOAD
             </label>
             <div
-              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-[#2D2E35] bg-[#0A0A0C]'} ${hasTypedText ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-slate-500'} ${uploadedFile ? 'hidden' : 'flex'}`}
+              className={`w-full p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-colors ${isDragging ? 'border-indigo-500 bg-indigo-500/5' : 'border-[var(--c-border)] bg-[var(--c-app)]'} ${hasTypedText ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-slate-500'} ${uploadedFile ? 'hidden' : 'flex'}`}
               onDragOver={hasTypedText ? undefined : onDragOver}
               onDragLeave={onDragLeave}
               onDrop={hasTypedText ? undefined : onDrop}
               onClick={() => !hasTypedText && fileInputRef.current?.click()}
             >
-              <UploadCloud className="w-10 h-10 text-slate-400 mb-4" />
-              <p className="text-[14px] text-slate-300 font-medium">Drag & drop your file here</p>
-              <p className="text-[12px] text-slate-500 mt-1">
+              <UploadCloud className="w-10 h-10 text-[var(--c-text-subtle)] mb-4" />
+              <p className="text-[14px] text-[var(--c-text-muted)] font-medium">Drag & drop your file here</p>
+              <p className="text-[12px] text-[var(--c-text-faint)] mt-1">
                 {hasTypedText ? 'Clear the text below to upload a file' : 'Supports TXT, DOCX, and PDF'}
               </p>
               <input
@@ -207,7 +207,7 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
             <textarea
               id="rawText"
               rows={8}
-              className="w-full rounded-xl bg-[#0A0A0C] border border-[#2D2E35] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-4 font-mono text-[14px] text-slate-300 resize-y outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-[var(--c-app)] border border-[var(--c-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-4 font-mono text-[14px] text-[var(--c-text-muted)] resize-y outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               placeholder={hasFile
                 ? 'Remove the attached file to paste text instead.'
                 : `Or paste your text here...
@@ -231,18 +231,18 @@ Answer Key:
             <button
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
-              className="flex items-center gap-2 text-[13px] text-slate-400 hover:text-slate-300 transition-colors"
+              className="flex items-center gap-2 text-[13px] text-[var(--c-text-subtle)] hover:text-[var(--c-text-muted)] transition-colors"
             >
               <Key className="w-3.5 h-3.5" />
               <span>Use your own API key</span>
-              <span className="text-[11px] px-1.5 py-0.5 bg-white/5 border border-[#2D2E35] rounded text-slate-500">Optional</span>
+              <span className="text-[11px] px-1.5 py-0.5 bg-white/5 border border-[var(--c-border)] rounded text-[var(--c-text-faint)]">Optional</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showApiKey ? 'rotate-180' : ''}`} />
             </button>
             {showApiKey && (
               <div className="mt-3">
                 <input
                   type="password"
-                  className="w-full rounded-xl bg-[#0A0A0C] border border-[#2D2E35] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 px-4 py-3 font-mono text-[13px] text-slate-300 outline-none transition-colors"
+                  className="w-full rounded-xl bg-[var(--c-app)] border border-[var(--c-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 px-4 py-3 font-mono text-[13px] text-[var(--c-text-muted)] outline-none transition-colors"
                   placeholder="Paste your Gemini API key..."
                   value={userApiKey}
                   onChange={(e) => {
@@ -251,7 +251,7 @@ Answer Key:
                   }}
                   disabled={isGenerating}
                 />
-                <p className="mt-2 text-[11px] text-slate-500">
+                <p className="mt-2 text-[11px] text-[var(--c-text-faint)]">
                   Your key is stored locally in your browser and never saved on our server. Get one free at{' '}
                   <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">
                     aistudio.google.com
@@ -271,9 +271,9 @@ Answer Key:
             <div className="w-full px-2 py-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[12px] font-medium text-indigo-400 uppercase tracking-wider">{progressText}</span>
-                <span className="text-[12px] text-slate-400 font-mono">{Math.round(progress)}%</span>
+                <span className="text-[12px] text-[var(--c-text-subtle)] font-mono">{Math.round(progress)}%</span>
               </div>
-              <div className="h-2 w-full bg-[#0A0A0C] rounded-full overflow-hidden border border-[#2D2E35]">
+              <div className="h-2 w-full bg-[var(--c-app)] rounded-full overflow-hidden border border-[var(--c-border)]">
                 <div 
                   className="h-full bg-indigo-500 transition-all duration-300 ease-out relative"
                   style={{ width: `${progress}%` }}
@@ -288,11 +288,11 @@ Answer Key:
             <button
               onClick={handleGenerate}
               disabled={isGenerating || (!rawText.trim() && !uploadedFile)}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-[14px] font-medium rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-[14px] font-medium rounded-xl text-[var(--c-text)] bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+                  <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-[var(--c-text)]" />
                   Generating Module
                 </>
               ) : (

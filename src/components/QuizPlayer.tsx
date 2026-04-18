@@ -32,7 +32,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
 
   return (
     <div className="flex-1 flex flex-col relative p-[60px]">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-[#2D2E35]">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--c-border)]">
         <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }}></div>
       </div>
       
@@ -40,14 +40,14 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
         {Object.keys(answers).length > 0 && Object.keys(answers).length < questions.length && (
           <button
             onClick={handleRetry}
-            className="px-4 py-2 text-[13px] font-medium text-slate-400 hover:text-white bg-[#15161A] hover:bg-[#2D2E35] border border-[#2D2E35] hover:border-slate-500 rounded-lg transition-colors"
+            className="px-4 py-2 text-[13px] font-medium text-[var(--c-text-subtle)] hover:text-[var(--c-text)] bg-[var(--c-surface)] hover:bg-[var(--c-border)] border border-[var(--c-border)] hover:border-slate-500 rounded-lg transition-colors"
           >
             Restart Output
           </button>
         )}
         <button
           onClick={onReset}
-          className="px-4 py-2 text-[13px] font-medium text-slate-400 hover:text-white bg-[#15161A] hover:bg-[#2D2E35] border border-[#2D2E35] hover:border-slate-500 rounded-lg transition-colors flex items-center gap-2"
+          className="px-4 py-2 text-[13px] font-medium text-[var(--c-text-subtle)] hover:text-[var(--c-text)] bg-[var(--c-surface)] hover:bg-[var(--c-border)] border border-[var(--c-border)] hover:border-slate-500 rounded-lg transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Exit Quiz
@@ -63,7 +63,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
           return (
             <div key={index} className="flex flex-col">
               <div className="text-indigo-500 text-[14px] font-semibold mb-3">Question {String(index + 1).padStart(2, '0')}</div>
-              <h1 className="text-[28px] leading-[1.3] font-medium mb-10 text-white">
+              <h1 className="text-[28px] leading-[1.3] font-medium mb-10 text-[var(--c-text)]">
                 {q.question}
               </h1>
               
@@ -72,7 +72,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
                   const isSelected = selectedOptionId === opt.id;
                   const isCorrectOption = q.correctOptionId === opt.id;
                   
-                  let buttonClass = "p-[18px_24px] bg-[#15161A] border border-[#2D2E35] rounded-xl cursor-pointer flex justify-between items-center transition-colors ";
+                  let buttonClass = "p-[18px_24px] bg-[var(--c-surface)] border border-[var(--c-border)] rounded-xl cursor-pointer flex justify-between items-center transition-colors ";
                   
                   if (!isAnswered) {
                     buttonClass += "hover:border-slate-400";
@@ -93,7 +93,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
                       onClick={() => handleOptionClick(index, opt.id)}
                       className={buttonClass}
                     >
-                      <span className="text-[16px] font-normal text-white">
+                      <span className="text-[16px] font-normal text-[var(--c-text)]">
                         {opt.id}) {opt.text}
                       </span>
                       {isAnswered && isCorrectOption && (
@@ -117,28 +117,28 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
               )}
               
               {!isAnswered && (
-                <p className="mt-10 text-[13px] text-slate-400 italic">Tap an option to see instant verification. No submit button required.</p>
+                <p className="mt-10 text-[13px] text-[var(--c-text-subtle)] italic">Tap an option to see instant verification. No submit button required.</p>
               )}
             </div>
           );
         })}
 
         {Object.keys(answers).length === questions.length && (
-          <div className="mt-12 p-8 bg-[#15161A] border border-[#2D2E35] rounded-xl text-center">
-            <h3 className="text-[24px] font-bold text-white mb-2">Quiz Completed!</h3>
-            <p className="text-[16px] text-slate-400 mb-6">
+          <div className="mt-12 p-8 bg-[var(--c-surface)] border border-[var(--c-border)] rounded-xl text-center">
+            <h3 className="text-[24px] font-bold text-[var(--c-text)] mb-2">Quiz Completed!</h3>
+            <p className="text-[16px] text-[var(--c-text-subtle)] mb-6">
               You scored {score} out of {questions.length} ({(score / questions.length * 100).toFixed(0)}%)
             </p>
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={handleRetry}
-                className="px-6 py-3 bg-[#2D2E35] hover:bg-slate-700 text-white font-medium rounded-xl transition-colors"
+                className="px-6 py-3 bg-[var(--c-border)] hover:bg-slate-700 text-[var(--c-text)] font-medium rounded-xl transition-colors"
               >
                 Retry Quiz
               </button>
               <button
                 onClick={onReset}
-                className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition-colors"
+                className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-[var(--c-text)] font-medium rounded-xl transition-colors"
               >
                 Create Another Quiz
               </button>

@@ -5,6 +5,28 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+:root {
+  --c-app: #0A0A0C;
+  --c-surface: #15161A;
+  --c-border: #2D2E35;
+  --c-hover: #2D2E35;
+  --c-text: #FFFFFF;
+  --c-text-muted: #CBD5E1;
+  --c-text-subtle: #94A3B8;
+  --c-text-faint: #64748B;
+}
+
+:root.light {
+  --c-app: #F6F7F9;
+  --c-surface: #FFFFFF;
+  --c-border: #E4E6EB;
+  --c-hover: #E4E6EB;
+  --c-text: #0A0A0C;
+  --c-text-muted: #334155;
+  --c-text-subtle: #475569;
+  --c-text-faint: #64748B;
+}
+
 @layer utilities {
   .animate-\[progress-pulse_1\.5s_ease-in-out_infinite\] {
     animation: progress-pulse 1.5s ease-in-out infinite;
@@ -21,8 +43,8 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #0A0A0C;
-  color: #FFFFFF;
+  background-color: var(--c-app);
+  color: var(--c-text);
 }
 
 body {
