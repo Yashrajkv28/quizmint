@@ -117,6 +117,32 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 25: Park future improvements in `future.md`
+Self-rated the current state 8.5/10 (user wanted 9). Logged the path from 8.5 → 9.5 in a new `future.md` so we can come back to it. Six buckets:
+1. **Code-split the landing from the app** — marketing landing shouldn't ship the full Gemini/quiz bundle. Lazy-load `QuizGenerator` / `QuizPlayer`, wrap in `Suspense`.
+2. **Mobile polish** — desktop is solid but phone sizes weren't actually tested. Marquee font size, hero `clamp` min, nav wrap.
+3. **Animated product demo** — Playful's floating cards are decorative. Port the Editorial `DemoCard` (paste → parsing → quiz auto-loop) from `QuizMint Home Redesign.html` lines 176–296.
+4. **Accessibility audit** — contrast on mint CTA, focus-visible rings, ARIA labels, keyboard nav, reduced-motion coverage beyond just floating cards.
+5. **OG / social preview** — no meta tags currently. Share in iMessage = blank preview. Need 1200×630 OG image, `og:*` + `twitter:card` tags, `<meta name="description">`, canonical.
+6. **Nice-to-haves** — error boundary, optional skip-landing preference, favicon PNG fallbacks, a single Vercel Analytics counter on CTA click.
+
+Not scheduled — just parked.
+
+#### Task 24: Remove Playwright plugin from Claude Code
+User found it unhelpful. Removed the `playwright@claude-plugins-official` entry from `~/.claude/plugins/installed_plugins.json` and deleted the cache folder `~/.claude/plugins/cache/claude-plugins-official/playwright/`. MCP server had already disconnected for the session, so no restart required. `/plugin` can reinstall it later if needed.
+
+#### Task 23: Untrack local tool state + scratch files
+Task 22's commit accidentally swept in `.claude/settings.local.json`, `.playwright-mcp/*.yml`, three `landing-*.png` debug screenshots, and the Task 21 `Screenshot 2026-04-19 135810.png`. No `.env` touched the repo — verified via `git ls-files | grep env` (only `.env.example` tracked, which is intentional). Ran `git rm -r --cached` on all of it and extended `.gitignore` with:
+
+```
+.claude/
+.playwright-mcp/
+landing-*.png
+Screenshot*.png
+```
+
+Files still exist locally, just untracked.
+
 #### Task 22: Playful landing page (from `QuizMint Home Redesign.html`)
 Adapted the Playful direction from the handoff into a new `src/components/LandingPage.tsx`. Flow is now **Splash (5s) → Landing → [CTA] → App (sidebar + QuizGenerator)**. Splash and app code unchanged; `App.tsx` just gates on a `showLanding` state that flips to false when the user clicks any CTA.
 
