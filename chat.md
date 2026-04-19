@@ -117,6 +117,29 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 22: Playful landing page (from `QuizMint Home Redesign.html`)
+Adapted the Playful direction from the handoff into a new `src/components/LandingPage.tsx`. Flow is now **Splash (5s) → Landing → [CTA] → App (sidebar + QuizGenerator)**. Splash and app code unchanged; `App.tsx` just gates on a `showLanding` state that flips to false when the user clicks any CTA.
+
+Design moves:
+- **Tokenized** every Playful color against `--c-app` / `--c-surface` / `--c-border` / `--c-text` / `--c-text-subtle` / `--c-text-faint` / `--c-brand` so the one component serves both light and dark. Cream (`#F7F3EC`) → `--c-app`; paper (`#FFFFFF`) → `--c-surface`; hairline (`#E6DFD2`) → `--c-border`. Mint CTA slab stays literal `var(--c-brand)` in both modes.
+- **Fraunces** added to `index.html` (weights 500/600 + italic 600) for the serif headlines and italic accents. Inter stays via `@theme` in `index.css`.
+- **FloatingCards**: four tilted quiz cards with staggered `translateY` float animations (`qmFloat0..3`). Hidden under 1100px via media query — no clipping on small screens.
+- **Marquee**: `qmMarquee` 40s linear infinite, items triplicated for seamless loop. Pruned to formats that actually work: `PDF textbooks`, `DOCX problem sets`, `Pasted MCQs`, `Lecture notes`, `Practice exams`, `TXT study guides`.
+- **Features grid**: 2×2 with serif numerals. Collapses to single column under 720px.
+- **CTA slab**: mint `var(--c-brand)` with white radial glow, serif "Stop formatting. Start studying.", ink pill button.
+- **Footer**: thin — wordmark + "Made with mint." + GitHub link.
+- **Reduced motion**: `@media (prefers-reduced-motion: reduce)` kills the float animation on the cards.
+
+Cut from the handoff (all fake-promise content):
+- `PlNav` links (`Product`, `Templates`, `For teachers`, `Pricing`) and `Sign in` button — none of those pages exist
+- `PlQuote` — fake testimonial from "Priya K., pre-med · UC Davis"
+- `PlCategories` — "2,792 quizzes · updated daily" / category browse; there's no library
+- Hero stats claiming "eight seconds" (softened to "In seconds")
+- Hero subcopy claim of "share link" — the app has no share feature; replaced with "difficulty labels and a one-line explanation for every answer"
+- 4th feature "It shares" → replaced with "It stays out of the way" (no account / no email / no pricing page — true)
+
+Behavior: landing shows on every fresh load after the splash. No localStorage gating — consistent with the splash policy from Task 19/20. Clicking any CTA (nav, hero, features section CTA, or big mint slab) flips `showLanding` to false; the existing sidebar + `QuizGenerator` takes over with no route change. Theme toggle lives in the landing nav too and uses the same `toggleTheme` from `App.tsx`, so the preference persists into the app view.
+
 #### Task 21: Close gap between "Quiz" and "Mint" in sidebar wordmark
 Screenshot showed a visible gap between "Quiz" and "Mint" in the sidebar header. The parent flex container uses `gap-2.5` to space the logo from the wordmark — but because the wordmark was `Quiz<span>Mint</span>` (a raw text node plus a span), flex treated them as two separate children and inserted the gap between them too.
 

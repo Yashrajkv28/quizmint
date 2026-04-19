@@ -3,12 +3,14 @@ import { Sun, Moon } from 'lucide-react';
 import { QuizGenerator } from './components/QuizGenerator';
 import { QuizPlayer } from './components/QuizPlayer';
 import { QuizMintLogo } from './components/QuizMintLogo';
+import { LandingPage } from './components/LandingPage';
 import { QuizData } from './types';
 
 type Theme = 'light' | 'dark';
 
 export default function App() {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
+  const [showLanding, setShowLanding] = useState(true);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark');
 
   useEffect(() => {
@@ -19,6 +21,16 @@ export default function App() {
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+
+  if (showLanding) {
+    return (
+      <LandingPage
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onStart={() => setShowLanding(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--c-app)] text-[var(--c-text)] font-sans flex overflow-hidden">

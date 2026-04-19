@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(grep -c \"YOUR_GEMINI_API_KEY_HERE\" dist/assets/*.js)",
+      "Bash(grep -c \"process.env\" dist/assets/*.js)",
+      "Bash(grep -o \"process\\\\.env\" dist/assets/*.js)",
+      "Bash(gh auth *)",
+      "Bash(where gh *)",
+      "Bash(choco install *)",
+      "Bash(winget install *)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" --version)",
+      "Bash(\"/c/Program Files \\(x86\\)/GitHub CLI/gh.exe\" --version)",
+      "Bash(cmd.exe *)",
+      "Bash(powershell.exe *)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
+      "Bash(/c/Program Files/GitHub CLI/gh.exe auth *)",
+      "Bash(\"/c/Program Files/GitHub *)",
+      "Bash(where vercel *)",
+      "Bash(npx vercel *)",
+      "Bash(vercel *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'feat: add light mode theme toggle *)",
+      "Bash(git commit -m 'style: rebrand accent from indigo to emerald *)",
+      "Bash(gh api *)",
+      "Bash(git commit *)",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_close"
+    ]
+  }
+}

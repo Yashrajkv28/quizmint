@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>QuizMint — Logo Handoff</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #0A0A0C;
+    --paper:    #FFFFFF;
+    --app:      #F6F7F9;
+    --border:   #E4E6EB;
+    --muted:    #475569;
+    --subtle:   #94A3B8;
+    --mint:     #10B981;   /* primary brand green */
+    --mint-600: #059669;
+    --mint-200: #A7F3D0;
+    --mint-50:  #ECFDF5;
+    --indigo:   #6366F1;   /* existing app accent, retained for UI */
+    --code-bg:  #0B1220;
+    --code-fg:  #E2E8F0;
+    --code-key: #67E8F9;
+    --code-str: #86EFAC;
+    --code-com: #64748B;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--app); color: var(--ink); font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 980px; margin: 0 auto; padding: 64px 40px 120px; }
+
+  /* Header */
+  .eyebrow { font-size: 12px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--subtle); font-weight: 600; }
+  h1 { font-size: 56px; letter-spacing: -2px; margin: 8px 0 0; font-weight: 800; }
+  .lede { font-size: 17px; color: var(--muted); line-height: 1.6; max-width: 640px; margin-top: 16px; }
+
+  /* Section */
+  section { margin-top: 64px; }
+  h2 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--subtle); font-weight: 600; margin: 0 0 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin: 0 0 6px; }
+  p  { color: var(--muted); line-height: 1.6; margin: 0 0 12px; }
+
+  /* Hero card */
+  .hero {
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: 0;
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 20px; overflow: hidden; margin-top: 28px;
+  }
+  .hero .big { padding: 72px; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%); }
+  .hero .meta { padding: 40px; background: var(--ink); color: white; display: flex; flex-direction: column; justify-content: center; gap: 24px; }
+  .hero .meta .row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; }
+  .hero .meta .row:last-child { border-bottom: none; padding-bottom: 0; }
+  .hero .meta .k { font-size: 11px; text-transform: uppercase; letter-spacing: 1.6px; color: #64748B; }
+  .hero .meta .v { font-size: 13px; color: white; font-family: 'JetBrains Mono', monospace; }
+
+  /* Grids of tiles */
+  .tiles { display: grid; gap: 16px; }
+  .tiles.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .tiles.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .tiles.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .tile {
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 200px;
+  }
+  .tile .head { display: flex; justify-content: space-between; align-items: baseline; }
+  .tile .label { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--subtle); font-weight: 600; }
+  .tile .dim { font-size: 11px; color: var(--subtle); font-family: 'JetBrains Mono', monospace; }
+  .tile .stage { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; padding: 16px; margin-top: 8px; }
+  .tile.dark   .stage { background: var(--ink); }
+  .tile.paper  .stage { background: #FAFAFA; }
+  .tile.mint   .stage { background: var(--mint-50); }
+  .tile.indigo .stage { background: var(--indigo); }
+  .tile .cap { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* Size ladder */
+  .ladder { display: flex; align-items: flex-end; gap: 28px; padding: 40px; background: var(--paper); border: 1px solid var(--border); border-radius: 14px; }
+  .ladder .slot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .ladder .slot .dim { font-size: 11px; color: var(--subtle); font-family: 'JetBrains Mono', monospace; }
+
+  /* Clearspace */
+  .clearspace { background: var(--paper); border: 1px solid var(--border); border-radius: 14px; padding: 40px; display: flex; justify-content: center; }
+  .cs-wrap { position: relative; padding: 48px; }
+  .cs-wrap::before, .cs-wrap::after { content: ''; position: absolute; border: 1px dashed #CBD5E1; }
+  .cs-wrap::before { inset: 0; border-radius: 12px; }
+
+  /* Do/Don't */
+  .dd { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .dd .tile { min-height: 220px; }
+  .dd .verdict { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 700; padding: 4px 10px; border-radius: 99px; }
+  .dd .ok  { color: var(--mint-600); background: var(--mint-50); }
+  .dd .no  { color: #DC2626;         background: #FEE2E2; }
+
+  /* Code block */
+  pre.code {
+    background: var(--code-bg); color: var(--code-fg);
+    border-radius: 14px; padding: 22px 24px; overflow: auto;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6;
+    border: 1px solid #1E293B;
+  }
+  .code .k   { color: var(--code-key); }
+  .code .s   { color: var(--code-str); }
+  .code .c   { color: var(--code-com); font-style: italic; }
+  .codehead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .codehead .name { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+  .copybtn {
+    font: 600 11px 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    background: var(--ink); color: white; border: none;
+    padding: 6px 12px; border-radius: 6px; cursor: pointer;
+  }
+  .copybtn:hover { background: #1a1410; }
+  .copybtn.done  { background: var(--mint-600); }
+
+  /* Swatches */
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .swatch { background: var(--paper); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .swatch .chip { height: 96px; }
+  .swatch .meta { padding: 12px 14px; }
+  .swatch .name { font-size: 13px; font-weight: 600; }
+  .swatch .hex  { font-size: 11px; color: var(--subtle); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .swatch .use  { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* Context mock — sidebar */
+  .ctx {
+    background: #0A0A0C; border: 1px solid #2D2E35; border-radius: 14px;
+    display: grid; grid-template-columns: 280px 1fr; overflow: hidden; min-height: 280px;
+  }
+  .ctx .side { padding: 24px; border-right: 1px solid #2D2E35; display: flex; flex-direction: column; gap: 20px; }
+  .ctx .side .brand { display: flex; align-items: center; gap: 10px; font: 700 16px Inter, sans-serif; color: white; letter-spacing: -0.4px; }
+  .ctx .side .brand .accent { color: var(--mint); }
+  .ctx .side .stat { padding: 12px; border: 1px solid #2D2E35; border-radius: 10px; background: rgba(255,255,255,0.02); }
+  .ctx .side .stat .lk { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #64748B; }
+  .ctx .side .stat .v  { font-size: 18px; font-weight: 600; color: white; margin-top: 4px; }
+  .ctx .body { padding: 40px; display: flex; align-items: center; justify-content: center; }
+  .ctx .body .hint { color: #64748B; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Footer */
+  footer { margin-top: 80px; padding-top: 28px; border-top: 1px solid var(--border); color: var(--subtle); font-size: 12px; display: flex; justify-content: space-between; }
+
+  /* ── Splash animation (for the §13 live preview) ── */
+  .qm-splash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #F6F7F9; overflow: hidden; }
+  .qm-ambient { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(16,185,129,0.10) 0%, transparent 55%); }
+  .qm-splash.play .qm-ambient { animation: qm-ambient-in 1.5s ease-out 0.2s forwards; }
+  @keyframes qm-ambient-in { to { opacity: 1; } }
+  .qm-logo { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+  .qm-leaf-r, .qm-leaf-l { stroke: #10B981; stroke-width: 1.5; fill-opacity: 0; stroke-dasharray: 300; stroke-dashoffset: 300; }
+  .qm-splash.play .qm-leaf-r { animation: qm-draw 1.1s cubic-bezier(0.4,0,0.2,1) 0.1s forwards, qm-fill 0.6s ease-out 1.0s forwards; }
+  .qm-splash.play .qm-leaf-l { animation: qm-draw 1.1s cubic-bezier(0.4,0,0.2,1) 0.25s forwards, qm-fill 0.6s ease-out 1.1s forwards; }
+  @keyframes qm-draw { to { stroke-dashoffset: 0; } }
+  @keyframes qm-fill { to { fill-opacity: 1; stroke-opacity: 0; } }
+  .qm-vein { stroke-dasharray: 120; stroke-dashoffset: 120; }
+  .qm-splash.play .qm-vein { animation: qm-draw-vein 0.7s cubic-bezier(0.4,0,0.2,1) 1.2s forwards; }
+  @keyframes qm-draw-vein { to { stroke-dashoffset: 0; } }
+  .qm-dot { transform-origin: 60px 92px; transform: scale(0); }
+  .qm-splash.play .qm-dot { animation: qm-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 1.85s forwards; }
+  @keyframes qm-pop { to { transform: scale(1); } }
+  .qm-word { opacity: 0; transform: translateY(8px); font: 700 32px Inter, sans-serif; letter-spacing: -1.3px; color: #0A0A0C; }
+  .qm-splash.play .qm-word { animation: qm-word-in 0.7s cubic-bezier(0.4,0,0.2,1) 2.0s forwards; }
+  @keyframes qm-word-in { to { opacity: 1; transform: translateY(0); } }
+  .qm-loader { margin-top: -4px; width: 120px; height: 2px; background: rgba(10,10,12,0.08); border-radius: 2px; overflow: hidden; opacity: 0; }
+  .qm-splash.play .qm-loader { animation: qm-loader-fade 0.4s ease 2.6s forwards; }
+  @keyframes qm-loader-fade { to { opacity: 1; } }
+  .qm-loader-bar { width: 40%; height: 100%; background: #10B981; border-radius: 2px; animation: qm-loader-slide 1.2s ease-in-out infinite; }
+  @keyframes qm-loader-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+  /* Favicon in browser chrome mock */
+  .chrome { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--paper); max-width: 520px; }
+  .chrome .bar { height: 32px; background: #F3F4F6; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 10px; gap: 6px; }
+  .chrome .dot { width: 10px; height: 10px; border-radius: 99px; background: #D1D5DB; }
+  .chrome .tab { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: white; border-radius: 6px 6px 0 0; margin-left: 14px; font-size: 12px; color: var(--ink); border: 1px solid var(--border); border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ─────────── HEADER ─────────── -->
+  <header>
+    <div class="eyebrow">QuizMint · Brand Identity · v1.2</div>
+    <h1>The Leaf Q mark.</h1>
+    <p class="lede">
+      A mint leaf whose central vein curls into a question mark. One idea,
+      two readings at once — the leaf signals <em>mint</em> (freshness, learning in bite-size),
+      the stem hook signals <em>quiz</em> (the question being asked). This document is a
+      complete handoff: final SVG, React component, color tokens, sizes, usage rules,
+      <strong>and the animated splash screen</strong> (§13). <em>v1.2 update:</em> the vein and dot are now <strong>slate (#334155)</strong> instead of white/mint-deep so the mark reads on any background — paper, app-light, or dark sidebar.
+    </p>
+  </header>
+
+  <!-- ─────────── HERO ─────────── -->
+  <div class="hero">
+    <div class="big">
+      <!-- FINAL MARK · Hero size -->
+      <svg id="hero-mark" viewBox="0 0 100 100" width="280" height="280" xmlns="http://www.w3.org/2000/svg" aria-label="QuizMint logo">
+        <!-- Right half of leaf -->
+        <path d="M50 10
+                 C 74 10, 88 28, 88 48
+                 C 88 63, 76 74, 60 74
+                 L 50 74
+                 Z"
+              fill="#10B981"/>
+        <!-- Left half of leaf (slightly darker for depth) -->
+        <path d="M50 10
+                 C 26 10, 12 28, 12 48
+                 C 12 63, 24 74, 40 74
+                 L 50 74
+                 Z"
+              fill="#059669"/>
+        <!-- Central vein becomes question-mark stem + hook -->
+        <path d="M50 14
+                 L 50 64
+                 C 50 74, 60 76, 60 84"
+              fill="none"
+              stroke="#334155"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              opacity="0.85"/>
+        <!-- Question-mark dot -->
+        <circle cx="60" cy="92" r="3.4" fill="#334155"/>
+      </svg>
+    </div>
+    <div class="meta">
+      <div class="row"><span class="k">Name</span><span class="v">Leaf Q</span></div>
+      <div class="row"><span class="k">Construction</span><span class="v">100 × 100 unit grid</span></div>
+      <div class="row"><span class="k">Primary color</span><span class="v">#10B981</span></div>
+      <div class="row"><span class="k">Shadow half</span><span class="v">#059669</span></div>
+      <div class="row"><span class="k">Vein &amp; dot</span><span class="v">#334155 (slate)</span></div>
+      <div class="row"><span class="k">Min size</span><span class="v">16px (favicon)</span></div>
+      <div class="row"><span class="k">File format</span><span class="v">SVG · inline</span></div>
+    </div>
+  </div>
+
+  <!-- ─────────── COLOR TOKENS ─────────── -->
+  <section>
+    <h2>01 · Color tokens</h2>
+    <p>Mint green becomes the brand accent. Keep existing app chrome colors — <code>--c-app</code>, <code>--c-surface</code>, <code>--c-border</code> — as-is. Replace the indigo accent dot/usages with <code>--c-brand</code> where they represent QuizMint itself (sidebar brand mark, primary CTAs, active states tied to identity).</p>
+    <div class="swatches" style="margin-top: 20px;">
+      <div class="swatch">
+        <div class="chip" style="background: #10B981"></div>
+        <div class="meta"><div class="name">Mint 500</div><div class="hex">#10B981</div><div class="use">Primary brand. Leaf body.</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: #059669"></div>
+        <div class="meta"><div class="name">Mint 600</div><div class="hex">#059669</div><div class="use">Leaf shadow half, hover.</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: #A7F3D0"></div>
+        <div class="meta"><div class="name">Mint 200</div><div class="hex">#A7F3D0</div><div class="use">Selected / correct-answer tint.</div></div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background: #ECFDF5; border-bottom: 1px solid var(--border);"></div>
+        <div class="meta"><div class="name">Mint 50</div><div class="hex">#ECFDF5</div><div class="use">Subtle success bg (light mode).</div></div>
+      </div>
+      <div class="swatch" style="grid-column: 1 / -1; display: grid; grid-template-columns: 96px 1fr;">
+        <div style="background: #334155;"></div>
+        <div class="meta" style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <div class="name">Slate — vein &amp; dot</div>
+            <div class="hex">#334155</div>
+          </div>
+          <div class="use" style="margin-top: 0; max-width: 420px; text-align: right;">Universal vein and question-dot. Works on paper, app-light, and the dark sidebar. Also used for the splash wordmark.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── SIZE LADDER ─────────── -->
+  <section>
+    <h2>02 · Size ladder</h2>
+    <p>The mark is built on a 100-unit grid with a 10-unit safe margin. It stays legible from 192px down to 16px — the vein thickness was tuned for the favicon to still read as a Q.</p>
+    <div class="ladder">
+      <div class="slot"><div class="mark-slot" data-size="16"></div><div class="dim">16</div></div>
+      <div class="slot"><div class="mark-slot" data-size="24"></div><div class="dim">24</div></div>
+      <div class="slot"><div class="mark-slot" data-size="32"></div><div class="dim">32</div></div>
+      <div class="slot"><div class="mark-slot" data-size="48"></div><div class="dim">48</div></div>
+      <div class="slot"><div class="mark-slot" data-size="64"></div><div class="dim">64</div></div>
+      <div class="slot"><div class="mark-slot" data-size="96"></div><div class="dim">96</div></div>
+      <div class="slot"><div class="mark-slot" data-size="128"></div><div class="dim">128</div></div>
+    </div>
+  </section>
+
+  <!-- ─────────── VARIANTS ─────────── -->
+  <section>
+    <h2>03 · Variants</h2>
+    <p>Four authorized variants. Anything else — outlines, gradients, drop shadows — is off-brand.</p>
+    <div class="tiles cols-4" style="margin-top: 16px;">
+      <div class="tile paper">
+        <div class="head"><span class="label">A · Default</span><span class="dim">on light</span></div>
+        <div class="stage"><div class="mark-slot" data-size="96" data-variant="default"></div></div>
+        <div class="cap">Mint 500 + 600. The canonical mark.</div>
+      </div>
+      <div class="tile dark">
+        <div class="head"><span class="label">B · On dark</span><span class="dim">app sidebar</span></div>
+        <div class="stage"><div class="mark-slot" data-size="96" data-variant="default"></div></div>
+        <div class="cap">Same colors — mint reads well on ink.</div>
+      </div>
+      <div class="tile paper">
+        <div class="head"><span class="label">C · Mono ink</span><span class="dim">print, 1-color</span></div>
+        <div class="stage"><div class="mark-slot" data-size="96" data-variant="mono-ink"></div></div>
+        <div class="cap">For print, documents, faxes, embossing.</div>
+      </div>
+      <div class="tile dark">
+        <div class="head"><span class="label">D · Mono white</span><span class="dim">reversed</span></div>
+        <div class="stage"><div class="mark-slot" data-size="96" data-variant="mono-white"></div></div>
+        <div class="cap">On photos, colored backgrounds, merch.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── WORDMARK ─────────── -->
+  <section>
+    <h2>04 · Wordmark &amp; lockups</h2>
+    <p>Inter 700, letter-spacing −0.04em. "Mint" shifts to the brand green to echo the mark. Clearspace = the height of the "Q" cap in the wordmark, on all sides.</p>
+    <div class="tiles cols-2" style="margin-top: 16px;">
+      <div class="tile paper">
+        <div class="head"><span class="label">Horizontal</span><span class="dim">primary</span></div>
+        <div class="stage">
+          <div style="display:flex; align-items:center; gap: 14px;">
+            <div class="mark-slot" data-size="48" data-variant="default"></div>
+            <div style="font: 800 38px Inter, sans-serif; letter-spacing: -1.5px; color: #0A0A0C;">Quiz<span style="color:#10B981;">Mint</span></div>
+          </div>
+        </div>
+        <div class="cap">Use on navbars, sign-in, marketing.</div>
+      </div>
+      <div class="tile paper">
+        <div class="head"><span class="label">Stacked</span><span class="dim">square formats</span></div>
+        <div class="stage">
+          <div style="display:flex; flex-direction:column; align-items:center; gap: 10px;">
+            <div class="mark-slot" data-size="64" data-variant="default"></div>
+            <div style="font: 700 22px Inter, sans-serif; letter-spacing: -0.8px; color: #0A0A0C;">Quiz<span style="color:#10B981;">Mint</span></div>
+          </div>
+        </div>
+        <div class="cap">Use for app icon labels, avatars, merch.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── CONTEXT ─────────── -->
+  <section>
+    <h2>05 · In context</h2>
+    <p>How it should look once dropped into the current QuizMint app. The existing indigo accent dot at the top of the sidebar gets replaced by the mark.</p>
+    <div class="ctx" style="margin-top: 16px;">
+      <div class="side">
+        <div class="brand">
+          <div class="mark-slot" data-size="22" data-variant="default"></div>
+          Quiz<span class="accent">Mint</span>
+        </div>
+        <div class="stat"><div class="lk">Status</div><div class="v">Awaiting Input</div></div>
+        <div style="margin-top:auto; padding: 14px; border: 1px solid rgba(16,185,129,0.35); background: rgba(16,185,129,0.08); border-radius: 10px;">
+          <div style="font: 600 12px Inter; color: #10B981; margin-bottom: 6px;">AI Engine Active</div>
+          <div style="font: 11px/1.55 Inter; color: #94A3B8;">Dynamically parsing and adjusting difficulty based on your dataset…</div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="hint">// main content area (QuizGenerator / QuizPlayer)</div>
+      </div>
+    </div>
+
+    <!-- favicon -->
+    <p style="margin-top: 28px;">And in the browser chrome:</p>
+    <div class="chrome" style="margin-top: 8px;">
+      <div class="bar">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="tab"><div class="mark-slot" data-size="14" data-variant="default"></div>QuizMint</div>
+      </div>
+      <div style="height: 60px;"></div>
+    </div>
+  </section>
+
+  <!-- ─────────── CLEARSPACE ─────────── -->
+  <section>
+    <h2>06 · Clearspace</h2>
+    <p>Minimum padding on all sides equals one quarter of the mark's height (the "Q" dot is the unit). Don't pack type or graphics inside that zone.</p>
+    <div class="clearspace">
+      <div class="cs-wrap">
+        <div class="mark-slot" data-size="128" data-variant="default"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── DO / DON'T ─────────── -->
+  <section>
+    <h2>07 · Do &amp; don't</h2>
+    <div class="dd" style="margin-top: 16px;">
+      <div class="tile paper">
+        <div class="head"><span class="verdict ok">✓ Do</span><span class="dim">default on light</span></div>
+        <div class="stage"><div class="mark-slot" data-size="96" data-variant="default"></div></div>
+        <div class="cap">Full-color mark on paper or near-white.</div>
+      </div>
+      <div class="tile paper">
+        <div class="head"><span class="verdict no">✗ Don't</span><span class="dim">no outline</span></div>
+        <div class="stage">
+          <svg viewBox="0 0 100 100" width="96" height="96">
+            <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="none" stroke="#10B981" stroke-width="2"/>
+            <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="none" stroke="#10B981" stroke-width="2"/>
+            <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="60" cy="92" r="3" fill="none" stroke="#10B981" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="cap">Don't outline-ify the mark — it's a filled shape.</div>
+      </div>
+      <div class="tile paper">
+        <div class="head"><span class="verdict no">✗ Don't</span><span class="dim">no gradients</span></div>
+        <div class="stage">
+          <svg viewBox="0 0 100 100" width="96" height="96">
+            <defs><linearGradient id="bad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6EE7B7"/><stop offset="1" stop-color="#6366F1"/></linearGradient></defs>
+            <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="url(#bad)"/>
+            <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="url(#bad)" opacity="0.8"/>
+            <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="60" cy="92" r="3.4" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="cap">No gradients or brand-color mixing.</div>
+      </div>
+      <div class="tile paper">
+        <div class="head"><span class="verdict no">✗ Don't</span><span class="dim">no rotation</span></div>
+        <div class="stage">
+          <div style="transform: rotate(-18deg);"><div class="mark-slot" data-size="96" data-variant="default"></div></div>
+        </div>
+        <div class="cap">Always upright — the leaf tip points to 12 o'clock.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── CODE · INLINE SVG ─────────── -->
+  <section>
+    <h2>08 · Drop-in SVG</h2>
+    <p>Paste this directly into markup. No dependencies, no external fetch. Inherits text color via <code>currentColor</code> only in the mono variants — the default uses explicit hex so the two leaf halves stay distinct.</p>
+    <div class="codehead">
+      <span class="name">QuizMintLogo.svg · default</span>
+      <button class="copybtn" data-copy="svg-default">Copy</button>
+    </div>
+<pre class="code" id="svg-default">&lt;svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64" aria-label="QuizMint"&gt;
+  &lt;path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/&gt;
+  &lt;path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#059669"/&gt;
+  &lt;path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="#334155" stroke-width="5.5" stroke-linecap="round" opacity="0.85"/&gt;
+  &lt;circle cx="60" cy="92" r="3.4" fill="#334155"/&gt;
+&lt;/svg&gt;</pre>
+
+    <div class="codehead" style="margin-top: 24px;">
+      <span class="name">QuizMintLogo.svg · mono (currentColor)</span>
+      <button class="copybtn" data-copy="svg-mono">Copy</button>
+    </div>
+<pre class="code" id="svg-mono">&lt;svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64" aria-label="QuizMint"&gt;
+  &lt;path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z
+           M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z"
+        fill="currentColor" fill-rule="evenodd"/&gt;
+  &lt;path d="M50 14 L 50 64 C 50 74, 60 76, 60 84"
+        fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"
+        style="mix-blend-mode: screen; opacity: 0; stroke: transparent"/&gt;
+  &lt;path d="M50 14 L 50 64 C 50 74, 60 76, 60 84"
+        fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" opacity="0.85"/&gt;
+  &lt;circle cx="60" cy="92" r="3.4" fill="currentColor"/&gt;
+&lt;/svg&gt;</pre>
+  </section>
+
+  <!-- ─────────── CODE · REACT ─────────── -->
+  <section>
+    <h2>09 · React component</h2>
+    <p>Drop this at <code>src/components/QuizMintLogo.tsx</code>. Props for <code>size</code> and <code>variant</code> cover all four authorized forms.</p>
+    <div class="codehead">
+      <span class="name">src/components/QuizMintLogo.tsx</span>
+      <button class="copybtn" data-copy="react-comp">Copy</button>
+    </div>
+<pre class="code" id="react-comp"><span class="c">// QuizMintLogo — the Leaf Q mark.</span>
+<span class="c">// The leaf is a mint leaf; its central vein is a question-mark stem.</span>
+<span class="k">type</span> Variant = <span class="s">'default'</span> | <span class="s">'mono-ink'</span> | <span class="s">'mono-white'</span>;
+
+<span class="k">interface</span> Props {
+  size?: number;         <span class="c">// pixel size (square). default 32.</span>
+  variant?: Variant;     <span class="c">// default | mono-ink | mono-white</span>
+  className?: string;
+  title?: string;        <span class="c">// a11y label. omit for decorative use.</span>
+}
+
+<span class="k">export function</span> <span class="s">QuizMintLogo</span>({
+  size = 32,
+  variant = <span class="s">'default'</span>,
+  className,
+  title = <span class="s">'QuizMint'</span>,
+}: Props) {
+  <span class="k">const</span> leafA = variant === <span class="s">'default'</span> ? <span class="s">'#10B981'</span>
+              : variant === <span class="s">'mono-white'</span> ? <span class="s">'#FFFFFF'</span>
+              : <span class="s">'#0A0A0C'</span>;
+  <span class="k">const</span> leafB = variant === <span class="s">'default'</span> ? <span class="s">'#059669'</span> : leafA;
+  <span class="k">const</span> vein  = variant === <span class="s">'mono-ink'</span> ? <span class="s">'#FFFFFF'</span>
+              : variant === <span class="s">'mono-white'</span> ? <span class="s">'#0A0A0C'</span>
+              : <span class="s">'#334155'</span>;   <span class="c">// slate — reads on any bg</span>
+  <span class="k">const</span> dot   = variant === <span class="s">'default'</span> ? <span class="s">'#334155'</span> : leafA;
+  <span class="k">const</span> veinOpacity = variant === <span class="s">'default'</span> ? 0.85 : 1;
+
+  <span class="k">return</span> (
+    &lt;svg
+      xmlns=<span class="s">"http://www.w3.org/2000/svg"</span>
+      viewBox=<span class="s">"0 0 100 100"</span>
+      width={size}
+      height={size}
+      role=<span class="s">"img"</span>
+      aria-label={title}
+      className={className}
+    &gt;
+      &lt;title&gt;{title}&lt;/title&gt;
+      &lt;path d=<span class="s">"M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z"</span> fill={leafA}/&gt;
+      &lt;path d=<span class="s">"M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z"</span> fill={leafB}/&gt;
+      &lt;path
+        d=<span class="s">"M50 14 L 50 64 C 50 74, 60 76, 60 84"</span>
+        fill=<span class="s">"none"</span>
+        stroke={vein}
+        strokeWidth={5.5}
+        strokeLinecap=<span class="s">"round"</span>
+        opacity={veinOpacity}
+      /&gt;
+      &lt;circle cx={60} cy={92} r={3.4} fill={dot}/&gt;
+    &lt;/svg&gt;
+  );
+}</pre>
+  </section>
+
+  <!-- ─────────── CODE · TOKENS ─────────── -->
+  <section>
+    <h2>10 · CSS token patch</h2>
+    <p>Add brand tokens to <code>src/index.css</code> alongside the existing <code>--c-*</code> variables. The app's indigo stays for UI states; mint is reserved for identity.</p>
+    <div class="codehead">
+      <span class="name">src/index.css · diff</span>
+      <button class="copybtn" data-copy="css-patch">Copy</button>
+    </div>
+<pre class="code" id="css-patch"><span class="c">/* Brand — QuizMint Leaf Q */</span>
+:root {
+  --c-brand:      <span class="s">#10B981</span>;   <span class="c">/* Mint 500 — primary */</span>
+  --c-brand-deep: <span class="s">#059669</span>;   <span class="c">/* Mint 600 — leaf shadow, hover */</span>
+  --c-brand-soft: <span class="s">#A7F3D0</span>;   <span class="c">/* Mint 200 — selected tint */</span>
+  --c-brand-wash: <span class="s">#ECFDF5</span>;   <span class="c">/* Mint 50  — success wash (light mode) */</span>
+  --c-vein:       <span class="s">#334155</span>;   <span class="c">/* Slate — mark vein + dot, splash wordmark */</span>
+}
+
+:root.light {
+  <span class="c">/* Same hex — mint reads well in both modes. */</span>
+}</pre>
+  </section>
+
+  <!-- ─────────── INTEGRATION · APP.TSX ─────────── -->
+  <section>
+    <h2>11 · Sidebar integration</h2>
+    <p>Replace the indigo dot in <code>src/App.tsx</code>. Keep the rest of the sidebar structure intact — this is a one-line swap.</p>
+    <div class="codehead">
+      <span class="name">src/App.tsx · change</span>
+      <button class="copybtn" data-copy="app-patch">Copy</button>
+    </div>
+<pre class="code" id="app-patch"><span class="c">// Before:</span>
+&lt;div className=<span class="s">"text-[18px] font-bold tracking-tight flex items-center gap-2.5"</span>&gt;
+  &lt;div className=<span class="s">"w-2 h-2 bg-indigo-500 rounded-full"</span>&gt;&lt;/div&gt;
+  QuizMint
+&lt;/div&gt;
+
+<span class="c">// After:</span>
+<span class="k">import</span> { QuizMintLogo } <span class="k">from</span> <span class="s">'./components/QuizMintLogo'</span>;
+
+&lt;div className=<span class="s">"text-[18px] font-bold tracking-tight flex items-center gap-2.5"</span>&gt;
+  &lt;QuizMintLogo size={22} /&gt;
+  Quiz&lt;span className=<span class="s">"text-[var(--c-brand)]"</span>&gt;Mint&lt;/span&gt;
+&lt;/div&gt;</pre>
+  </section>
+
+  <!-- ─────────── FAVICON ─────────── -->
+  <section>
+    <h2>12 · Favicon &amp; PWA</h2>
+    <p>Save the default SVG as <code>public/favicon.svg</code> and wire it in <code>index.html</code>. Modern browsers render SVG favicons crisply at every DPI — no need for a PNG fallback unless you ship to iOS Safari (add a 180×180 apple-touch-icon PNG for that).</p>
+    <div class="codehead">
+      <span class="name">index.html · head</span>
+      <button class="copybtn" data-copy="favicon-patch">Copy</button>
+    </div>
+<pre class="code" id="favicon-patch">&lt;link rel=<span class="s">"icon"</span> type=<span class="s">"image/svg+xml"</span> href=<span class="s">"/favicon.svg"</span> /&gt;
+&lt;link rel=<span class="s">"apple-touch-icon"</span> href=<span class="s">"/apple-touch-icon.png"</span> /&gt;
+&lt;meta name=<span class="s">"theme-color"</span> content=<span class="s">"#10B981"</span> /&gt;</pre>
+  </section>
+
+  <!-- ─────────── SPLASH SCREEN ─────────── -->
+  <section>
+    <h2>13 · Animated splash screen · "Draw On"</h2>
+    <p>
+      Shown on first load and on reload, while the app boots. The leaf draws on stroke-first (right half, then
+      left, overlapping slightly), the filled color flushes in, the vein writes like a pen,
+      the question-dot pops in, and finally the wordmark fades up. Total duration ≈ <strong>2.6s</strong>, with a subtle
+      indeterminate loader that appears at the end for any remaining boot time.
+    </p>
+
+    <!-- Live preview -->
+    <div class="tile" style="min-height: 360px; padding: 0; overflow: hidden; margin-top: 16px; background: #F6F7F9; border: 1px solid #E4E6EB;">
+      <div id="splash-stage" style="position: relative; width: 100%; height: 360px; display: flex; align-items: center; justify-content: center;">
+        <div class="qm-splash play" id="qm-splash">
+          <div class="qm-ambient"></div>
+          <div class="qm-logo">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="140" height="140" style="overflow: visible;">
+              <path class="qm-leaf-r" d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/>
+              <path class="qm-leaf-l" d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#059669"/>
+              <path class="qm-vein" d="M50 14 L 50 64 C 50 74, 60 76, 60 84"
+                    fill="none" stroke="#334155" stroke-width="5.5" stroke-linecap="round" opacity="0.85"/>
+              <circle class="qm-dot" cx="60" cy="92" r="3.4" fill="#334155"/>
+            </svg>
+            <div class="qm-word">Quiz<span style="color: #10B981;">Mint</span></div>
+            <div class="qm-loader"><div class="qm-loader-bar"></div></div>
+          </div>
+        </div>
+        <button id="qm-replay" style="position: absolute; bottom: 16px; right: 16px; font: 600 11px 'JetBrains Mono', monospace; letter-spacing: 1.5px; text-transform: uppercase; background: rgba(255,255,255,0.85); border: 1px solid #E4E6EB; color: #475569; padding: 8px 14px; border-radius: 99px; cursor: pointer;">↻ Replay</button>
+      </div>
+    </div>
+
+    <!-- Timing spec -->
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 20px;">
+      <div class="tile" style="min-height: auto; padding: 14px;">
+        <div class="label">0.1 – 1.2s</div>
+        <div style="font: 600 13px Inter; color: var(--ink); margin-top: 4px;">Right leaf draws</div>
+        <div style="font: 11px/1.4 Inter; color: var(--muted); margin-top: 2px;">stroke → fill</div>
+      </div>
+      <div class="tile" style="min-height: auto; padding: 14px;">
+        <div class="label">0.25 – 1.35s</div>
+        <div style="font: 600 13px Inter; color: var(--ink); margin-top: 4px;">Left leaf draws</div>
+        <div style="font: 11px/1.4 Inter; color: var(--muted); margin-top: 2px;">stroke → fill, offset</div>
+      </div>
+      <div class="tile" style="min-height: auto; padding: 14px;">
+        <div class="label">1.2 – 1.9s</div>
+        <div style="font: 600 13px Inter; color: var(--ink); margin-top: 4px;">Vein writes</div>
+        <div style="font: 11px/1.4 Inter; color: var(--muted); margin-top: 2px;">white stroke</div>
+      </div>
+      <div class="tile" style="min-height: auto; padding: 14px;">
+        <div class="label">1.85 – 2.25s</div>
+        <div style="font: 600 13px Inter; color: var(--ink); margin-top: 4px;">Dot pops</div>
+        <div style="font: 11px/1.4 Inter; color: var(--muted); margin-top: 2px;">back-out easing</div>
+      </div>
+      <div class="tile" style="min-height: auto; padding: 14px;">
+        <div class="label">2.0 – 2.7s</div>
+        <div style="font: 600 13px Inter; color: var(--ink); margin-top: 4px;">Wordmark fades in</div>
+        <div style="font: 11px/1.4 Inter; color: var(--muted); margin-top: 2px;">8px rise, opacity</div>
+      </div>
+    </div>
+
+    <!-- The splash component code -->
+    <h3 style="margin-top: 32px;">Splash component</h3>
+    <p>Drop-in React component. Renders a full-viewport overlay, plays the animation, then fades itself out and unmounts. Accepts a <code>minDurationMs</code> to guarantee the user sees the full animation even on a fast boot, and an optional <code>onDone</code> callback.</p>
+    <div class="codehead">
+      <span class="name">src/components/QuizMintSplash.tsx</span>
+      <button class="copybtn" data-copy="splash-comp">Copy</button>
+    </div>
+<pre class="code" id="splash-comp"><span class="k">import</span> { useEffect, useState } <span class="k">from</span> <span class="s">'react'</span>;
+<span class="k">import</span> <span class="s">'./QuizMintSplash.css'</span>;
+
+<span class="k">interface</span> Props {
+  minDurationMs?: number;   <span class="c">// keep splash visible at least this long. default 2800.</span>
+  onDone?: () =&gt; void;      <span class="c">// called after fade-out completes</span>
+}
+
+<span class="k">export function</span> <span class="s">QuizMintSplash</span>({ minDurationMs = 2800, onDone }: Props) {
+  <span class="k">const</span> [phase, setPhase] = useState&lt;<span class="s">'playing'</span> | <span class="s">'fading'</span> | <span class="s">'done'</span>&gt;(<span class="s">'playing'</span>);
+
+  useEffect(() =&gt; {
+    <span class="k">const</span> t1 = setTimeout(() =&gt; setPhase(<span class="s">'fading'</span>), minDurationMs);
+    <span class="k">const</span> t2 = setTimeout(() =&gt; { setPhase(<span class="s">'done'</span>); onDone?.(); }, minDurationMs + 400);
+    <span class="k">return</span> () =&gt; { clearTimeout(t1); clearTimeout(t2); };
+  }, [minDurationMs, onDone]);
+
+  <span class="k">if</span> (phase === <span class="s">'done'</span>) <span class="k">return null</span>;
+
+  <span class="k">return</span> (
+    &lt;div className={`qm-splash play ${phase === <span class="s">'fading'</span> ? <span class="s">'fade-out'</span> : <span class="s">''</span>}`} aria-hidden=<span class="s">"true"</span>&gt;
+      &lt;div className=<span class="s">"qm-ambient"</span> /&gt;
+      &lt;div className=<span class="s">"qm-logo"</span>&gt;
+        &lt;svg viewBox=<span class="s">"0 0 100 100"</span> width={140} height={140} style={{ overflow: <span class="s">'visible'</span> }} aria-label=<span class="s">"QuizMint"</span>&gt;
+          &lt;path className=<span class="s">"qm-leaf-r"</span> d=<span class="s">"M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z"</span> fill=<span class="s">"#10B981"</span>/&gt;
+          &lt;path className=<span class="s">"qm-leaf-l"</span> d=<span class="s">"M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z"</span> fill=<span class="s">"#059669"</span>/&gt;
+          &lt;path className=<span class="s">"qm-vein"</span> d=<span class="s">"M50 14 L 50 64 C 50 74, 60 76, 60 84"</span>
+                fill=<span class="s">"none"</span> stroke=<span class="s">"#334155"</span> strokeWidth={5.5} strokeLinecap=<span class="s">"round"</span> opacity={0.85}/&gt;
+          &lt;circle className=<span class="s">"qm-dot"</span> cx={60} cy={92} r={3.4} fill=<span class="s">"#334155"</span>/&gt;
+        &lt;/svg&gt;
+        &lt;div className=<span class="s">"qm-word"</span>&gt;Quiz&lt;span style={{ color: <span class="s">'#10B981'</span> }}&gt;Mint&lt;/span&gt;&lt;/div&gt;
+        &lt;div className=<span class="s">"qm-loader"</span>&gt;&lt;div className=<span class="s">"qm-loader-bar"</span> /&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+
+    <h3 style="margin-top: 32px;">Splash stylesheet</h3>
+    <p>All the animation work lives here. No dependencies.</p>
+    <div class="codehead">
+      <span class="name">src/components/QuizMintSplash.css</span>
+      <button class="copybtn" data-copy="splash-css">Copy</button>
+    </div>
+<pre class="code" id="splash-css">.qm-splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: #F6F7F9;
+  transition: opacity 0.4s ease;
+}
+.qm-splash.fade-out { opacity: 0; pointer-events: none; }
+
+.qm-ambient {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(16,185,129,0.10) 0%, transparent 55%);
+}
+.qm-splash.play .qm-ambient { animation: qm-ambient-in 1.5s ease-out 0.2s forwards; }
+@keyframes qm-ambient-in { to { opacity: 1; } }
+
+.qm-logo { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+
+<span class="c">/* Leaves: stroke-draw first, then fill flushes in */</span>
+.qm-leaf-r, .qm-leaf-l {
+  stroke: #10B981; stroke-width: 1.5; fill-opacity: 0;
+  stroke-dasharray: 300; stroke-dashoffset: 300;
+}
+.qm-splash.play .qm-leaf-r {
+  animation: qm-draw 1.1s cubic-bezier(0.4,0,0.2,1) 0.1s forwards,
+             qm-fill 0.6s ease-out 1.0s forwards;
+}
+.qm-splash.play .qm-leaf-l {
+  animation: qm-draw 1.1s cubic-bezier(0.4,0,0.2,1) 0.25s forwards,
+             qm-fill 0.6s ease-out 1.1s forwards;
+}
+@keyframes qm-draw { to { stroke-dashoffset: 0; } }
+@keyframes qm-fill { to { fill-opacity: 1; stroke-opacity: 0; } }
+
+<span class="c">/* Vein: writes after leaves */</span>
+.qm-vein { stroke-dasharray: 120; stroke-dashoffset: 120; }
+.qm-splash.play .qm-vein {
+  animation: qm-draw-vein 0.7s cubic-bezier(0.4,0,0.2,1) 1.2s forwards;
+}
+@keyframes qm-draw-vein { to { stroke-dashoffset: 0; } }
+
+<span class="c">/* Dot: pops with back-out easing */</span>
+.qm-dot { transform-origin: 60px 92px; transform: scale(0); }
+.qm-splash.play .qm-dot {
+  animation: qm-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) 1.85s forwards;
+}
+@keyframes qm-pop { to { transform: scale(1); } }
+
+<span class="c">/* Wordmark: fades in and rises */</span>
+.qm-word {
+  opacity: 0; transform: translateY(8px);
+  font: 700 36px 'Inter', system-ui, sans-serif;
+  letter-spacing: -1.5px; color: #0A0A0C;
+}
+.qm-splash.play .qm-word {
+  animation: qm-word-in 0.7s cubic-bezier(0.4,0,0.2,1) 2.0s forwards;
+}
+@keyframes qm-word-in { to { opacity: 1; transform: translateY(0); } }
+
+<span class="c">/* Indeterminate loader — fades in last, covers any remaining boot */</span>
+.qm-loader {
+  margin-top: -4px; width: 120px; height: 2px;
+  background: rgba(10,10,12,0.08); border-radius: 2px;
+  overflow: hidden; opacity: 0;
+}
+.qm-splash.play .qm-loader { animation: qm-loader-fade 0.4s ease 2.6s forwards; }
+@keyframes qm-loader-fade { to { opacity: 1; } }
+.qm-loader-bar {
+  width: 40%; height: 100%; background: #10B981; border-radius: 2px;
+  animation: qm-loader-slide 1.2s ease-in-out infinite;
+}
+@keyframes qm-loader-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+<span class="c">/* Respect reduced-motion: skip all animations, show final state */</span>
+@media (prefers-reduced-motion: reduce) {
+  .qm-splash.play .qm-leaf-r,
+  .qm-splash.play .qm-leaf-l { animation: none; fill-opacity: 1; stroke-opacity: 0; }
+  .qm-splash.play .qm-vein   { animation: none; stroke-dashoffset: 0; }
+  .qm-splash.play .qm-dot    { animation: none; transform: scale(1); }
+  .qm-splash.play .qm-word,
+  .qm-splash.play .qm-loader { animation: none; opacity: 1; transform: none; }
+}</pre>
+
+    <h3 style="margin-top: 32px;">Mounting the splash</h3>
+    <p>Wrap the app root in <code>main.tsx</code> so the splash is the first thing the user sees, even before React hydrates the rest of the tree. Use <code>sessionStorage</code> so repeat navigations within the same session skip it — the user sees it on reload / first open, not on every client-side nav.</p>
+    <div class="codehead">
+      <span class="name">src/main.tsx · wrap App</span>
+      <button class="copybtn" data-copy="splash-mount">Copy</button>
+    </div>
+<pre class="code" id="splash-mount"><span class="k">import</span> { useState } <span class="k">from</span> <span class="s">'react'</span>;
+<span class="k">import</span> { QuizMintSplash } <span class="k">from</span> <span class="s">'./components/QuizMintSplash'</span>;
+<span class="k">import</span> App <span class="k">from</span> <span class="s">'./App'</span>;
+
+<span class="k">function</span> <span class="s">Root</span>() {
+  <span class="c">// Show splash on first load of this session only.</span>
+  <span class="k">const</span> [showSplash, setShowSplash] = useState(() =&gt; {
+    <span class="k">if</span> (<span class="k">typeof</span> window === <span class="s">'undefined'</span>) <span class="k">return false</span>;
+    <span class="k">const</span> seen = sessionStorage.getItem(<span class="s">'qm-splash-seen'</span>);
+    <span class="k">return</span> !seen;
+  });
+
+  <span class="k">return</span> (
+    &lt;&gt;
+      &lt;App /&gt;
+      {showSplash &amp;&amp; (
+        &lt;QuizMintSplash onDone={() =&gt; {
+          sessionStorage.setItem(<span class="s">'qm-splash-seen'</span>, <span class="s">'1'</span>);
+          setShowSplash(<span class="k">false</span>);
+        }} /&gt;
+      )}
+    &lt;/&gt;
+  );
+}
+
+ReactDOM.createRoot(document.getElementById(<span class="s">'root'</span>)!).render(&lt;Root /&gt;);</pre>
+
+    <h3 style="margin-top: 32px;">Pre-hydration splash (optional upgrade)</h3>
+    <p>For an <em>even faster</em> first paint — before any JS runs — inline a minimal version directly in <code>index.html</code>. Vite will serve this instantly; React replaces it when it mounts. Users see the leaf drawing before the bundle even downloads.</p>
+    <div class="codehead">
+      <span class="name">index.html · inline splash (optional)</span>
+      <button class="copybtn" data-copy="splash-inline">Copy</button>
+    </div>
+<pre class="code" id="splash-inline">&lt;style&gt;
+  <span class="c">/* Paste the entire QuizMintSplash.css contents here */</span>
+&lt;/style&gt;
+
+&lt;div id=<span class="s">"root"</span>&gt;
+  &lt;div class=<span class="s">"qm-splash play"</span>&gt;
+    &lt;div class=<span class="s">"qm-ambient"</span>&gt;&lt;/div&gt;
+    &lt;div class=<span class="s">"qm-logo"</span>&gt;
+      &lt;svg viewBox=<span class="s">"0 0 100 100"</span> width=<span class="s">"140"</span> height=<span class="s">"140"</span> style=<span class="s">"overflow:visible"</span>&gt;
+        &lt;path class=<span class="s">"qm-leaf-r"</span> d=<span class="s">"M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z"</span> fill=<span class="s">"#10B981"</span>/&gt;
+        &lt;path class=<span class="s">"qm-leaf-l"</span> d=<span class="s">"M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z"</span> fill=<span class="s">"#059669"</span>/&gt;
+        &lt;path class=<span class="s">"qm-vein"</span> d=<span class="s">"M50 14 L 50 64 C 50 74, 60 76, 60 84"</span>
+              fill=<span class="s">"none"</span> stroke=<span class="s">"#334155"</span> stroke-width=<span class="s">"5.5"</span> stroke-linecap=<span class="s">"round"</span> opacity=<span class="s">"0.85"</span>/&gt;
+        &lt;circle class=<span class="s">"qm-dot"</span> cx=<span class="s">"60"</span> cy=<span class="s">"92"</span> r=<span class="s">"3.4"</span> fill=<span class="s">"#334155"</span>/&gt;
+      &lt;/svg&gt;
+      &lt;div class=<span class="s">"qm-word"</span>&gt;Quiz&lt;span style=<span class="s">"color:#10B981"</span>&gt;Mint&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=<span class="s">"qm-loader"</span>&gt;&lt;div class=<span class="s">"qm-loader-bar"</span>&gt;&lt;/div&gt;&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+  </section>
+
+  <!-- ─────────── SPEC ─────────── -->
+  <section>
+    <h2>14 · Handoff checklist for Claude Code</h2>
+    <div class="tile" style="margin-top: 16px;">
+      <ol style="margin: 0; padding-left: 20px; color: var(--muted); line-height: 1.8;">
+        <li>Create <code>src/components/QuizMintLogo.tsx</code> with the component from §09.</li>
+        <li>Create <code>public/favicon.svg</code> with the default SVG from §08.</li>
+        <li>Patch <code>src/index.css</code> with the brand tokens from §10.</li>
+        <li>Patch <code>src/App.tsx</code> sidebar header per §11 — swap the indigo dot for <code>&lt;QuizMintLogo /&gt;</code> and wrap "Mint" in a span using <code>--c-brand</code>.</li>
+        <li>Patch <code>index.html</code> head with the favicon + theme-color tags from §12.</li>
+        <li><strong>Splash:</strong> create <code>src/components/QuizMintSplash.tsx</code> and <code>QuizMintSplash.css</code> from §13. Wrap <code>App</code> in <code>main.tsx</code> with the <code>Root</code> pattern so the splash mounts on first session load.</li>
+        <li><strong>Optional:</strong> inline the pre-hydration splash in <code>index.html</code> for an instant-on feel — replace the empty <code>&lt;div id="root"&gt;&lt;/div&gt;</code> with the snippet in §13.</li>
+        <li>Optional: update the "AI Engine Active" card to use <code>--c-brand</code> instead of indigo for tonal consistency (keep indigo elsewhere in UI if you want the product / brand color split).</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <div>QuizMint · Brand handoff v1.0</div>
+    <div>Single file · self-contained · zero deps</div>
+  </footer>
+</div>
+
+<!-- ─────────── SCRIPT: fill every .mark-slot with a sized svg ─────────── -->
+<script>
+  const svgFor = (size, variant = 'default') => {
+    const leafA = variant === 'default' ? '#10B981' : variant === 'mono-white' ? '#FFFFFF' : '#0A0A0C';
+    const leafB = variant === 'default' ? '#059669' : leafA;
+    const vein  = variant === 'mono-ink' ? '#FFFFFF' : variant === 'mono-white' ? '#0A0A0C' : '#334155';
+    const dot   = variant === 'default' ? '#334155' : leafA;
+    const op    = variant === 'default' ? 0.85 : 1;
+    return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-label="QuizMint">
+      <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="${leafA}"/>
+      <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="${leafB}"/>
+      <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="${vein}" stroke-width="5.5" stroke-linecap="round" opacity="${op}"/>
+      <circle cx="60" cy="92" r="3.4" fill="${dot}"/>
+    </svg>`;
+  };
+  document.querySelectorAll('.mark-slot').forEach(el => {
+    const size = +el.dataset.size || 48;
+    const variant = el.dataset.variant || 'default';
+    el.innerHTML = svgFor(size, variant);
+  });
+
+  // Splash replay
+  const splashEl = document.getElementById('qm-splash');
+  const replayBtn = document.getElementById('qm-replay');
+  if (splashEl && replayBtn) {
+    replayBtn.addEventListener('click', () => {
+      splashEl.classList.remove('play');
+      void splashEl.offsetWidth;
+      splashEl.classList.add('play');
+    });
+    // Auto-loop so users can watch without clicking
+    setInterval(() => {
+      splashEl.classList.remove('play');
+      void splashEl.offsetWidth;
+      splashEl.classList.add('play');
+    }, 5000);
+  }
+
+  // Copy buttons
+  document.querySelectorAll('.copybtn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.getElementById(btn.dataset.copy);
+      if (!target) return;
+      const text = target.innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        const label = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(() => { btn.textContent = label; btn.classList.remove('done'); }, 1400);
+      } catch (e) {
+        // fallback: select the text
+        const range = document.createRange(); range.selectNode(target);
+        window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+      }
+    });
+  });
+</script>
+</body>
+</html>

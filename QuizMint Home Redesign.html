@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>QuizMint — Home redesign</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --ink:#0A0A0C; --ink-2:#15161A; --border-d:#2D2E35;
+    --paper:#FFFFFF; --app:#F6F7F9; --border-l:#E4E6EB;
+    --muted:#475569; --subtle:#94A3B8; --faint:#64748B;
+    --mint:#10B981; --mint-600:#059669; --mint-200:#A7F3D0; --mint-50:#ECFDF5;
+    --cream:#F7F3EC;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--ink);color:#fff;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--mint);color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ─── Tweak state (persisted) ───────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "direction": "playful",
+  "theme": "dark"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === '__activate_edit_mode') setEditMode(true);
+      if (e.data.type === '__deactivate_edit_mode') setEditMode(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const update = (patch) => {
+    const next = { ...tweaks, ...patch };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: patch }, '*');
+  };
+
+  const V = { tweaks, update };
+
+  return (
+    <>
+      {tweaks.direction === 'editorial' && <Editorial {...V} />}
+      {tweaks.direction === 'playful' && <Playful {...V} />}
+      {tweaks.direction === 'technical' && <Technical {...V} />}
+      {editMode && <TweakPanel tweaks={tweaks} update={update} />}
+    </>
+  );
+}
+
+// ─── Shared atoms ──────────────────────────────────────────────────
+const Logo = ({ size=28, color='#10B981' }) => (
+  <svg viewBox="0 0 100 100" width={size} height={size} aria-label="QuizMint">
+    <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill={color}/>
+    <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill={color} opacity="0.82"/>
+    <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" opacity="0.55"/>
+    <circle cx="60" cy="92" r="3.4" fill="currentColor" opacity="0.55"/>
+  </svg>
+);
+
+const Wordmark = ({ light=false }) => (
+  <div style={{display:'flex',alignItems:'center',gap:10,fontWeight:700,fontSize:18,letterSpacing:-0.2,color: light?'#0A0A0C':'#fff'}}>
+    <span style={{color: light?'#0A0A0C':'#fff'}}><Logo size={22} /></span>
+    <span>Quiz<span style={{color:'#10B981'}}>Mint</span></span>
+  </div>
+);
+
+// Tiny sparkline generator for fake-but-believable stats
+const spark = (n=24, seed=1) => {
+  let s = seed;
+  const rand = () => { s = (s*9301+49297) % 233280; return s/233280; };
+  return Array.from({length:n}, (_,i) => 30 + Math.sin(i/2+seed)*12 + rand()*18);
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  DIRECTION 1 — EDITORIAL / PRODUCT-LED (dark, confident, demo-forward)
+// ═══════════════════════════════════════════════════════════════════
+function Editorial() {
+  return (
+    <div style={{background:'#0A0A0C',color:'#fff',minHeight:'100vh'}}>
+      <EdNav/>
+      <EdHero/>
+      <EdLogos/>
+      <EdFeatures/>
+      <EdHow/>
+      <EdBandStats/>
+      <EdUseCases/>
+      <EdTestimonial/>
+      <EdCTA/>
+      <EdFooter/>
+    </div>
+  );
+}
+
+function EdNav() {
+  return (
+    <header style={{
+      position:'sticky',top:0,zIndex:20,
+      background:'rgba(10,10,12,0.72)',backdropFilter:'blur(12px)',
+      borderBottom:'1px solid #1A1B20'
+    }}>
+      <div style={{maxWidth:1240,margin:'0 auto',padding:'16px 32px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <Wordmark/>
+        <nav style={{display:'flex',gap:32,fontSize:14,color:'#94A3B8'}}>
+          <a style={{color:'#fff'}}>Product</a>
+          <a>Templates</a>
+          <a>Pricing</a>
+          <a>Docs</a>
+          <a>Changelog</a>
+        </nav>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <button style={btnGhost}>Sign in</button>
+          <button style={btnPrimary}>Try free →</button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function EdHero() {
+  return (
+    <section style={{maxWidth:1240,margin:'0 auto',padding:'72px 32px 40px',display:'grid',gridTemplateColumns:'1.05fr 1fr',gap:64,alignItems:'center'}}>
+      <div>
+        <div style={pillDark}>
+          <span style={{width:6,height:6,borderRadius:99,background:'#10B981',boxShadow:'0 0 10px #10B981'}}/>
+          <span>Gemini 3 Flash · live</span>
+        </div>
+        <h1 style={{
+          fontSize:84,lineHeight:0.98,letterSpacing:-3.2,margin:'24px 0 24px',fontWeight:700,
+          color:'#fff'
+        }}>
+          Turn any document<br/>into a quiz in
+          <span style={{color:'#10B981'}}> eight seconds.</span>
+        </h1>
+        <p style={{fontSize:19,lineHeight:1.5,color:'#94A3B8',maxWidth:540,margin:0}}>
+          Paste raw MCQs, drop a PDF, upload a lecture doc — QuizMint parses the structure, grades difficulty, writes explanations, and ships an interactive module. No formatting. No cleanup.
+        </p>
+        <div style={{display:'flex',gap:12,marginTop:36,alignItems:'center'}}>
+          <button style={{...btnPrimary,fontSize:15,padding:'14px 22px'}}>Generate a quiz →</button>
+          <button style={{...btnGhost,fontSize:15,padding:'14px 22px'}}>▶ Watch 40s demo</button>
+        </div>
+        <div style={{display:'flex',gap:32,marginTop:44,fontSize:13,color:'#64748B'}}>
+          <span><b style={{color:'#fff'}}>142,000+</b> quizzes generated</span>
+          <span><b style={{color:'#fff'}}>TXT · DOCX · PDF</b> supported</span>
+          <span><b style={{color:'#fff'}}>Free</b> forever tier</span>
+        </div>
+      </div>
+
+      <DemoCard/>
+    </section>
+  );
+}
+
+function DemoCard() {
+  const [stage, setStage] = useState(0); // 0 paste, 1 parsing, 2 quiz
+  const [selected, setSelected] = useState(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const loop = setTimeout(() => {
+      if (stage === 0) setStage(1);
+      else if (stage === 1) setStage(2);
+      else { setStage(0); setSelected(null); setProgress(0); }
+    }, stage === 1 ? 2600 : 4800);
+    return () => clearTimeout(loop);
+  }, [stage]);
+
+  useEffect(() => {
+    if (stage !== 1) return;
+    let p = 0;
+    const iv = setInterval(() => { p = Math.min(100, p+7); setProgress(p); }, 170);
+    return () => clearInterval(iv);
+  }, [stage]);
+
+  return (
+    <div style={{
+      background:'#15161A',border:'1px solid #2D2E35',borderRadius:20,overflow:'hidden',
+      boxShadow:'0 40px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(16,185,129,0.08)'
+    }}>
+      {/* chrome */}
+      <div style={{display:'flex',alignItems:'center',gap:8,padding:'12px 16px',borderBottom:'1px solid #2D2E35',background:'#101115'}}>
+        <span style={dot('#FF5F57')}/><span style={dot('#FEBC2E')}/><span style={dot('#28C840')}/>
+        <div style={{marginLeft:12,fontSize:12,color:'#64748B',fontFamily:'JetBrains Mono, monospace'}}>quizmint.app/generate</div>
+        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:6,fontSize:11,color:'#10B981'}}>
+          <span style={{width:6,height:6,borderRadius:99,background:'#10B981'}}/> Live
+        </div>
+      </div>
+
+      {stage === 0 && (
+        <div style={{padding:24}}>
+          <div style={{fontSize:11,fontWeight:600,letterSpacing:1.4,color:'#10B981',marginBottom:10}}>RAW DATA INPUT</div>
+          <div style={{background:'#0A0A0C',border:'1px solid #2D2E35',borderRadius:12,padding:16,fontFamily:'JetBrains Mono, monospace',fontSize:12.5,lineHeight:1.7,color:'#CBD5E1',minHeight:220}}>
+            <div>1. Which structure regulates blood sugar?</div>
+            <div style={{paddingLeft:14}}>A) Liver</div>
+            <div style={{paddingLeft:14}}>B) Pancreas</div>
+            <div style={{paddingLeft:14}}>C) Kidney</div>
+            <div style={{paddingLeft:14}}>D) Spleen</div>
+            <div style={{marginTop:8}}>2. The mitochondrion's inner membrane is folded into...</div>
+            <div style={{paddingLeft:14}}>A) Cristae</div>
+            <div style={{paddingLeft:14}}>B) Thylakoids</div>
+            <div style={{paddingLeft:14}}>C) Stroma</div>
+            <div style={{paddingLeft:14}}>D) Matrix</div>
+            <div style={{marginTop:10,color:'#64748B'}}>Answer Key:</div>
+            <div style={{color:'#64748B'}}>1. B &nbsp; 2. A<span style={{background:'#10B981',width:7,height:14,display:'inline-block',marginLeft:3,verticalAlign:'middle',animation:'blink 1s steps(2) infinite'}}/></div>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:16}}>
+            <div style={{fontSize:12,color:'#64748B'}}>2 questions detected · Biology</div>
+            <button style={btnPrimary}>✨ Generate module</button>
+          </div>
+        </div>
+      )}
+
+      {stage === 1 && (
+        <div style={{padding:24,minHeight:320,display:'flex',flexDirection:'column',justifyContent:'center'}}>
+          <div style={{fontSize:11,fontWeight:600,letterSpacing:1.4,color:'#10B981',marginBottom:14}}>AI ENGINE WORKING</div>
+          {[
+            ['Parsing document structure', progress>10],
+            ['Identifying 24 questions', progress>35],
+            ['Grading difficulty (Medium)', progress>60],
+            ['Writing explanations', progress>85],
+          ].map(([t,done],i) => (
+            <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',color: done?'#fff':'#64748B',fontSize:14,transition:'color .3s'}}>
+              <span style={{width:18,height:18,borderRadius:99,border:'1.5px solid '+(done?'#10B981':'#2D2E35'),display:'flex',alignItems:'center',justifyContent:'center',background:done?'#10B981':'transparent'}}>
+                {done && <span style={{color:'#0A0A0C',fontSize:11,fontWeight:800}}>✓</span>}
+              </span>
+              <span>{t}</span>
+            </div>
+          ))}
+          <div style={{marginTop:18,height:4,background:'#0A0A0C',borderRadius:99,overflow:'hidden',border:'1px solid #2D2E35'}}>
+            <div style={{height:'100%',width:progress+'%',background:'#10B981',transition:'width .25s'}}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:11,fontFamily:'JetBrains Mono, monospace',color:'#64748B'}}>
+            <span>Analyzing dataset</span><span>{progress}%</span>
+          </div>
+        </div>
+      )}
+
+      {stage === 2 && (
+        <div style={{padding:24}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div style={{fontSize:11,fontWeight:600,letterSpacing:1.4,color:'#10B981'}}>QUESTION 1 OF 24</div>
+            <div style={{fontSize:11,color:'#64748B',fontFamily:'JetBrains Mono, monospace'}}>MEDIUM · 00:47</div>
+          </div>
+          <div style={{fontSize:18,fontWeight:600,lineHeight:1.35,marginBottom:16,color:'#fff'}}>
+            Which organ is primarily responsible for regulating blood sugar levels?
+          </div>
+          {['Liver','Pancreas','Kidney','Spleen'].map((opt,i) => {
+            const isCorrect = i===1;
+            const picked = selected === i;
+            const bg = picked ? (isCorrect ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)') : '#0A0A0C';
+            const br = picked ? (isCorrect ? '#10B981' : '#EF4444') : '#2D2E35';
+            return (
+              <button key={i} onClick={()=>setSelected(i)} style={{
+                width:'100%',textAlign:'left',padding:'12px 14px',margin:'6px 0',
+                background:bg,border:'1px solid '+br,borderRadius:10,color:'#fff',fontSize:14,
+                display:'flex',alignItems:'center',gap:12,cursor:'pointer',transition:'all .15s'
+              }}>
+                <span style={{width:22,height:22,borderRadius:6,border:'1px solid '+br,display:'grid',placeItems:'center',fontSize:11,fontFamily:'JetBrains Mono, monospace',color:'#94A3B8'}}>{String.fromCharCode(65+i)}</span>
+                {opt}
+                {picked && isCorrect && <span style={{marginLeft:'auto',color:'#10B981',fontSize:12,fontWeight:600}}>✓ Correct</span>}
+              </button>
+            );
+          })}
+          {selected===1 && (
+            <div style={{marginTop:12,padding:'12px 14px',background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:10,fontSize:13,color:'#A7F3D0',lineHeight:1.55}}>
+              <b style={{color:'#10B981'}}>Why:</b> The pancreas secretes insulin and glucagon, the two hormones that raise and lower glucose in the bloodstream.
+            </div>
+          )}
+        </div>
+      )}
+      <style>{`@keyframes blink { 50% { opacity: 0 } }`}</style>
+    </div>
+  );
+}
+
+function EdLogos() {
+  const logos = ['STANFORD','MIT OCW','KHAN','BARRON\'S','PEARSON','COURSERA','duolingo','McGraw Hill'];
+  return (
+    <section style={{maxWidth:1240,margin:'0 auto',padding:'72px 32px 24px',borderTop:'1px solid #1A1B20'}}>
+      <div style={{fontSize:11,letterSpacing:2,color:'#64748B',textAlign:'center',marginBottom:24,fontWeight:600}}>
+        USED BY LEARNERS STUDYING FROM
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:32,alignItems:'center'}}>
+        {logos.map(l => (
+          <div key={l} style={{fontFamily:l==='duolingo'?'Inter':'serif',fontSize:15,fontWeight:700,color:'#475569',textAlign:'center',letterSpacing:l==='duolingo'?-0.3:0.5,opacity:0.7}}>{l}</div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EdFeatures() {
+  const items = [
+    {k:'01',t:'Parses messy formats',d:'Numbered lists, bullet points, inline answer keys, scanned PDFs — QuizMint finds the questions regardless.',v:<FeatureParse/>},
+    {k:'02',t:'Grades difficulty',d:'Every question lands in Easy / Medium / Hard based on cognitive demand, not just word count.',v:<FeatureDiff/>},
+    {k:'03',t:'Writes explanations',d:'Each answer ships with a 1–2 sentence "why," so students learn the mechanism, not just the key.',v:<FeatureExpl/>},
+    {k:'04',t:'Shareable modules',d:'Every quiz gets a clean URL. Send to a cohort, embed in Notion, or export as a PDF worksheet.',v:<FeatureShare/>},
+  ];
+  return (
+    <section style={{maxWidth:1240,margin:'0 auto',padding:'96px 32px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'end',marginBottom:40}}>
+        <h2 style={{fontSize:44,letterSpacing:-1.4,fontWeight:700,margin:0,maxWidth:640}}>
+          Boring ingestion. <span style={{color:'#64748B'}}>Magical output.</span>
+        </h2>
+        <div style={{fontSize:14,color:'#94A3B8',maxWidth:320}}>Four things QuizMint does that an average PDF-to-quiz tool doesn't.</div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:20}}>
+        {items.map(it => (
+          <div key={it.k} style={{
+            background:'linear-gradient(180deg,#15161A 0%,#101115 100%)',
+            border:'1px solid #2D2E35',borderRadius:18,padding:28,display:'flex',flexDirection:'column',gap:16,minHeight:340
+          }}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
+              <span style={{fontFamily:'JetBrains Mono, monospace',color:'#10B981',fontSize:12,letterSpacing:1.4}}>{it.k}</span>
+              <span style={{fontSize:10,color:'#64748B',letterSpacing:1.4}}>FEATURE</span>
+            </div>
+            <div style={{flex:1,display:'grid',placeItems:'center',padding:'8px 0'}}>{it.v}</div>
+            <div>
+              <h3 style={{fontSize:22,fontWeight:600,letterSpacing:-0.4,margin:'0 0 8px'}}>{it.t}</h3>
+              <p style={{fontSize:14.5,color:'#94A3B8',lineHeight:1.55,margin:0}}>{it.d}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const FeatureParse = () => (
+  <div style={{display:'grid',gridTemplateColumns:'1fr 24px 1fr',gap:0,alignItems:'center',width:'100%',maxWidth:460}}>
+    <div style={{background:'#0A0A0C',border:'1px solid #2D2E35',borderRadius:10,padding:12,fontFamily:'JetBrains Mono, monospace',fontSize:10.5,color:'#94A3B8',lineHeight:1.6}}>
+      Q1. 4+5=?<br/>a. 7 b. 8<br/>c. 9 d. 10<br/>——<br/>Key: 1-c
+    </div>
+    <div style={{textAlign:'center',color:'#10B981'}}>→</div>
+    <div style={{background:'#0A0A0C',border:'1px solid #2D2E35',borderRadius:10,padding:12,fontFamily:'JetBrains Mono, monospace',fontSize:10.5,color:'#A7F3D0',lineHeight:1.6}}>
+      {`{`}<br/>&nbsp;&nbsp;q: "4 + 5 = ?",<br/>&nbsp;&nbsp;ans: "C",<br/>&nbsp;&nbsp;diff: "Easy"<br/>{`}`}
+    </div>
+  </div>
+);
+
+const FeatureDiff = () => (
+  <div style={{display:'flex',flexDirection:'column',gap:10,width:'100%',maxWidth:360}}>
+    {[['Easy','42%','#34D399'],['Medium','38%','#FBBF24'],['Hard','20%','#F87171']].map(([l,w,c]) => (
+      <div key={l} style={{display:'flex',alignItems:'center',gap:12}}>
+        <div style={{width:64,fontSize:12,color:'#94A3B8'}}>{l}</div>
+        <div style={{flex:1,height:8,background:'#0A0A0C',borderRadius:99,border:'1px solid #2D2E35',overflow:'hidden'}}>
+          <div style={{width:w,height:'100%',background:c}}/>
+        </div>
+        <div style={{fontSize:11,fontFamily:'JetBrains Mono, monospace',color:'#64748B',width:36,textAlign:'right'}}>{w}</div>
+      </div>
+    ))}
+  </div>
+);
+
+const FeatureExpl = () => (
+  <div style={{width:'100%',maxWidth:360}}>
+    <div style={{padding:'10px 12px',background:'rgba(16,185,129,0.1)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:10,fontSize:12,color:'#A7F3D0',lineHeight:1.55}}>
+      <b style={{color:'#10B981'}}>Why C:</b> Paris is the political and administrative capital of France, seat of the President and Parliament.
+    </div>
+    <div style={{marginTop:8,fontSize:10,color:'#64748B',textAlign:'right',fontFamily:'JetBrains Mono, monospace'}}>auto-generated · 1.2s</div>
+  </div>
+);
+
+const FeatureShare = () => (
+  <div style={{width:'100%',maxWidth:360}}>
+    <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'#0A0A0C',border:'1px solid #2D2E35',borderRadius:10,fontFamily:'JetBrains Mono, monospace',fontSize:12,color:'#CBD5E1'}}>
+      <span style={{color:'#64748B'}}>🔗</span>
+      <span>quizmint.app/q/</span><span style={{color:'#10B981'}}>bio-midterm-24</span>
+      <span style={{marginLeft:'auto',padding:'3px 8px',background:'#10B981',color:'#0A0A0C',borderRadius:4,fontSize:10,fontWeight:700}}>COPY</span>
+    </div>
+    <div style={{marginTop:10,display:'flex',gap:6}}>
+      {['PDF','CSV','Embed','Notion'].map(t=>(
+        <div key={t} style={{fontSize:11,padding:'4px 10px',background:'#15161A',border:'1px solid #2D2E35',borderRadius:6,color:'#94A3B8'}}>{t}</div>
+      ))}
+    </div>
+  </div>
+);
+
+function EdHow() {
+  const steps = [
+    {n:'01',t:'Drop in a document',d:'PDF of a textbook chapter, DOCX of a problem set, or a bare paste from the web — anything with questions and a key.'},
+    {n:'02',t:'AI parses + structures',d:'QuizMint identifies each question stem, options, and the correct answer. It flags ambiguous items for review.'},
+    {n:'03',t:'Quiz. Share. Repeat.',d:'Get an interactive module with timer, streaks, and explanations. Share the link; students don\'t need an account.'},
+  ];
+  return (
+    <section style={{background:'#09090B',borderTop:'1px solid #1A1B20',borderBottom:'1px solid #1A1B20'}}>
+      <div style={{maxWidth:1240,margin:'0 auto',padding:'96px 32px'}}>
+        <div style={{fontSize:12,color:'#10B981',letterSpacing:2,fontWeight:600,marginBottom:16}}>HOW IT WORKS</div>
+        <h2 style={{fontSize:44,letterSpacing:-1.4,fontWeight:700,margin:'0 0 48px',maxWidth:700}}>
+          Three steps. Roughly eight seconds.
+        </h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1,background:'#1A1B20',border:'1px solid #1A1B20',borderRadius:18,overflow:'hidden'}}>
+          {steps.map(s => (
+            <div key={s.n} style={{background:'#0A0A0C',padding:'36px 32px',minHeight:220}}>
+              <div style={{fontFamily:'JetBrains Mono, monospace',fontSize:42,fontWeight:700,color:'#10B981',letterSpacing:-1,lineHeight:1}}>{s.n}</div>
+              <h3 style={{fontSize:22,fontWeight:600,letterSpacing:-0.3,margin:'20px 0 10px'}}>{s.t}</h3>
+              <p style={{fontSize:14.5,color:'#94A3B8',lineHeight:1.6,margin:0}}>{s.d}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EdBandStats() {
+  const stats = [
+    ['142,340','quizzes generated'],
+    ['8.2s','median generation'],
+    ['1.8M','questions parsed'],
+    ['96.4%','parsing accuracy'],
+  ];
+  return (
+    <section style={{background:'#10B981',color:'#052E24'}}>
+      <div style={{maxWidth:1240,margin:'0 auto',padding:'64px 32px',display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:40}}>
+        {stats.map(([n,l]) => (
+          <div key={l}>
+            <div style={{fontSize:56,fontWeight:800,letterSpacing:-2,lineHeight:1,fontFamily:'Inter'}}>{n}</div>
+            <div style={{marginTop:8,fontSize:14,color:'#064E3B'}}>{l}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EdUseCases() {
+  const cases = [
+    {who:'Students',t:'Cram the week before',d:'Paste last year\'s practice exam. Get a timed, scored replay.',tint:'#10B981'},
+    {who:'Teachers',t:'Formative checks in minutes',d:'Drop in your slide deck. Share a quiz link with the class.',tint:'#6366F1'},
+    {who:'Tutors',t:'Custom drills per student',d:'Upload weak-topic MCQs and give every student their own set.',tint:'#F59E0B'},
+  ];
+  return (
+    <section style={{maxWidth:1240,margin:'0 auto',padding:'96px 32px'}}>
+      <h2 style={{fontSize:44,letterSpacing:-1.4,fontWeight:700,margin:'0 0 40px',maxWidth:640}}>Who it's for</h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20}}>
+        {cases.map(c => (
+          <div key={c.who} style={{background:'#15161A',border:'1px solid #2D2E35',borderRadius:18,padding:28,minHeight:240,display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+            <div style={{width:40,height:40,borderRadius:10,background:c.tint+'22',border:'1px solid '+c.tint+'55',display:'grid',placeItems:'center',color:c.tint,fontWeight:700}}>{c.who[0]}</div>
+            <div>
+              <div style={{fontSize:12,color:c.tint,letterSpacing:1.4,fontWeight:600,marginBottom:4}}>{c.who.toUpperCase()}</div>
+              <h3 style={{fontSize:22,fontWeight:600,letterSpacing:-0.3,margin:'0 0 8px'}}>{c.t}</h3>
+              <p style={{fontSize:14,color:'#94A3B8',lineHeight:1.55,margin:0}}>{c.d}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EdTestimonial() {
+  return (
+    <section style={{maxWidth:900,margin:'0 auto',padding:'64px 32px 96px',textAlign:'center'}}>
+      <div style={{fontSize:28,lineHeight:1.35,letterSpacing:-0.5,fontWeight:500,color:'#E2E8F0'}}>
+        "I paste in my professor's review packet on Sunday night. By the time my coffee is done, I have a 40-question graded quiz with explanations for every answer. <span style={{color:'#10B981'}}>This is what I wish Quizlet had been for the last decade.</span>"
+      </div>
+      <div style={{marginTop:28,fontSize:13,color:'#94A3B8'}}>
+        <b style={{color:'#fff'}}>Priya K.</b> · pre-med, UC Davis
+      </div>
+    </section>
+  );
+}
+
+function EdCTA() {
+  return (
+    <section style={{maxWidth:1240,margin:'0 auto',padding:'0 32px 96px'}}>
+      <div style={{
+        background:'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        borderRadius:24,padding:'72px 64px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:32,
+        position:'relative',overflow:'hidden'
+      }}>
+        <div style={{position:'absolute',right:-80,top:-80,width:320,height:320,borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}/>
+        <div style={{position:'relative'}}>
+          <div style={{fontSize:12,color:'#052E24',letterSpacing:2,fontWeight:700,marginBottom:12}}>READY?</div>
+          <h2 style={{fontSize:52,fontWeight:800,letterSpacing:-1.8,margin:0,color:'#052E24',lineHeight:1.02}}>Your first quiz is<br/>60 seconds away.</h2>
+        </div>
+        <div style={{display:'flex',gap:12,position:'relative'}}>
+          <button style={{background:'#0A0A0C',color:'#fff',border:'none',padding:'16px 24px',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer'}}>Start free →</button>
+          <button style={{background:'transparent',color:'#052E24',border:'1px solid #052E24',padding:'16px 24px',borderRadius:12,fontSize:15,fontWeight:600,cursor:'pointer'}}>See pricing</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EdFooter() {
+  return (
+    <footer style={{borderTop:'1px solid #1A1B20',background:'#09090B'}}>
+      <div style={{maxWidth:1240,margin:'0 auto',padding:'48px 32px 32px',display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',gap:32}}>
+        <div>
+          <Wordmark/>
+          <p style={{color:'#64748B',fontSize:13,marginTop:14,maxWidth:280,lineHeight:1.6}}>The fastest way from a document to an interactive quiz. Built on Gemini 3.</p>
+        </div>
+        {[['Product',['Features','Templates','Pricing','Changelog']],['Company',['About','Blog','Careers','Press']],['Resources',['Docs','API','Status','Help']],['Legal',['Privacy','Terms','DMCA','Cookies']]].map(([h,items])=>(
+          <div key={h}>
+            <div style={{fontSize:11,color:'#64748B',letterSpacing:1.4,fontWeight:600,marginBottom:14}}>{h.toUpperCase()}</div>
+            {items.map(i => <div key={i} style={{fontSize:13,color:'#94A3B8',padding:'4px 0'}}>{i}</div>)}
+          </div>
+        ))}
+      </div>
+      <div style={{borderTop:'1px solid #1A1B20',padding:'20px 32px',maxWidth:1240,margin:'0 auto',display:'flex',justifyContent:'space-between',fontSize:12,color:'#64748B'}}>
+        <span>© 2026 QuizMint. Made for students.</span>
+        <span style={{fontFamily:'JetBrains Mono, monospace'}}>v2.4.1 · all systems operational</span>
+      </div>
+    </footer>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DIRECTION 2 — PLAYFUL / MAGAZINE  (cream, serif, kinetic cards)
+// ═══════════════════════════════════════════════════════════════════
+function Playful() {
+  return (
+    <div style={{background:'#F7F3EC',color:'#0A0A0C',minHeight:'100vh',fontFamily:'Inter'}}>
+      <PlNav/>
+      <PlHero/>
+      <PlMarquee/>
+      <PlFeatures/>
+      <PlQuote/>
+      <PlCategories/>
+      <PlCTA/>
+    </div>
+  );
+}
+
+function PlNav() {
+  return (
+    <header style={{padding:'24px 40px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #E6DFD2'}}>
+      <Wordmark light/>
+      <nav style={{display:'flex',gap:32,fontSize:14,color:'#475569'}}>
+        <a>Product</a><a>Templates</a><a>For teachers</a><a>Pricing</a>
+      </nav>
+      <div style={{display:'flex',gap:10}}>
+        <button style={{...btnGhost,color:'#0A0A0C',border:'1px solid #0A0A0C'}}>Sign in</button>
+        <button style={{background:'#0A0A0C',color:'#fff',border:'none',padding:'10px 18px',borderRadius:99,fontSize:14,fontWeight:500,cursor:'pointer'}}>Make a quiz →</button>
+      </div>
+    </header>
+  );
+}
+
+function PlHero() {
+  return (
+    <section style={{position:'relative',padding:'80px 40px 120px',overflow:'hidden'}}>
+      <div style={{maxWidth:1280,margin:'0 auto',position:'relative',zIndex:2}}>
+        <div style={{fontSize:12,letterSpacing:2.4,color:'#10B981',fontWeight:700,marginBottom:24}}>
+          ✦ &nbsp;THE STUDY TOOL YOUR NOTES DESERVE
+        </div>
+        <h1 style={{
+          fontFamily:'Fraunces, serif',fontWeight:600,fontSize:124,lineHeight:0.9,letterSpacing:-4.5,margin:0,maxWidth:1100
+        }}>
+          Any document,<br/>
+          <em style={{color:'#10B981',fontStyle:'italic',fontWeight:600}}>instantly</em> studyable.
+        </h1>
+        <p style={{fontSize:20,color:'#475569',lineHeight:1.5,maxWidth:560,marginTop:32}}>
+          QuizMint reads your PDFs, pastes, and lecture docs and turns them into real quizzes — with explanations, difficulty, and a share link. In about eight seconds.
+        </p>
+        <div style={{display:'flex',gap:12,marginTop:40,alignItems:'center'}}>
+          <button style={{background:'#0A0A0C',color:'#fff',border:'none',padding:'16px 26px',borderRadius:99,fontSize:15,fontWeight:600,cursor:'pointer'}}>Try it free →</button>
+          <div style={{fontSize:13,color:'#64748B'}}>No account · unlimited on free tier</div>
+        </div>
+      </div>
+
+      {/* Floating cards */}
+      <FloatingCards/>
+    </section>
+  );
+}
+
+function FloatingCards() {
+  const cards = [
+    {t:'Biology · Ch 7',q:'Which organ regulates blood sugar?',color:'#10B981',rotate:-6,top:90,right:520,z:3},
+    {t:'US History',q:'What year did the Treaty of Versailles conclude?',color:'#F59E0B',rotate:4,top:60,right:240,z:2},
+    {t:'Organic Chem',q:'The SN1 reaction proceeds through a...',color:'#6366F1',rotate:-2,top:320,right:120,z:4},
+    {t:'Intro to Econ',q:'Price elasticity of demand measures...',color:'#EC4899',rotate:8,top:380,right:420,z:1},
+  ];
+  return (
+    <div style={{position:'absolute',top:40,right:0,width:720,height:620,pointerEvents:'none'}}>
+      {cards.map((c,i) => (
+        <div key={i} style={{
+          position:'absolute',top:c.top,right:c.right,width:260,
+          background:'#fff',border:'1px solid #E6DFD2',borderRadius:16,padding:20,
+          boxShadow:'0 20px 40px -12px rgba(10,10,12,0.18), 0 4px 8px -2px rgba(10,10,12,0.08)',
+          transform:`rotate(${c.rotate}deg)`,zIndex:c.z,
+          animation:`float${i} 6s ease-in-out infinite`
+        }}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <span style={{fontSize:10,letterSpacing:1.4,color:c.color,fontWeight:700}}>{c.t.toUpperCase()}</span>
+            <span style={{width:8,height:8,borderRadius:99,background:c.color}}/>
+          </div>
+          <div style={{fontFamily:'Fraunces, serif',fontSize:18,fontWeight:600,lineHeight:1.3,color:'#0A0A0C'}}>{c.q}</div>
+          <div style={{marginTop:14,display:'flex',gap:4}}>
+            {['A','B','C','D'].map(l => (
+              <div key={l} style={{flex:1,textAlign:'center',padding:'6px 0',background:'#F7F3EC',border:'1px solid #E6DFD2',borderRadius:6,fontSize:11,color:'#475569',fontFamily:'JetBrains Mono, monospace'}}>{l}</div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <style>{`
+        @keyframes float0 { 0%,100% { transform: rotate(-6deg) translateY(0) } 50% { transform: rotate(-6deg) translateY(-8px) } }
+        @keyframes float1 { 0%,100% { transform: rotate(4deg) translateY(0) } 50% { transform: rotate(4deg) translateY(-12px) } }
+        @keyframes float2 { 0%,100% { transform: rotate(-2deg) translateY(0) } 50% { transform: rotate(-2deg) translateY(-6px) } }
+        @keyframes float3 { 0%,100% { transform: rotate(8deg) translateY(0) } 50% { transform: rotate(8deg) translateY(-10px) } }
+      `}</style>
+    </div>
+  );
+}
+
+function PlMarquee() {
+  const items = ['PDF textbooks','DOCX problem sets','Pasted Quizlet sets','Course handouts','Scanned notes','Practice exams','AP test prep','GRE drills'];
+  return (
+    <div style={{borderTop:'1px solid #E6DFD2',borderBottom:'1px solid #E6DFD2',background:'#fff',overflow:'hidden'}}>
+      <div style={{display:'flex',gap:56,padding:'20px 0',animation:'marquee 40s linear infinite',whiteSpace:'nowrap'}}>
+        {[...items,...items,...items].map((it,i) => (
+          <div key={i} style={{display:'flex',alignItems:'center',gap:18,fontFamily:'Fraunces, serif',fontSize:26,fontStyle:'italic',color:'#0A0A0C'}}>
+            <span style={{color:'#10B981'}}>✦</span> {it}
+          </div>
+        ))}
+      </div>
+      <style>{`@keyframes marquee { 0% { transform: translateX(0) } 100% { transform: translateX(-33.33%) } }`}</style>
+    </div>
+  );
+}
+
+function PlFeatures() {
+  const items = [
+    {n:'01',t:'It parses the mess',d:'Numbered? Lettered? Footnoted answer key? Scan of a page? Yes, yes, yes, yes.'},
+    {n:'02',t:'It grades itself',d:'Difficulty labels aren\'t guesses. They\'re based on what the question actually demands.'},
+    {n:'03',t:'It explains',d:'"The answer is C" is useless at 2am. Every answer ships with a one-line why.'},
+    {n:'04',t:'It shares',d:'Every quiz gets a link. No login required on the other end.'},
+  ];
+  return (
+    <section style={{padding:'120px 40px',maxWidth:1280,margin:'0 auto'}}>
+      <h2 style={{fontFamily:'Fraunces, serif',fontWeight:600,fontSize:72,letterSpacing:-2,margin:'0 0 64px',maxWidth:820,lineHeight:1}}>
+        Four small things.<br/><em style={{color:'#10B981'}}>One big difference.</em>
+      </h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:2,background:'#E6DFD2'}}>
+        {items.map(it => (
+          <div key={it.n} style={{background:'#F7F3EC',padding:48,minHeight:260,display:'flex',flexDirection:'column',gap:16}}>
+            <div style={{fontFamily:'Fraunces, serif',fontStyle:'italic',fontSize:48,color:'#10B981',lineHeight:1,fontWeight:600}}>{it.n}.</div>
+            <h3 style={{fontFamily:'Fraunces, serif',fontSize:32,fontWeight:600,letterSpacing:-0.6,margin:0,color:'#0A0A0C'}}>{it.t}</h3>
+            <p style={{fontSize:17,color:'#475569',lineHeight:1.55,margin:0,maxWidth:420}}>{it.d}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PlQuote() {
+  return (
+    <section style={{padding:'80px 40px',background:'#0A0A0C',color:'#fff'}}>
+      <div style={{maxWidth:900,margin:'0 auto'}}>
+        <div style={{fontFamily:'Fraunces, serif',fontSize:64,color:'#10B981',lineHeight:0.6,marginBottom:16}}>&ldquo;</div>
+        <div style={{fontFamily:'Fraunces, serif',fontSize:44,lineHeight:1.2,letterSpacing:-1,fontWeight:500}}>
+          I paste in a review packet on Sunday night. Before my coffee is done I have a graded quiz with explanations for every answer.
+        </div>
+        <div style={{marginTop:32,display:'flex',alignItems:'center',gap:14}}>
+          <div style={{width:44,height:44,borderRadius:99,background:'#10B981',display:'grid',placeItems:'center',color:'#0A0A0C',fontWeight:700}}>PK</div>
+          <div>
+            <div style={{fontSize:15,fontWeight:600}}>Priya K.</div>
+            <div style={{fontSize:13,color:'#94A3B8'}}>pre-med · UC Davis</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PlCategories() {
+  const cats = [
+    {t:'Biology',n:847,c:'#10B981'},{t:'US History',n:412,c:'#F59E0B'},{t:'Organic Chem',n:289,c:'#6366F1'},
+    {t:'Calculus',n:356,c:'#EC4899'},{t:'Statistics',n:221,c:'#06B6D4'},{t:'World Lit',n:167,c:'#A855F7'},
+    {t:'AP Psych',n:302,c:'#F97316'},{t:'Econ 101',n:198,c:'#14B8A6'},
+  ];
+  return (
+    <section style={{padding:'120px 40px',maxWidth:1280,margin:'0 auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:40,borderBottom:'1px solid #E6DFD2',paddingBottom:16}}>
+        <h2 style={{fontFamily:'Fraunces, serif',fontSize:40,fontWeight:600,letterSpacing:-1,margin:0}}>Browse by subject</h2>
+        <div style={{fontSize:13,color:'#64748B'}}>2,792 quizzes · updated daily</div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16}}>
+        {cats.map(c => (
+          <div key={c.t} style={{background:'#fff',border:'1px solid #E6DFD2',borderRadius:16,padding:24,minHeight:160,display:'flex',flexDirection:'column',justifyContent:'space-between',cursor:'pointer'}}>
+            <div style={{width:36,height:36,borderRadius:10,background:c.c+'22',display:'grid',placeItems:'center',color:c.c,fontWeight:700,fontSize:14}}>{c.t[0]}</div>
+            <div>
+              <div style={{fontFamily:'Fraunces, serif',fontSize:22,fontWeight:600,letterSpacing:-0.3}}>{c.t}</div>
+              <div style={{fontSize:12,color:'#64748B',marginTop:4}}>{c.n} quizzes →</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PlCTA() {
+  return (
+    <section style={{padding:'0 40px 120px',maxWidth:1280,margin:'0 auto'}}>
+      <div style={{background:'#10B981',borderRadius:32,padding:'96px 72px',textAlign:'center',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',inset:0,background:'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.2), transparent 50%)'}}/>
+        <h2 style={{fontFamily:'Fraunces, serif',fontSize:88,fontWeight:600,letterSpacing:-3,margin:0,color:'#052E24',lineHeight:0.95,position:'relative'}}>
+          Stop formatting.<br/><em>Start studying.</em>
+        </h2>
+        <button style={{marginTop:40,background:'#0A0A0C',color:'#fff',border:'none',padding:'20px 36px',borderRadius:99,fontSize:16,fontWeight:600,cursor:'pointer',position:'relative'}}>
+          Make your first quiz →
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DIRECTION 3 — TECHNICAL / DEV-TOOL (Linear/Vercel-inspired, code-first)
+// ═══════════════════════════════════════════════════════════════════
+function Technical() {
+  return (
+    <div style={{background:'#0A0A0C',color:'#fff',minHeight:'100vh',backgroundImage:'radial-gradient(circle at 50% -200px, rgba(16,185,129,0.15), transparent 60%)'}}>
+      <TcNav/>
+      <TcHero/>
+      <TcBandStats/>
+      <TcPipeline/>
+      <TcTrio/>
+      <TcCTA/>
+      <EdFooter/>
+    </div>
+  );
+}
+
+function TcNav() {
+  return (
+    <header style={{padding:'18px 32px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:'1px solid #1A1B20',maxWidth:1280,margin:'0 auto'}}>
+      <div style={{display:'flex',alignItems:'center',gap:32}}>
+        <Wordmark/>
+        <span style={{padding:'3px 8px',background:'#15161A',border:'1px solid #2D2E35',borderRadius:6,fontSize:11,fontFamily:'JetBrains Mono, monospace',color:'#10B981'}}>v2.4.1</span>
+      </div>
+      <nav style={{display:'flex',gap:28,fontSize:13,color:'#94A3B8',fontFamily:'JetBrains Mono, monospace'}}>
+        <a>/docs</a><a>/api</a><a>/changelog</a><a>/pricing</a>
+      </nav>
+      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+        <div style={{fontSize:12,color:'#64748B',fontFamily:'JetBrains Mono, monospace'}}>⌘K</div>
+        <button style={btnPrimary}>Launch app →</button>
+      </div>
+    </header>
+  );
+}
+
+function TcHero() {
+  return (
+    <section style={{maxWidth:1280,margin:'0 auto',padding:'80px 32px 40px'}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:64,alignItems:'center'}}>
+        <div>
+          <div style={{display:'inline-flex',alignItems:'center',gap:10,padding:'6px 12px',background:'#15161A',border:'1px solid #2D2E35',borderRadius:99,fontSize:12,fontFamily:'JetBrains Mono, monospace',color:'#94A3B8',marginBottom:32}}>
+            <span style={{width:6,height:6,borderRadius:99,background:'#10B981'}}/>
+            <span>api.quizmint.app</span>
+            <span style={{color:'#475569'}}>·</span>
+            <span style={{color:'#10B981'}}>99.98% up</span>
+          </div>
+          <h1 style={{fontSize:76,lineHeight:0.95,letterSpacing:-3.4,fontWeight:700,margin:'0 0 24px'}}>
+            The quiz<br/>
+            <span style={{color:'#10B981',fontFamily:'JetBrains Mono, monospace',fontWeight:600,letterSpacing:-2}}>
+              pipeline
+            </span>{' '}
+            for study tools.
+          </h1>
+          <p style={{fontSize:18,lineHeight:1.55,color:'#94A3B8',margin:0,maxWidth:480}}>
+            <span style={{color:'#fff'}}>Document in, structured quiz out.</span> QuizMint is an LLM-powered parser that turns raw MCQs — from any format — into JSON, with difficulty grading and explanation generation built in.
+          </p>
+          <div style={{marginTop:36,display:'flex',gap:10,alignItems:'center'}}>
+            <button style={{...btnPrimary,padding:'14px 22px'}}>Get API key</button>
+            <button style={{...btnGhost,padding:'14px 22px',fontFamily:'JetBrains Mono, monospace',fontSize:13}}>$ npm i quizmint</button>
+          </div>
+        </div>
+        <CodePanel/>
+      </div>
+    </section>
+  );
+}
+
+function CodePanel() {
+  const [tab, setTab] = useState('in');
+  const inputText = `1. Which organ regulates blood sugar?
+A) Liver   B) Pancreas
+C) Kidney  D) Spleen
+
+2. The mitochondrion's inner
+membrane is folded into:
+A) Cristae   B) Thylakoids
+C) Stroma    D) Matrix
+
+Answer Key:
+1. B   2. A`;
+  const jsonText = `{
+  "title": "Biology Ch. 7",
+  "difficulty": "Medium",
+  "questions": [
+    {
+      "id": "q_a41f",
+      "stem": "Which organ regulates...",
+      "options": ["Liver","Pancreas","Kidney","Spleen"],
+      "answer": "B",
+      "explanation": "The pancreas secretes
+         insulin and glucagon...",
+      "difficulty": "Easy",
+      "topic": "Endocrine"
+    },
+    { "id": "q_c82e", ... }
+  ]
+}`;
+  return (
+    <div style={{background:'#0B1220',border:'1px solid #2D2E35',borderRadius:16,overflow:'hidden',boxShadow:'0 40px 80px -20px rgba(0,0,0,0.7)'}}>
+      <div style={{display:'flex',alignItems:'center',borderBottom:'1px solid #2D2E35',background:'#080D17'}}>
+        {[['in','input.txt','#F59E0B'],['out','quiz.json','#10B981']].map(([k,l,c])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{
+            padding:'12px 18px',background:tab===k?'#0B1220':'transparent',border:'none',borderRight:'1px solid #2D2E35',
+            color:tab===k?'#fff':'#64748B',fontFamily:'JetBrains Mono, monospace',fontSize:12,cursor:'pointer',display:'flex',alignItems:'center',gap:8
+          }}>
+            <span style={{width:8,height:8,borderRadius:2,background:c}}/>
+            {l}
+          </button>
+        ))}
+        <div style={{marginLeft:'auto',padding:'0 16px',fontSize:11,color:'#475569',fontFamily:'JetBrains Mono, monospace'}}>
+          8.2s · 24 questions · 96% conf
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'40px 1fr'}}>
+        <div style={{padding:'18px 0',textAlign:'right',paddingRight:10,fontFamily:'JetBrains Mono, monospace',fontSize:12,color:'#334155',lineHeight:1.65,background:'#070B13',borderRight:'1px solid #1A2133'}}>
+          {Array.from({length: tab==='in'? 12 : 16}).map((_,i)=>(<div key={i}>{i+1}</div>))}
+        </div>
+        <pre style={{margin:0,padding:'18px 20px',fontFamily:'JetBrains Mono, monospace',fontSize:12.5,lineHeight:1.65,color:'#CBD5E1',whiteSpace:'pre-wrap'}}>
+          {tab === 'in' ? <code style={{color:'#E2E8F0'}}>{inputText}</code> : <JsonSyntax text={jsonText}/>}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+const JsonSyntax = ({text}) => {
+  // crude but readable JSON coloring
+  const lines = text.split('\n');
+  return <>{lines.map((ln,i) => {
+    const parts = [];
+    let rest = ln;
+    const re = /("[^"]*":)|("[^"]*")|(\/\/.*)|(\.\.\.)/g;
+    let last = 0, m;
+    while ((m = re.exec(ln)) !== null) {
+      if (m.index > last) parts.push(<span key={last} style={{color:'#94A3B8'}}>{ln.slice(last,m.index)}</span>);
+      if (m[1]) parts.push(<span key={m.index} style={{color:'#67E8F9'}}>{m[1]}</span>);
+      else if (m[2]) parts.push(<span key={m.index} style={{color:'#86EFAC'}}>{m[2]}</span>);
+      else if (m[3]) parts.push(<span key={m.index} style={{color:'#64748B'}}>{m[3]}</span>);
+      else if (m[4]) parts.push(<span key={m.index} style={{color:'#475569'}}>{m[4]}</span>);
+      last = m.index + m[0].length;
+    }
+    if (last < ln.length) parts.push(<span key={last+'z'} style={{color:'#94A3B8'}}>{ln.slice(last)}</span>);
+    return <div key={i}>{parts.length?parts:ln}{' '}</div>;
+  })}</>;
+};
+
+function TcBandStats() {
+  const stats = [
+    ['8.2s','p50 latency','#10B981'],
+    ['96.4%','parsing acc.','#fff'],
+    ['142k','jobs / week','#fff'],
+    ['12+','input formats','#fff'],
+    ['99.98%','uptime','#10B981'],
+  ];
+  return (
+    <section style={{borderTop:'1px solid #1A1B20',borderBottom:'1px solid #1A1B20'}}>
+      <div style={{maxWidth:1280,margin:'0 auto',padding:'24px 32px',display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:0,borderLeft:'1px solid #1A1B20'}}>
+        {stats.map(([n,l,c]) => (
+          <div key={l} style={{padding:'20px 24px',borderRight:'1px solid #1A1B20',display:'flex',alignItems:'baseline',gap:14}}>
+            <span style={{fontSize:28,fontWeight:700,letterSpacing:-1,color:c,fontFamily:'JetBrains Mono, monospace'}}>{n}</span>
+            <span style={{fontSize:12,color:'#64748B'}}>{l}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TcPipeline() {
+  const steps = [
+    {k:'01',n:'ingest',d:'Bytes in. PDF, DOCX, TXT, paste — normalized to a raw text stream with layout hints.'},
+    {k:'02',n:'parse',d:'LLM identifies question stems, options, and answer keys. Confidence-scored, low-conf items flagged.'},
+    {k:'03',n:'enrich',d:'Each question gets a difficulty (E/M/H), a topic label, and a generated 1–2 line explanation.'},
+    {k:'04',n:'emit',d:'Strict, validated JSON. Live-quiz UI, shareable link, or webhook back to your app.'},
+  ];
+  return (
+    <section style={{maxWidth:1280,margin:'0 auto',padding:'96px 32px'}}>
+      <div style={{fontFamily:'JetBrains Mono, monospace',fontSize:12,color:'#10B981',letterSpacing:1.4,marginBottom:14}}>// THE PIPELINE</div>
+      <h2 style={{fontSize:48,letterSpacing:-1.6,fontWeight:700,margin:'0 0 48px',maxWidth:720}}>
+        Four stages. One call.
+      </h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:0,border:'1px solid #2D2E35',borderRadius:16,overflow:'hidden',background:'#15161A'}}>
+        {steps.map((s,i) => (
+          <div key={s.k} style={{padding:'28px 24px',borderRight: i<3?'1px solid #2D2E35':'none',minHeight:200,display:'flex',flexDirection:'column',gap:12,position:'relative'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontFamily:'JetBrains Mono, monospace',fontSize:11,color:'#64748B'}}>{s.k}</span>
+              <span style={{flex:1,height:1,background:'#2D2E35'}}/>
+              {i<3 && <span style={{color:'#10B981',fontFamily:'JetBrains Mono, monospace',fontSize:16}}>→</span>}
+            </div>
+            <h3 style={{fontFamily:'JetBrains Mono, monospace',fontSize:22,fontWeight:600,color:'#10B981',margin:0,letterSpacing:-0.5}}>{s.n}()</h3>
+            <p style={{fontSize:13.5,color:'#94A3B8',lineHeight:1.55,margin:0}}>{s.d}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TcTrio() {
+  const cards = [
+    {h:'Strict JSON output',d:'Schema-validated every time. Pipe it straight into your DB or LMS.',code:'schema.validate(quiz) // ok'},
+    {h:'Hybrid key model',d:'BYO Gemini key for unlimited, or use the shared pool — up to 5 backup keys rotate on rate-limit.',code:'key: auto | user | pool'},
+    {h:'Open sourced',d:'Fork the engine. Self-host the UI. Licenced Apache 2.0.',code:'github.com/quizmint/core'},
+  ];
+  return (
+    <section style={{maxWidth:1280,margin:'0 auto',padding:'0 32px 96px'}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {cards.map(c => (
+          <div key={c.h} style={{background:'#0F1014',border:'1px solid #2D2E35',borderRadius:16,padding:28,minHeight:240,display:'flex',flexDirection:'column',gap:16}}>
+            <h3 style={{fontSize:20,fontWeight:600,letterSpacing:-0.3,margin:0}}>{c.h}</h3>
+            <p style={{fontSize:14,color:'#94A3B8',lineHeight:1.55,margin:0,flex:1}}>{c.d}</p>
+            <div style={{padding:'10px 12px',background:'#0A0A0C',border:'1px solid #2D2E35',borderRadius:8,fontFamily:'JetBrains Mono, monospace',fontSize:12,color:'#A7F3D0'}}>
+              <span style={{color:'#64748B'}}>{`>`}</span> {c.code}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TcCTA() {
+  return (
+    <section style={{maxWidth:1280,margin:'0 auto',padding:'0 32px 96px'}}>
+      <div style={{
+        border:'1px solid #2D2E35',borderRadius:20,padding:'64px 48px',
+        background:'linear-gradient(180deg,#0F1014 0%,#15161A 100%)',
+        display:'grid',gridTemplateColumns:'1.2fr 1fr',gap:48,alignItems:'center'
+      }}>
+        <div>
+          <div style={{fontFamily:'JetBrains Mono, monospace',fontSize:12,color:'#10B981',letterSpacing:1.4,marginBottom:12}}>$ quizmint --start</div>
+          <h2 style={{fontSize:48,letterSpacing:-1.6,fontWeight:700,margin:0,lineHeight:1.05}}>
+            Ship learning<br/>at the speed of <span style={{color:'#10B981'}}>paste.</span>
+          </h2>
+        </div>
+        <div style={{background:'#0A0A0C',border:'1px solid #2D2E35',borderRadius:12,padding:20,fontFamily:'JetBrains Mono, monospace',fontSize:13,lineHeight:1.8,color:'#CBD5E1'}}>
+          <div><span style={{color:'#64748B'}}>$</span> <span style={{color:'#10B981'}}>curl</span> quizmint.app/api/gen \</div>
+          <div>&nbsp;&nbsp;-F "doc=@chapter7.pdf" \</div>
+          <div>&nbsp;&nbsp;-H "auth: Bearer $KEY"</div>
+          <div style={{color:'#64748B',marginTop:8}}># → 24 questions, 8.2s, 96% conf</div>
+          <button style={{marginTop:16,width:'100%',...btnPrimary,padding:'12px'}}>Get your API key →</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Tweak Panel ───────────────────────────────────────────────────
+function TweakPanel({ tweaks, update }) {
+  const dirs = [
+    {k:'editorial', l:'Editorial', d:'Product-led, demo-first'},
+    {k:'playful',   l:'Playful',   d:'Cream, serif, kinetic'},
+    {k:'technical', l:'Technical', d:'Dev-tool, code-first'},
+  ];
+  return (
+    <div style={{
+      position:'fixed',right:20,bottom:20,zIndex:99999,
+      background:'#15161A',border:'1px solid #2D2E35',borderRadius:14,
+      padding:16,width:280,color:'#fff',fontFamily:'Inter',
+      boxShadow:'0 20px 40px rgba(0,0,0,0.5)'
+    }}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div style={{fontSize:13,fontWeight:600,letterSpacing:-0.2}}>Tweaks</div>
+        <div style={{fontSize:10,color:'#64748B',fontFamily:'JetBrains Mono, monospace'}}>3 directions</div>
+      </div>
+      <div style={{fontSize:10,color:'#64748B',letterSpacing:1.4,fontWeight:600,marginBottom:8}}>DIRECTION</div>
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        {dirs.map(d => (
+          <button key={d.k} onClick={()=>update({direction:d.k})} style={{
+            textAlign:'left',padding:'10px 12px',borderRadius:8,cursor:'pointer',
+            background: tweaks.direction===d.k?'#10B98122':'#0A0A0C',
+            border:'1px solid '+(tweaks.direction===d.k?'#10B981':'#2D2E35'),
+            color:'#fff'
+          }}>
+            <div style={{fontSize:13,fontWeight:600}}>{d.l}</div>
+            <div style={{fontSize:11,color:'#94A3B8',marginTop:2}}>{d.d}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Shared button styles ──────────────────────────────────────────
+const btnPrimary = {
+  background:'#10B981',color:'#052E24',border:'none',padding:'10px 16px',borderRadius:8,
+  fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:-0.1
+};
+const btnGhost = {
+  background:'transparent',color:'#fff',border:'1px solid #2D2E35',padding:'10px 16px',borderRadius:8,
+  fontSize:13,fontWeight:500,cursor:'pointer'
+};
+const pillDark = {
+  display:'inline-flex',alignItems:'center',gap:10,padding:'6px 12px',
+  background:'#15161A',border:'1px solid #2D2E35',borderRadius:99,
+  fontSize:12,color:'#94A3B8',fontFamily:'JetBrains Mono, monospace'
+};
+const dot = (c) => ({width:10,height:10,borderRadius:99,background:c,display:'inline-block'});
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
