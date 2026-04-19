@@ -111,8 +111,8 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
                 })}
               </div>
               {isAnswered && q.explanation && (
-                <div className="mt-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 text-[14px]">
-                  <span className="font-semibold text-emerald-400">Explanation:</span> {q.explanation}
+                <div className="mt-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 [.light_&]:text-emerald-800 text-[14px]">
+                  <span className="font-semibold text-emerald-400 [.light_&]:text-emerald-700">Explanation:</span> {q.explanation}
                 </div>
               )}
               

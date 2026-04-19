@@ -117,6 +117,13 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 26: Fix unreadable green-on-green text in light mode
+User flagged two places where emerald-200 text sat on an emerald-500/10 wash and became invisible in light mode (dark mode was fine):
+- `QuizGenerator.tsx:192` — "{file} attached" pill
+- `QuizPlayer.tsx:114-115` — answer Explanation block (body + "Explanation:" label)
+
+Fix: kept dark-mode colors untouched and added Tailwind arbitrary variants that only fire under `:root.light` via the `[.light_&]:` selector. Filename pill → `emerald-700`; explanation body → `emerald-800`, label → `emerald-700`. Solid contrast on the pale mint wash without disturbing dark mode.
+
 #### Task 25: Park future improvements in `future.md`
 Self-rated the current state 8.5/10 (user wanted 9). Logged the path from 8.5 → 9.5 in a new `future.md` so we can come back to it. Six buckets:
 1. **Code-split the landing from the app** — marketing landing shouldn't ship the full Gemini/quiz bundle. Lazy-load `QuizGenerator` / `QuizPlayer`, wrap in `Suspense`.

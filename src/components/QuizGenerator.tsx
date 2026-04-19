@@ -189,7 +189,7 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
               <div className="flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mt-4">
                 <div className="flex items-center space-x-3">
                   <FileIcon className="w-6 h-6 text-emerald-400" />
-                  <span className="text-[14px] font-medium text-emerald-200">{uploadedFile.name} attached</span>
+                  <span className="text-[14px] font-medium text-emerald-200 [.light_&]:text-emerald-700">{uploadedFile.name} attached</span>
                 </div>
                 {!isGenerating && (
                   <button onClick={removeFile} className="p-1 hover:bg-emerald-500/20 rounded-lg text-emerald-400 transition-colors">
