@@ -37,10 +37,18 @@ export default function App() {
       {/* Sidebar */}
       <aside className="hidden lg:flex w-[280px] bg-[var(--c-surface)] border-r border-[var(--c-border)] p-6 flex-col gap-8 shrink-0">
         <div className="flex items-center justify-between">
-          <div className="text-[18px] font-bold tracking-tight flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              setQuizData(null);
+              setShowLanding(true);
+            }}
+            aria-label="Back to landing"
+            className="text-[18px] font-bold tracking-tight flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <QuizMintLogo size={22} />
             <span>Quiz<span className="text-[var(--c-brand)]">Mint</span></span>
-          </div>
+          </button>
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"

@@ -117,6 +117,9 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 27: Sidebar logo → back to landing
+Wired the sidebar QuizMint mark (logo + wordmark) as a button in `App.tsx:40`. Click resets `quizData` and flips `showLanding` back to true. Standard "logo = home" behavior. Confirmation-on-dirty-state deliberately skipped for now — parked in `future.md` section 7 so we can come back to it.
+
 #### Task 26: Fix unreadable green-on-green text in light mode
 User flagged two places where emerald-200 text sat on an emerald-500/10 wash and became invisible in light mode (dark mode was fine):
 - `QuizGenerator.tsx:192` — "{file} attached" pill

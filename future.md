@@ -50,3 +50,8 @@ Right now sharing the URL in iMessage / Slack / Twitter gives a blank preview.
 - Persist `theme` + maybe a "skip landing" preference in localStorage (Task 19 deliberately didn't do this for splash — reconsider for landing if friends give feedback)
 - Actual favicon PNG fallbacks for browsers that don't handle SVG favicons well
 - Telemetry: just a single Vercel Analytics counter on CTA click would answer "does anyone actually press the button"
+
+## 7. Logo-home: guard against losing unsaved input
+The sidebar QuizMint logo now navigates back to the landing page (Task 27). It unconditionally wipes `quizData` and `showLanding = true`, which means a user mid-paste or mid-quiz loses their state silently.
+
+Upgrade: before navigating, check for unsaved work — non-empty `rawText` in `QuizGenerator`, an `uploadedFile`, or an in-progress `quizData` with unanswered questions — and show a confirm dialog ("Leave? Your input will be cleared."). Only nuke state on confirm. The check needs `QuizGenerator` to lift or expose its dirty state (currently local), or App can track it via a callback ref.
