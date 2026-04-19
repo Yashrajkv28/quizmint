@@ -27,7 +27,7 @@ export default function App() {
         <div className="flex items-center justify-between">
           <div className="text-[18px] font-bold tracking-tight flex items-center gap-2.5">
             <QuizMintLogo size={22} />
-            Quiz<span className="text-[var(--c-brand)]">Mint</span>
+            <span>Quiz<span className="text-[var(--c-brand)]">Mint</span></span>
           </div>
           <button
             onClick={toggleTheme}
