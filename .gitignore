@@ -9,3 +9,11 @@ dist/
 !.env.example
 
 .vercel
+
+# Local tool state
+.claude/
+.playwright-mcp/
+
+# Screenshots / scratch
+landing-*.png
+Screenshot*.png
