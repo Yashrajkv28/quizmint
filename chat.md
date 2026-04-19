@@ -117,6 +117,11 @@ Since the UI now guarantees only one input path reaches the server, the backend'
 - Swept `App.tsx`, `QuizGenerator.tsx`, `QuizPlayer.tsx` to replace hardcoded hex/slate classes with `var(--c-*)` equivalents
 - Added Sun/Moon theme toggle in the sidebar; preference persisted to `localStorage` and applied on mount
 
+#### Task 21: Close gap between "Quiz" and "Mint" in sidebar wordmark
+Screenshot showed a visible gap between "Quiz" and "Mint" in the sidebar header. The parent flex container uses `gap-2.5` to space the logo from the wordmark — but because the wordmark was `Quiz<span>Mint</span>` (a raw text node plus a span), flex treated them as two separate children and inserted the gap between them too.
+
+Fix: wrap both in a single `<span>` so the wordmark is one flex item. `App.tsx:30`. Logo-to-wordmark gap preserved; "QuizMint" now renders tight.
+
 #### Task 20: Splash duration locked to 5s on every load
 Dropped the `isFirstEver` branching in `main.tsx` and removed the `qm-splash-first-done` localStorage flag. `minDurationMs={5000}` on every load — user wanted the full animation every time.
 
