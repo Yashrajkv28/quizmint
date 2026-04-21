@@ -23,14 +23,14 @@
 }
 
 :root.light {
-  --c-app: #F6F7F9;
-  --c-surface: #FFFFFF;
-  --c-border: #E4E6EB;
-  --c-hover: #E4E6EB;
-  --c-text: #0A0A0C;
-  --c-text-muted: #334155;
-  --c-text-subtle: #475569;
-  --c-text-faint: #64748B;
+  --c-app: #FAF7F0;
+  --c-surface: #FFFDF8;
+  --c-border: #ECE6D8;
+  --c-hover: #ECE6D8;
+  --c-text: #1A1713;
+  --c-text-muted: #3A342B;
+  --c-text-subtle: #5C5346;
+  --c-text-faint: #837866;
 }
 
 @layer utilities {
@@ -43,6 +43,19 @@
   0% { transform: translateX(-100%); opacity: 0; }
   50% { opacity: 0.5; }
   100% { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(16,185,129,0.08), transparent);
+  animation: shimmer-sweep 3.5s ease-in-out infinite;
 }
 
 html, body, #root {

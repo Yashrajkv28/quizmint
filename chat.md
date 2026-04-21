@@ -1,5 +1,95 @@
 # QuizMint Development Chat Log
 
+## Session: 2026-04-22
+
+### Summary
+Shipped auth + dashboard + custom domain + hardening. Landing → login → dashboard → generator is now the real flow. Uploads per-user to Supabase storage with a daily cleanup cron. `quizmint.me` is live, Resend SMTP handles auth emails, CSP and friends are in place. MCQ option shuffling defeats AI-bias toward a fixed correct letter.
+
+#### Task 41: Per-attempt option shuffling + letter re-mapping
+User flagged a real teaching-side issue: a lot of AI-generated quizzes bias the correct answer toward a specific letter, so students memorize position instead of content. Fix in `src/lib/shuffle.ts` + `QuizPlayer.tsx`:
+- Fisher-Yates shuffle (not `sort(() => Math.random() - 0.5)` which is biased)
+- Options re-lettered a/b/c/d in visual order after shuffle, `correctOptionId` remapped to the new letter
+- `useMemo` keyed on `[questions, attemptKey]` so order is stable mid-quiz but re-shuffles on **Restart Output** / **Retry Quiz**
+- All render + score paths now use `displayQuestions` instead of raw `questions`
+
+Data model was already keyed by `correctOptionId` (not index), so grading survives the reshuffle for free.
+
+#### Task 40: DNS IP-range migration
+Vercel prompted a DNS update for planned IP range expansion. Swapped two records in Namecheap:
+- `A @`: `76.76.21.21` → `216.198.79.1`
+- `CNAME www`: `cname.vercel-dns.com.` → `ed165d6e01573168.vercel-dns-017.com.`
+
+Resend MX/TXT rows untouched. Vercel runs old + new in parallel — zero downtime during propagation.
+
+#### Task 39: Cream light mode (subtle paper palette)
+User wanted a warmer, less-sterile light mode. Two attempts, settled on the subtle one:
+- `--c-app: #FAF7F0`, `--c-surface: #FFFDF8`, `--c-border: #ECE6D8`, warm text (`#1A1713` / `#3A342B` / `#5C5346` / `#837866`)
+- One bolder version (`#F3EBD6` / `#FBF5E6` / `#DED2B0`) was deployed and reverted — "looks shit now"
+- Original cool-grey values (`#F6F7F9` / `#FFFFFF` / `#E4E6EB`) kept as a documented fallback
+
+Dark mode untouched.
+
+#### Task 38: Dashboard redesign — Workspace layout
+Previous dashboard was functional but "mid". Generated a 3-variant mockup page (`mockups/dashboard.html`) — Spotlight / Workspace / Command — user picked Workspace. Rewrote `src/components/Dashboard.tsx`:
+- 12-col grid, main column 8 wide with hero "Generate a quiz" card (gradient wash + CSS `shimmer-sweep` overlay), 3-chip info strip below
+- Sticky account sidebar (4 wide) with email/password/signout rows + inline password-confirm delete zone
+- Main column left open for future tool cards (timer, etc.)
+- Works in both themes via `var(--c-*)` throughout
+- `shimmer-sweep` keyframe added to `src/index.css`
+
+#### Task 37: Gmail-only signup + strong password policy + animated strength meter
+- `src/lib/validation.ts` — `validateEmail` (gmail-only on signup/forgot-password; sign-in skips so pre-existing non-gmail accounts can still log in), `validatePassword` (8+, upper/lower/digit/symbol), `PASSWORD_HELP`, `getPasswordChecks` per-rule breakdown
+- `PasswordStrength.tsx` — 5-segment bar, red→amber→lime→emerald, Too weak → Excellent label, rule pills with check/x icons, all CSS transitions (no libraries)
+- Wired into `LoginPage.tsx` (signup tab), `AccountModal.tsx` (change password), `ResetPasswordPage.tsx`
+- Sign-in path deliberately skips gmail check so Supabase surfaces the error server-side
+
+#### Task 36: `docs/services-used.md` — service expiries and limits
+Created reference doc listing Vercel (Hobby, never expires, daily cron limit, 300s timeout, 4.5MB body cap), Supabase (Free, auto-pauses 7 days idle), Resend (Free, 100/day, 3000/month, 1 custom domain), Namecheap (GitHub Student Pack, **expires 2027-04-21**), Google AI Studio (Free, 20/day/model × 5 rotating keys), GitHub Student Pack. Renewal calendar table at the bottom.
+
+#### Task 35: Security headers in `vercel.json`
+Added headers block covering all routes:
+- `X-Frame-Options: DENY` + CSP `frame-ancestors 'none'` (defense-in-depth against clickjacking)
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()`
+- `Content-Security-Policy`: `default-src 'self'`, scripts `'self'`, styles `'self' 'unsafe-inline' + Google Fonts`, images `self data: blob:`, `connect-src 'self' https://*.supabase.co wss://*.supabase.co`, `worker-src 'self' blob:`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`
+
+#### Task 34: Remove Vercel-generated preview domain from canonical URL
+`quizmint-blue.vercel.app` auto-regenerates on every deploy — can't be permanently deleted. Chose `quizmint.me` as the primary domain; every other alias (including `www.quizmint.me` and all auto `.vercel.app` hosts) redirects to it via the Vercel Domains UI.
+
+#### Task 33: Resend SMTP → Supabase auth emails via `quizmint.me`
+Set up Resend's free tier (100/day, 3000/month) as the SMTP provider for Supabase auth. DNS records added to Namecheap (Advanced DNS for TXT, Custom MX block for MX):
+- `MX send` → `feedback-smtp.ap-northeast-1.amazonses.com` (priority 10)
+- `TXT send` → `v=spf1 include:amazonses.com ~all`
+- `TXT resend._domainkey` → DKIM public key
+- `TXT _dmarc` → `v=DMARC1; p=none;`
+
+Debugging notes: Namecheap's top "Host Records" block has no MX type unless "Mail Settings" is explicitly set to "Custom MX" — and even then the MX input lives in its own block at the bottom of the page, not in the main records table. Branded HTML email templates committed under `docs/email-templates/`.
+
+#### Task 32: Custom domain `quizmint.me` via GitHub Student Pack
+Grabbed the 1-year free `.me` via the Student Developer Pack → Namecheap. Pointed at Vercel, removed an accidentally-configured GitHub Pages integration. Domain expires **2027-04-21**. Security hygiene: 2FA on Namecheap (authenticator, not SMS), Registrar Lock ON, WhoisGuard ON.
+
+#### Task 31: `/api/account/delete` + password re-auth
+Self-service account deletion:
+- `api/account/delete.ts` — verifies bearer token, lists the user's files in the `user-uploads` Supabase bucket, removes them, then calls `supabaseAdmin.auth.admin.deleteUser(auth.id)`
+- Client re-authenticates with `signInWithPassword` before calling the endpoint — a hijacked browser session can't silently nuke the account without the current password
+- UI: inline password-confirm zone on the dashboard, Enter-to-submit, red styling
+
+#### Task 30: Dashboard v1 (between login and generator)
+Added `Dashboard.tsx` as the post-login landing: generate card, profile rows (change email, reset password, sign out), red danger zone with inline delete. Sign-out was removed from the `QuizGenerator` sidebar to consolidate account actions. Design marked "mid" by the user, kicked off the Task 38 redesign.
+
+#### Task 29: Fix `FUNCTION_INVOCATION_FAILED` on all `/api/*` routes
+Vercel's bundler was silently skipping files under `api/_lib/`, so every serverless function threw `Cannot find module '/var/task/api/_lib/auth'` at runtime. Moved the shared auth helper to `server/auth.ts` (outside `api/`, no underscore prefix) and added `.js` extensions to all relative imports so Vercel's ESM resolution doesn't choke. Lazy-init proxy around `createClient` so missing env vars surface as a handled error instead of crashing the function cold-start.
+
+#### Task 28: Tighten Gemini key rotation (proper 429 detection)
+`err.status` from the Gemini SDK is often `undefined`; the actual code lives in `err.error.code` or `err.response.data.error.code`. Rotation was falling through to 502 instead of retrying on the next key. Fix in `api/generate.ts`: check nested code paths AND regex the message for `429`, `RESOURCE_EXHAUSTED`, `quota`, `UNAUTHENTICATED`, `PERMISSION_DENIED`. Confirmed working after adding two more keys (`GEMINI_API_KEY_4/_5`) to Vercel env.
+
+### URLs
+- **Production:** https://quizmint.me
+- **GitHub:** https://github.com/Yashrajkv28/quizmint
+
+---
+
 ## Session: 2026-04-17
 
 ### Initial Request
@@ -216,6 +306,6 @@ Brand mint (`#10B981` / `#059669`) is identical to Tailwind's `emerald-500`/`600
 ### Deploy policy
 Deploys are **always manual** via `vercel --prod`. The GitHub repo is intentionally not connected to Vercel — `git push` to `main` does nothing on the hosting side. After pushing, run `vercel --prod` locally to ship.
 
-### URLs
-- **Production:** https://quizmint-blue.vercel.app
+### URLs (at time of this session)
+- **Production (auto-generated):** https://quizmint-blue.vercel.app
 - **GitHub:** https://github.com/Yashrajkv28/quizmint

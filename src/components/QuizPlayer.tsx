@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Question } from '../types';
+import { shuffleQuestionOptions } from '../lib/shuffle';
 
 interface QuizPlayerProps {
   questions: Question[];
@@ -9,6 +10,17 @@ interface QuizPlayerProps {
 
 export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  // Bumping attemptKey re-runs the shuffle on Restart / Retry.
+  const [attemptKey, setAttemptKey] = useState(0);
+
+  // Shuffle each question's options once per attempt. Stable within an attempt
+  // so the UI doesn't reshuffle on every re-render while the user is playing.
+  const displayQuestions = useMemo(
+    () => questions.map(shuffleQuestionOptions),
+    // attemptKey intentionally in deps so we re-shuffle on retry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [questions, attemptKey],
+  );
 
   const handleOptionClick = (questionIndex: number, optionId: string) => {
     if (answers[questionIndex]) return; // Already answered
@@ -17,16 +29,17 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
 
   const score = Object.keys(answers).reduce((acc, qIndexStr) => {
     const qIndex = parseInt(qIndexStr, 10);
-    if (answers[qIndex] === questions[qIndex].correctOptionId) {
+    if (answers[qIndex] === displayQuestions[qIndex].correctOptionId) {
       return acc + 1;
     }
     return acc;
   }, 0);
 
-  const progress = (Object.keys(answers).length / questions.length) * 100;
+  const progress = (Object.keys(answers).length / displayQuestions.length) * 100;
 
   const handleRetry = () => {
     setAnswers({});
+    setAttemptKey((k) => k + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -37,7 +50,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
       </div>
       
       <div className="absolute top-8 right-8 flex items-center gap-3">
-        {Object.keys(answers).length > 0 && Object.keys(answers).length < questions.length && (
+        {Object.keys(answers).length > 0 && Object.keys(answers).length < displayQuestions.length && (
           <button
             onClick={handleRetry}
             className="px-4 py-2 text-[13px] font-medium text-[var(--c-text-subtle)] hover:text-[var(--c-text)] bg-[var(--c-surface)] hover:bg-[var(--c-border)] border border-[var(--c-border)] hover:border-slate-500 rounded-lg transition-colors"
@@ -55,7 +68,7 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
       </div>
 
       <div className="max-w-[600px] w-full mx-auto space-y-24 pb-20">
-        {questions.map((q, index) => {
+        {displayQuestions.map((q, index) => {
           const selectedOptionId = answers[index];
           const isAnswered = !!selectedOptionId;
           const isCorrect = selectedOptionId === q.correctOptionId;
@@ -123,11 +136,11 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
           );
         })}
 
-        {Object.keys(answers).length === questions.length && (
+        {Object.keys(answers).length === displayQuestions.length && (
           <div className="mt-12 p-8 bg-[var(--c-surface)] border border-[var(--c-border)] rounded-xl text-center">
             <h3 className="text-[24px] font-bold text-[var(--c-text)] mb-2">Quiz Completed!</h3>
             <p className="text-[16px] text-[var(--c-text-subtle)] mb-6">
-              You scored {score} out of {questions.length} ({(score / questions.length * 100).toFixed(0)}%)
+              You scored {score} out of {displayQuestions.length} ({(score / displayQuestions.length * 100).toFixed(0)}%)
             </p>
             <div className="flex items-center justify-center gap-4">
               <button
