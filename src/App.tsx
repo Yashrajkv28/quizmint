@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, ArrowLeft } from 'lucide-react';
 import { QuizGenerator } from './components/QuizGenerator';
 import { QuizPlayer } from './components/QuizPlayer';
 import { QuizMintLogo } from './components/QuizMintLogo';
 import { LandingPage } from './components/LandingPage';
+import { LoginPage } from './components/LoginPage';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
+import { Dashboard } from './components/Dashboard';
 import { QuizData } from './types';
+import { useAuth } from './lib/auth';
 
 type Theme = 'light' | 'dark';
+type View = 'landing' | 'login' | 'dashboard' | 'app';
 
 export default function App() {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
-  const [showLanding, setShowLanding] = useState(true);
+  const [view, setView] = useState<View>('landing');
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'dark');
+  const { user, loading, isPasswordRecovery } = useAuth();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -20,30 +26,76 @@ export default function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Once the user signs in, land on the dashboard. If they sign out while inside, bounce to landing.
+  useEffect(() => {
+    if (user && view === 'login') setView('dashboard');
+    if (!user && (view === 'app' || view === 'dashboard')) {
+      setQuizData(null);
+      setView('landing');
+    }
+  }, [user, view]);
+
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  if (showLanding) {
+  const handleStart = () => {
+    if (user) setView('dashboard');
+    else setView('login');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--c-app)] text-[var(--c-text-subtle)] text-[14px]">
+        Loading…
+      </div>
+    );
+  }
+
+  if (isPasswordRecovery) {
+    return <ResetPasswordPage theme={theme} onToggleTheme={toggleTheme} />;
+  }
+
+  if (view === 'landing') {
     return (
       <LandingPage
         theme={theme}
         onToggleTheme={toggleTheme}
-        onStart={() => setShowLanding(false)}
+        onStart={handleStart}
+      />
+    );
+  }
+
+  if (view === 'login') {
+    return (
+      <LoginPage
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onBack={() => setView('landing')}
+      />
+    );
+  }
+
+  if (view === 'dashboard') {
+    return (
+      <Dashboard
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onStartGenerate={() => setView('app')}
+        onBackToLanding={() => setView('landing')}
       />
     );
   }
 
   return (
     <div className="min-h-screen bg-[var(--c-app)] text-[var(--c-text)] font-sans flex overflow-hidden">
-      {/* Sidebar */}
       <aside className="hidden lg:flex w-[280px] bg-[var(--c-surface)] border-r border-[var(--c-border)] p-6 flex-col gap-8 shrink-0">
         <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={() => {
               setQuizData(null);
-              setShowLanding(true);
+              setView('dashboard');
             }}
-            aria-label="Back to landing"
+            aria-label="Back to dashboard"
             className="text-[18px] font-bold tracking-tight flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
           >
             <QuizMintLogo size={22} />
@@ -57,6 +109,18 @@ export default function App() {
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setQuizData(null);
+            setView('dashboard');
+          }}
+          className="flex items-center gap-2 text-[12px] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] transition-colors self-start"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Dashboard</span>
+        </button>
 
         <div className="flex flex-col gap-4">
           <div className="p-4 bg-white/5 border border-[var(--c-border)] rounded-xl">
@@ -81,27 +145,35 @@ export default function App() {
           )}
         </div>
 
-        <div className="mt-auto p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-xl">
-          <p className="text-[12px] font-semibold text-emerald-500 mb-2">AI Engine Active</p>
-          <p className="text-[11px] text-[var(--c-text-subtle)] leading-relaxed">
-            Dynamically parsing and adjusting difficulty based on your dataset...
-          </p>
+        <div className="mt-auto flex flex-col gap-3">
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-xl">
+            <p className="text-[12px] font-semibold text-emerald-500 mb-2">AI Engine Active</p>
+            <p className="text-[11px] text-[var(--c-text-subtle)] leading-relaxed">
+              Dynamically parsing and adjusting difficulty based on your dataset...
+            </p>
+          </div>
+          {user && (
+            <div className="p-3 bg-[var(--c-app)] border border-[var(--c-border)] rounded-xl">
+              <p className="text-[11px] uppercase text-[var(--c-text-subtle)] tracking-wider">Signed in</p>
+              <p className="text-[12px] text-[var(--c-text-muted)] font-medium truncate">{user.email}</p>
+            </div>
+          )}
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 relative flex flex-col h-screen overflow-y-auto">
         {quizData ? (
-          <QuizPlayer 
-            questions={quizData.questions} 
-            onReset={() => setQuizData(null)} 
+          <QuizPlayer
+            questions={quizData.questions}
+            onReset={() => setQuizData(null)}
           />
         ) : (
-          <QuizGenerator 
-            onGenerate={(generatedData) => setQuizData(generatedData)} 
+          <QuizGenerator
+            onGenerate={(generatedData) => setQuizData(generatedData)}
           />
         )}
       </main>
+
     </div>
   );
 }

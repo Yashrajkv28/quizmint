@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import mammoth from 'mammoth';
-import { parseMCQs } from '../services/geminiService';
+import { parseMCQs, extractPdfText, uploadPdfForVision, GenerationMode, Difficulty, ExtractionMode } from '../services/geminiService';
 import { QuizData } from '../types';
 import { Loader2, Sparkles, UploadCloud, File as FileIcon, X, Key, ChevronDown } from 'lucide-react';
 
@@ -10,7 +10,7 @@ interface QuizGeneratorProps {
 
 export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
   const [rawText, setRawText] = useState('');
-  const [uploadedFile, setUploadedFile] = useState<{ name: string; type: 'text' | 'pdf'; data: string } | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; kind: 'txt' | 'docx' | 'pdf'; file: File } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -18,10 +18,24 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
   const [progressText, setProgressText] = useState("Parsing Dataset...");
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [mode, setMode] = useState<GenerationMode>('parse');
+  const [count, setCount] = useState(20);
+  const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
+  // Vision reads diagrams/images in PDFs; text is faster and keeps the request small.
+  const [extractionMode, setExtractionMode] = useState<ExtractionMode>('vision');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  // Parse mode has no need for the text/vision toggle — a parse-ready PDF either has
+  // selectable text (we still send it to vision, which handles both) or it doesn't.
+  // Pin it to vision so the user never has to think about it.
+  useEffect(() => {
+    if (mode === 'parse' && uploadedFile?.kind === 'pdf') {
+      setExtractionMode('vision');
+    }
+  }, [mode, uploadedFile?.kind]);
+
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB — vision path uploads to Supabase Storage; text path extracts client-side
 
   const hasTypedText = rawText.trim().length > 0 && !uploadedFile;
   const hasFile = !!uploadedFile;
@@ -38,19 +52,16 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
       if (file.type === 'text/plain') {
         const text = await file.text();
         setRawText(text);
-        setUploadedFile({ name: file.name, type: 'text', data: '' });
+        setUploadedFile({ name: file.name, kind: 'txt', file });
       } else if (file.name.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
         setRawText(result.value);
-        setUploadedFile({ name: file.name, type: 'text', data: '' });
+        setUploadedFile({ name: file.name, kind: 'docx', file });
+        // DOCX vision isn't supported — mammoth already pulled the text, so force text mode.
+        setExtractionMode('text');
       } else if (file.type === 'application/pdf') {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const base64 = (e.target?.result as string).split(',')[1];
-          setUploadedFile({ name: file.name, type: 'pdf', data: base64 });
-        };
-        reader.readAsDataURL(file);
+        setUploadedFile({ name: file.name, kind: 'pdf', file });
       } else {
         setError("Unsupported file format. Please upload TXT, DOCX, or PDF.");
       }
@@ -103,9 +114,33 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
     }, 500);
 
     try {
-      const filePart = uploadedFile?.type === 'pdf' ? { mimeType: 'application/pdf', data: uploadedFile.data } : undefined;
+      const isPdf = uploadedFile?.kind === 'pdf';
+      let storagePath: string | undefined;
+      let textForApi = rawText;
+
+      if (isPdf && uploadedFile) {
+        if (extractionMode === 'vision') {
+          // Upload to Supabase Storage; server will download, process, then delete.
+          setProgressText("Uploading document...");
+          storagePath = await uploadPdfForVision(uploadedFile.file);
+        } else {
+          // Text-only: extract in the browser so the request stays small.
+          setProgressText("Extracting text from document...");
+          textForApi = await extractPdfText(uploadedFile.file);
+        }
+      }
+
       setProgressText("Analyzing document structure...");
-      const quizData = await parseMCQs(rawText, filePart, userApiKey || undefined);
+      const quizData = await parseMCQs({
+        rawText: textForApi,
+        storagePath,
+        userApiKey: userApiKey || undefined,
+        options: {
+          mode,
+          count: mode === 'generate' ? count : undefined,
+          difficulty: mode === 'generate' ? difficulty : undefined,
+        },
+      });
       
       clearInterval(simulatedProgressInterval);
       setProgress(100);
@@ -131,7 +166,7 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
   };
 
   const removeFile = () => {
-    if (uploadedFile?.type === 'text') {
+    if (uploadedFile?.kind === 'txt' || uploadedFile?.kind === 'docx') {
       setRawText('');
     }
     setUploadedFile(null);
@@ -151,12 +186,90 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
             Initialize Knowledge Engine
           </h1>
           <p className="text-[16px] text-[var(--c-text-subtle)]">
-            Paste your raw multiple-choice questions or upload a document (TXT, DOCX, PDF). The AI will parse and construct an interactive module.
+            {mode === 'parse'
+              ? 'Paste your raw multiple-choice questions or upload a document (TXT, DOCX, PDF). The AI will parse and construct an interactive module.'
+              : 'Upload course slides, notes, or any study material (TXT, DOCX, PDF). The AI will read the content and write a brand-new quiz at the difficulty you pick.'}
           </p>
         </div>
 
         <div className="bg-[var(--c-surface)] rounded-xl border border-[var(--c-border)] overflow-hidden flex flex-col gap-6 p-6">
-          
+
+          {/* Mode toggle */}
+          <div>
+            <label className="block text-[14px] font-semibold text-emerald-500 mb-3">
+              MODE
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-[var(--c-app)] border border-[var(--c-border)] rounded-xl">
+              {([
+                { id: 'parse', label: 'Parse existing Q&A', hint: 'Source already has questions + answers' },
+                { id: 'generate', label: 'Generate from content', hint: 'Source is slides/notes, no questions yet' },
+              ] as const).map((opt) => {
+                const active = mode === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setMode(opt.id)}
+                    disabled={isGenerating}
+                    className={`text-left px-4 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${active ? 'bg-emerald-500/10 border border-emerald-500/40' : 'border border-transparent hover:bg-white/5'}`}
+                  >
+                    <div className={`text-[13px] font-semibold ${active ? 'text-emerald-500' : 'text-[var(--c-text)]'}`}>{opt.label}</div>
+                    <div className="text-[11px] text-[var(--c-text-subtle)] mt-0.5">{opt.hint}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {mode === 'generate' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label htmlFor="count" className="text-[14px] font-semibold text-emerald-500">
+                    QUESTION COUNT
+                  </label>
+                  <span className="text-[13px] font-mono text-[var(--c-text-muted)]">{count}</span>
+                </div>
+                <input
+                  id="count"
+                  type="range"
+                  min={10}
+                  max={50}
+                  step={1}
+                  value={count}
+                  onChange={(e) => setCount(Number(e.target.value))}
+                  disabled={isGenerating}
+                  className="w-full accent-emerald-500 disabled:opacity-50"
+                />
+                <div className="flex justify-between text-[11px] text-[var(--c-text-faint)] mt-1">
+                  <span>10</span>
+                  <span>50</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[14px] font-semibold text-emerald-500 mb-3">
+                  DIFFICULTY
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['Easy', 'Medium', 'Hard'] as const).map((d) => {
+                    const active = difficulty === d;
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDifficulty(d)}
+                        disabled={isGenerating}
+                        className={`px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${active ? 'bg-emerald-500/10 border border-emerald-500/40 text-emerald-500' : 'bg-[var(--c-app)] border border-[var(--c-border)] text-[var(--c-text-muted)] hover:text-[var(--c-text)]'}`}
+                      >
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Upload Dropzone */}
           <div>
             <label className="block text-[14px] font-semibold text-emerald-500 mb-3">
@@ -198,6 +311,40 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
                 )}
               </div>
             )}
+
+            {/* Extraction mode — only exposed in generate mode; parse mode always uses vision. */}
+            {mode === 'generate' && uploadedFile?.kind === 'pdf' && (
+              <div className="mt-4">
+                <label className="block text-[13px] font-semibold text-emerald-500 mb-2">
+                  EXTRACTION
+                </label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-[var(--c-app)] border border-[var(--c-border)] rounded-xl">
+                  {([
+                    { id: 'text', label: 'Text only', hint: 'Fast. Skips images.' },
+                    { id: 'vision', label: 'Text + Images', hint: 'Reads diagrams. Slower.' },
+                  ] as const).map((opt) => {
+                    const active = extractionMode === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setExtractionMode(opt.id)}
+                        disabled={isGenerating}
+                        className={`text-left px-4 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${active ? 'bg-emerald-500/10 border border-emerald-500/40' : 'border border-transparent hover:bg-white/5'}`}
+                      >
+                        <div className={`text-[13px] font-semibold ${active ? 'text-emerald-500' : 'text-[var(--c-text)]'}`}>{opt.label}</div>
+                        <div className="text-[11px] text-[var(--c-text-subtle)] mt-0.5">{opt.hint}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {uploadedFile?.kind === 'docx' && (
+              <p className="text-[11px] text-[var(--c-text-faint)] mt-3">
+                DOCX images aren't analyzed. Convert to PDF for vision extraction.
+              </p>
+            )}
           </div>
 
           <div>
@@ -210,7 +357,10 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
               className="w-full rounded-xl bg-[var(--c-app)] border border-[var(--c-border)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 p-4 font-mono text-[14px] text-[var(--c-text-muted)] resize-y outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               placeholder={hasFile
                 ? 'Remove the attached file to paste text instead.'
-                : `Or paste your text here...
+                : mode === 'generate'
+                  ? `Or paste your study material here...
+(lecture notes, chapter text, slide content — anything the AI can read to write ${count} ${difficulty.toLowerCase()} questions)`
+                  : `Or paste your text here...
 Example:
 1. What is the capital of France?
 A) London
@@ -220,7 +370,7 @@ D) Madrid
 
 Answer Key:
 1. C`}
-              value={hasFile && uploadedFile?.type === 'pdf' ? '' : rawText}
+              value={hasFile && uploadedFile?.kind === 'pdf' ? '' : rawText}
               onChange={(e) => setRawText(e.target.value)}
               disabled={isGenerating || hasFile}
             />
