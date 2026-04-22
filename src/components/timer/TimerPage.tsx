@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   Sun, Moon, ArrowLeft, Play, Pause, RotateCcw, Maximize2, Minimize2,
-  Clock as ClockIcon, Timer as TimerIcon, TrendingUp, Repeat,
+  Clock as ClockIcon, Timer as TimerIcon, TrendingUp, Repeat, Music,
 } from 'lucide-react';
 import { QuizMintLogo } from '../QuizMintLogo';
 import { secondsToParts } from '../../lib/formatTime';
 import { useTimer, TimerMode } from '../../lib/useTimer';
 import { audioService } from '../../lib/audioService';
 import FlipClockDisplay from './FlipClockDisplay';
+import { SpotifyEmbed } from './SpotifyEmbed';
+import { parseSpotifyUrl, useSpotifyEnabled, useSpotifySize, useSpotifyUrl } from '../../lib/spotify';
+import { useIsMobile } from '../../lib/useIsMobile';
 
 type Theme = 'light' | 'dark';
 
@@ -143,6 +146,32 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
   const [duration, setDuration] = useState<number>(DEFAULT_DURATION);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const [spotifyEnabledRaw] = useSpotifyEnabled();
+  const spotifyEnabled = spotifyEnabledRaw && !isMobile;
+  const [spotifySize] = useSpotifySize();
+  const [spotifyUrl, setSpotifyUrl] = useSpotifyUrl();
+  const [spotifyInput, setSpotifyInput] = useState('');
+  const [spotifyError, setSpotifyError] = useState(false);
+  const parsedSpotify = useMemo(() => parseSpotifyUrl(spotifyUrl), [spotifyUrl]);
+
+  const handleSpotifySubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const parsed = parseSpotifyUrl(spotifyInput);
+    if (!parsed) {
+      setSpotifyError(true);
+      return;
+    }
+    setSpotifyError(false);
+    setSpotifyUrl(spotifyInput.trim());
+    setSpotifyInput('');
+  };
+
+  const handleSpotifyClose = () => {
+    setSpotifyUrl('');
+    setSpotifyInput('');
+    setSpotifyError(false);
+  };
 
   const { seconds, status, hybridPhase, start, pause, resume, reset } = useTimer({
     mode,
@@ -185,7 +214,7 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
         else if (status === 'paused') resume();
       } else if (e.key === 'Escape' && document.fullscreenElement) {
         document.exitFullscreen();
-      } else if (e.key === 'f' || e.key === 'F') {
+      } else if ((e.key === 'f' || e.key === 'F') && !isMobile) {
         toggleFullscreen();
       }
     };
@@ -235,7 +264,7 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
   return (
     <div
       ref={containerRef}
-      className="min-h-screen bg-[var(--c-app)] text-[var(--c-text)] font-sans flex flex-col"
+      className="min-h-screen min-w-fit bg-[var(--c-app)] text-[var(--c-text)] font-sans flex flex-col"
     >
       {!isFullscreen && (
         <header className="flex items-center justify-between px-6 py-5 border-b border-[var(--c-border)]">
@@ -269,7 +298,7 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
 
       <main
         className={`flex-1 w-full px-6 flex flex-col items-center justify-center gap-8 ${
-          isFullscreen ? 'py-8' : 'max-w-[1100px] mx-auto py-10'
+          isFullscreen ? 'py-8' : 'max-w-[1400px] mx-auto py-10'
         }`}
       >
         {!isFullscreen && (
@@ -284,30 +313,31 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
           </div>
         )}
 
-        <div
-          className={`relative flex flex-col items-center gap-6 ${
-            isFullscreen
-              ? 'p-8 sm:p-12 md:p-16 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-[var(--c-surface)] via-[var(--c-surface)] to-emerald-500/[0.06] shadow-[0_0_60px_-12px_rgba(16,185,129,0.35)]'
-              : ''
-          }`}
-        >
-          {isFullscreen && (
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] uppercase tracking-[0.25em] text-emerald-500 font-semibold">
-              <ModeIcon className="w-3.5 h-3.5" />
-              <span>{meta.label} · {statusLabel}</span>
-            </div>
-          )}
+        <div className={`flex gap-8 ${isFullscreen ? 'items-center' : 'items-start'}`}>
+          <div
+            className={`relative flex flex-col items-center gap-6 ${
+              isFullscreen
+                ? 'p-8 sm:p-12 md:p-16 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-[var(--c-surface)] via-[var(--c-surface)] to-emerald-500/[0.06] shadow-[0_0_60px_-12px_rgba(16,185,129,0.35)]'
+                : ''
+            }`}
+          >
+            {isFullscreen && (
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] uppercase tracking-[0.25em] text-emerald-500 font-semibold">
+                <ModeIcon className="w-3.5 h-3.5" />
+                <span>{meta.label} · {statusLabel}</span>
+              </div>
+            )}
 
-          <FlipClockDisplay
-            hours={parts.h}
-            minutes={parts.m}
-            seconds={parts.s}
-            showHours={showHours}
-            color={alertColor}
-            isRunning={status === 'running'}
-          />
+            <FlipClockDisplay
+              hours={parts.h}
+              minutes={parts.m}
+              seconds={parts.s}
+              showHours={showHours}
+              color={alertColor}
+              isRunning={status === 'running'}
+            />
 
-          {isFullscreen && canStart && (
+            {isFullscreen && canStart && (
             <div className="flex items-center gap-3 mt-2">
               <button
                 type="button"
@@ -336,6 +366,15 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
               </button>
             </div>
           )}
+          </div>
+
+          {spotifyEnabled && parsedSpotify && spotifySize === 'standard' && (
+            <SpotifyEmbed
+              parsed={parsedSpotify}
+              size={spotifySize}
+              onClose={handleSpotifyClose}
+            />
+          )}
         </div>
 
         {!isFullscreen && (
@@ -361,14 +400,16 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
                 </button>
               </>
             )}
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              aria-label="Toggle fullscreen"
-              className="inline-flex items-center gap-2 p-3 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] hover:bg-[var(--c-hover)] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] transition-colors"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                aria-label="Toggle fullscreen"
+                className="inline-flex items-center gap-2 p-3 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] hover:bg-[var(--c-hover)] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] transition-colors"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
 
@@ -396,7 +437,50 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
             </div>
           </div>
         )}
+
+        {spotifyEnabled && parsedSpotify && spotifySize === 'compact' && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+            <SpotifyEmbed
+              parsed={parsedSpotify}
+              size={spotifySize}
+              onClose={handleSpotifyClose}
+            />
+          </div>
+        )}
+
+        {!isFullscreen && spotifyEnabled && !parsedSpotify && (
+          <form onSubmit={handleSpotifySubmit} className="w-full max-w-[480px] flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Music className="w-3.5 h-3.5 text-emerald-500" />
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--c-text-faint)]">Music</p>
+              <span className="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-[9px] font-bold tracking-[0.15em] uppercase text-amber-600 [.light_&]:text-amber-700">
+                Beta
+              </span>
+            </div>
+            <div className="w-full flex gap-2">
+              <input
+                type="url"
+                value={spotifyInput}
+                onChange={(e) => { setSpotifyInput(e.target.value); if (spotifyError) setSpotifyError(false); }}
+                placeholder="Paste a Spotify playlist, album, or track link"
+                className={`flex-1 rounded-xl bg-[var(--c-surface)] border px-4 py-2.5 text-[13px] text-[var(--c-text)] placeholder:text-[var(--c-text-faint)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-colors ${
+                  spotifyError ? 'border-red-500/60' : 'border-[var(--c-border)]'
+                }`}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[13px] font-medium transition-colors"
+              >
+                Load
+              </button>
+            </div>
+            {spotifyError && (
+              <p className="text-[11px] text-red-500 self-start">Not a Spotify link.</p>
+            )}
+          </form>
+        )}
       </main>
+
     </div>
   );
 }
