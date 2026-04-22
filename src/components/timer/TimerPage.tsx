@@ -337,32 +337,37 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
               isRunning={status === 'running'}
             />
 
-            {isFullscreen && canStart && (
+            {isFullscreen && (
             <div className="flex items-center gap-3 mt-2">
-              <button
-                type="button"
-                onClick={handlePrimary}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[14px] font-semibold transition-colors"
-              >
-                {status === 'running' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                {primaryLabel}
-              </button>
-              <button
-                type="button"
-                onClick={reset}
-                disabled={status === 'idle'}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[var(--c-border)] bg-[var(--c-app)] hover:bg-[var(--c-hover)] text-[14px] font-medium text-[var(--c-text)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset
-              </button>
+              {canStart && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrimary}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[14px] font-semibold transition-colors"
+                  >
+                    {status === 'running' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    {primaryLabel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={reset}
+                    disabled={status === 'idle'}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[var(--c-border)] bg-[var(--c-app)] hover:bg-[var(--c-hover)] text-[14px] font-medium text-[var(--c-text)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={toggleFullscreen}
                 aria-label="Exit fullscreen"
-                className="p-3 rounded-xl border border-[var(--c-border)] bg-[var(--c-app)] hover:bg-[var(--c-hover)] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-[var(--c-border)] bg-[var(--c-app)] hover:bg-[var(--c-hover)] text-[14px] font-medium text-[var(--c-text-subtle)] hover:text-[var(--c-text)] transition-colors"
               >
                 <Minimize2 className="w-4 h-4" />
+                Exit fullscreen
               </button>
             </div>
           )}
