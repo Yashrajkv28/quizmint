@@ -70,7 +70,18 @@ Implementation shape when revisited:
 - Scope to Countdown / Count up / Hybrid modes — skip Clock mode (pure decoration there).
 - Wrap Spotify calls in a `SpotifyClient` class with one method per endpoint so playback controls can drop in later without restructuring.
 
-## 8. Logo-home: guard against losing unsaved input
+## 8. Ambient animation synced to Spotify play-state
+"Visualizer" for the embed is impossible — cross-origin iframe, browser same-origin policy, no access to audio samples. `getDisplayMedia` would work but prompts every session and captures all tab audio (creepy). Web Playback SDK reopens OAuth + Premium, rejected in section 7.
+
+What we *can* do: honest ambient animation. Load Spotify's IFrame API (`https://open.spotify.com/embed/iframe-api/v1`) instead of a raw `<iframe>`, subscribe to `playback_update` events, and use just the play/pause state to drive a slow gradient/blob animation behind the timer.
+
+- When playing: background gradient slowly cycles (e.g., 20s loop, emerald/teal shift)
+- When paused: animation halts/fades
+- No pretending to beat-match; truthful to the data we actually have
+
+Not a visualizer — more like "vibe mode." Fits the focus-timer aesthetic. Respect `prefers-reduced-motion`. Per-user toggle or bundled into the Spotify BETA feature.
+
+## 9. Logo-home: guard against losing unsaved input
 The sidebar QuizMint logo now navigates back to the landing page (Task 27). It unconditionally wipes `quizData` and `showLanding = true`, which means a user mid-paste or mid-quiz loses their state silently.
 
 Upgrade: before navigating, check for unsaved work — non-empty `rawText` in `QuizGenerator`, an `uploadedFile`, or an in-progress `quizData` with unanswered questions — and show a confirm dialog ("Leave? Your input will be cleared."). Only nuke state on confirm. The check needs `QuizGenerator` to lift or expose its dirty state (currently local), or App can track it via a callback ref.
