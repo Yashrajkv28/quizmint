@@ -25,7 +25,14 @@ export function buildEmbedSrc(parsed: ParsedSpotify, theme: 'light' | 'dark' = '
 
 const ENABLED_KEY = 'qm-spotify-enabled';
 const URL_KEY = 'qm-spotify-url';
+const SIZE_KEY = 'qm-spotify-size';
 const EVENT_NAME = 'qm-spotify-change';
+
+export type SpotifySize = 'compact' | 'standard';
+export const SIZE_HEIGHTS: Record<SpotifySize, number> = {
+  compact: 80,
+  standard: 152,
+};
 
 function readBool(key: string): boolean {
   try { return localStorage.getItem(key) === '1'; } catch { return false; }
@@ -56,6 +63,33 @@ export function useSpotifyEnabled(): [boolean, (v: boolean) => void] {
     notify();
   };
   return [enabled, update];
+}
+
+export function useSpotifySize(): [SpotifySize, (v: SpotifySize) => void] {
+  const read = (): SpotifySize => {
+    try {
+      const v = localStorage.getItem(SIZE_KEY);
+      if (v === 'standard') return 'standard';
+      if (v === 'full') return 'standard';
+      return 'compact';
+    } catch { return 'compact'; }
+  };
+  const [size, setSize] = useState<SpotifySize>(read);
+  useEffect(() => {
+    const sync = () => setSize(read());
+    window.addEventListener(EVENT_NAME, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(EVENT_NAME, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+  const update = (v: SpotifySize) => {
+    try { localStorage.setItem(SIZE_KEY, v); } catch {}
+    setSize(v);
+    notify();
+  };
+  return [size, update];
 }
 
 export function useSpotifyUrl(): [string, (v: string) => void] {

@@ -1,20 +1,21 @@
 import { X } from 'lucide-react';
-import { buildEmbedSrc, ParsedSpotify } from '../../lib/spotify';
-
-type Theme = 'light' | 'dark';
+import { buildEmbedSrc, ParsedSpotify, SIZE_HEIGHTS, SpotifySize } from '../../lib/spotify';
 
 interface SpotifyEmbedProps {
   parsed: ParsedSpotify;
-  theme: Theme;
+  size: SpotifySize;
   onClose: () => void;
+  className?: string;
 }
 
-export function SpotifyEmbed({ parsed, theme, onClose }: SpotifyEmbedProps) {
-  const src = buildEmbedSrc(parsed, theme);
+export function SpotifyEmbed({ parsed, size, onClose, className = '' }: SpotifyEmbedProps) {
+  const src = buildEmbedSrc(parsed, 'dark');
+  const height = SIZE_HEIGHTS[size];
+  const width = size === 'compact' ? 360 : 420;
   return (
     <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[360px] rounded-2xl overflow-hidden border border-emerald-500/20 bg-[var(--c-surface)]"
-      style={{ boxShadow: '0 8px 32px -12px rgba(16,185,129,0.25), 0 4px 16px -8px rgba(0,0,0,0.4)' }}
+      className={`relative rounded-2xl overflow-hidden border border-emerald-500/20 bg-[var(--c-surface)] ${className}`}
+      style={{ width: `${width}px`, boxShadow: '0 8px 32px -12px rgba(16,185,129,0.25), 0 4px 16px -8px rgba(0,0,0,0.4)' }}
     >
       <button
         type="button"
@@ -28,7 +29,7 @@ export function SpotifyEmbed({ parsed, theme, onClose }: SpotifyEmbedProps) {
         title="Spotify mini player"
         src={src}
         width="100%"
-        height="80"
+        height={height}
         frameBorder={0}
         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
         loading="lazy"
