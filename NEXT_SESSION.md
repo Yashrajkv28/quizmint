@@ -27,7 +27,7 @@ Short brief for Claude at the start of the next session. Read this first, then `
 ### P2 — nice-to-have
 5. **A11y audit** (`future.md` §4) — focus rings, ARIA, contrast, keyboard nav
 6. **Error boundary** around the app route
-7. **Logo-home dirty-state guard** (`future.md` §8) — confirm before discarding unsaved quiz input
+7. **Logo-home dirty-state guard** (`future.md` §9) — confirm before discarding unsaved quiz input
 
 ## Things NOT to touch
 - **Auth / Supabase / Resend config** — stable, tested
