@@ -40,25 +40,74 @@
 }
 
 @keyframes progress-pulse {
-  0% { transform: translateX(-100%); opacity: 0; }
-  50% { opacity: 0.5; }
-  100% { transform: translateX(100%); opacity: 0; }
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
 }
 
 @keyframes shimmer-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .shimmer-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(16,185,129,0.08), transparent);
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.08), transparent);
   animation: shimmer-sweep 3.5s ease-in-out infinite;
 }
 
-html, body, #root {
+/* Hover-only sweep — only animates while the parent .group is hovered */
+.shimmer-hover {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.14), transparent);
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: opacity 0.2s ease;
+}
+
+.group:hover .shimmer-hover {
+  opacity: 1;
+  animation: shimmer-sweep 2.5s ease-in-out infinite;
+}
+
+/* Breathing glow — emerald box-shadow pulses while hovered */
+@keyframes mint-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.0), 0 0 20px -6px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12), 0 0 32px -4px rgba(16, 185, 129, 0.55);
+  }
+}
+.mint-breathe {
+  transition: box-shadow 0.3s ease;
+}
+.mint-breathe:hover {
+  animation: mint-breathe 2.6s ease-in-out infinite;
+}
+
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -68,4 +117,75 @@ html, body, #root {
 
 body {
   font-family: var(--font-sans);
+}
+
+/* Flip clock card faces */
+.upper-card,
+.lower-card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.upper-card {
+  top: 0;
+  transform-origin: bottom center;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  clip-path: inset(0 0 0 0);
+}
+
+.lower-card {
+  bottom: 0;
+  transform-origin: top center;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  clip-path: inset(0 0 0 0);
+}
+
+@keyframes flipTopDown {
+  0% {
+    transform: rotateX(0deg);
+  }
+
+  100% {
+    transform: rotateX(-90deg);
+  }
+}
+
+@keyframes flipBottomUp {
+  0% {
+    transform: rotateX(90deg);
+  }
+
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+@keyframes flip-blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-flip-top-down {
+  animation: flipTopDown 0.3s ease-in both;
+}
+
+.animate-flip-bottom-up {
+  animation: flipBottomUp 0.3s ease-out 0.3s both;
+}
+
+.animate-flip-blink {
+  animation: flip-blink 1s infinite;
 }

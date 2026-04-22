@@ -1,7 +1,7 @@
 import { useState, ReactNode } from 'react';
 import {
   Sun, Moon, LogOut, Sparkles, KeyRound, Mail, Trash2,
-  ArrowRight, FileText, Clock, ShieldCheck,
+  ArrowRight, FileText, Clock, ShieldCheck, Timer,
 } from 'lucide-react';
 import { QuizMintLogo } from './QuizMintLogo';
 import { AccountModal } from './AccountModal';
@@ -13,10 +13,11 @@ interface DashboardProps {
   theme: Theme;
   onToggleTheme: () => void;
   onStartGenerate: () => void;
-  onBackToLanding: () => void;
+  onStartTimer: () => void;
+  onLogoHome: () => void;
 }
 
-export function Dashboard({ theme, onToggleTheme, onStartGenerate, onBackToLanding }: DashboardProps) {
+export function Dashboard({ theme, onToggleTheme, onStartGenerate, onStartTimer, onLogoHome }: DashboardProps) {
   const { user, signOut, sendPasswordReset, deleteAccount } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
@@ -66,8 +67,8 @@ export function Dashboard({ theme, onToggleTheme, onStartGenerate, onBackToLandi
       <header className="flex items-center justify-between px-6 py-5 border-b border-[var(--c-border)]">
         <button
           type="button"
-          onClick={onBackToLanding}
-          aria-label="Back to landing"
+          onClick={onLogoHome}
+          aria-label="Home"
           className="flex items-center gap-2.5 text-[16px] font-bold tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
         >
           <QuizMintLogo size={20} />
@@ -98,7 +99,7 @@ export function Dashboard({ theme, onToggleTheme, onStartGenerate, onBackToLandi
               onClick={onStartGenerate}
               className="relative overflow-hidden w-full text-left p-8 bg-gradient-to-br from-emerald-500/[0.08] to-transparent border border-emerald-500/30 rounded-2xl group hover:border-emerald-500/60 transition-colors"
             >
-              <span className="shimmer-overlay" />
+              <span className="shimmer-hover" />
               <div className="relative flex items-start gap-5">
                 <div className="w-14 h-14 rounded-xl bg-emerald-500/15 border border-emerald-500/40 grid place-items-center shrink-0">
                   <Sparkles className="w-6 h-6 text-emerald-500" />
@@ -121,6 +122,32 @@ export function Dashboard({ theme, onToggleTheme, onStartGenerate, onBackToLandi
               <InfoChip icon={<FileText className="w-3 h-3" />} label="Sources" value="PDF, text, links" />
               <InfoChip icon={<Clock className="w-3 h-3" />} label="Speed" value="~8s per quiz" />
               <InfoChip icon={<ShieldCheck className="w-3 h-3" />} label="Privacy" value="Wiped daily" />
+            </div>
+
+            <div className="mt-6">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--c-text-faint)] mb-3">Tools</p>
+              <button
+                type="button"
+                onClick={onStartTimer}
+                className="relative overflow-hidden w-full text-left p-5 bg-gradient-to-br from-emerald-500/[0.08] to-transparent border border-emerald-500/30 rounded-2xl hover:border-emerald-500/60 transition-colors group"
+              >
+                <span className="shimmer-hover" />
+                <div className="relative flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/40 grid place-items-center shrink-0 text-emerald-500 transition-colors">
+                    <Timer className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-semibold text-[var(--c-text)]">Flip timer</p>
+                    <p className="text-[12px] text-[var(--c-text-subtle)] mt-1">
+                      Live clock, countdown, count up, hybrid. Useful for timed study.
+                    </p>
+                    <span className="inline-flex items-center gap-1.5 mt-3 text-[12px] font-medium text-[var(--c-text-subtle)] group-hover:text-emerald-500 group-hover:gap-2 transition-all">
+                      Open timer
+                      <ArrowRight className="w-3 h-3" strokeWidth={2.5} />
+                    </span>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -227,7 +254,7 @@ interface InfoChipProps {
 
 function InfoChip({ icon, label, value }: InfoChipProps) {
   return (
-    <div className="p-3.5 bg-[var(--c-surface)] border border-[var(--c-border)] rounded-xl">
+    <div className="p-3.5 bg-[var(--c-surface)] border border-emerald-500/25 rounded-xl">
       <div className="flex items-center gap-2 mb-1 text-[var(--c-text-faint)]">
         {icon}
         <p className="text-[10px] uppercase tracking-wider">{label}</p>

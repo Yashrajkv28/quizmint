@@ -3,7 +3,53 @@
 ## Session: 2026-04-22
 
 ### Summary
-Shipped auth + dashboard + custom domain + hardening. Landing → login → dashboard → generator is now the real flow. Uploads per-user to Supabase storage with a daily cleanup cron. `quizmint.me` is live, Resend SMTP handles auth emails, CSP and friends are in place. MCQ option shuffling defeats AI-bias toward a fixed correct letter.
+Shipped auth + dashboard + custom domain + hardening. Landing → login → dashboard → generator is now the real flow. Uploads per-user to Supabase storage with a daily cleanup cron. `quizmint.me` is live, Resend SMTP handles auth emails, CSP and friends are in place. MCQ option shuffling defeats AI-bias toward a fixed correct letter. Later same day: integrated a flip-clock timer (Clock / Countdown / Count up / Hybrid) ported from a personal `chronoflip` project, stripped of speech-timer IP, and reskinned to the QuizMint mint aesthetic.
+
+#### Task 48: Logo routes home based on auth
+Dashboard's QuizMint header button was booting logged-in users back to the landing page. Renamed the prop (`onBackToLanding` → `onLogoHome`) and wired it in `App.tsx` as `user ? 'dashboard' : 'landing'`. TimerPage already routed to dashboard via `onBack`, so no change needed there.
+
+#### Task 47: Hover effects on dashboard and timer menu cards
+Two distinct motions so cards feel different, not uniform:
+- **Generate** and **Flip timer** (primary CTAs): share identical emerald gradient wash + 30/60% border + hover-only `shimmer-hover` sweep (2.5s). Permanent shimmer removed — it was irritating at rest.
+- **4 mode cards** in TimerMenu: new `mint-breathe` class — emerald box-shadow pulses at rest to full emerald ring + outer glow (2.6s cycle). Radial motion, different grammar from the sweep.
+- **Info chips** (Sources / Speed / Privacy): stripped back to a static emerald border — no shimmer, no hover motion. They're metadata, not actions.
+
+Added `.shimmer-hover` and `@keyframes mint-breathe` to `src/index.css`.
+
+#### Task 46: ChronoFlip timer integration (Clock / Countdown / Count up / Hybrid)
+User dropped a `chronoflip/` folder into the repo — a personal flip-clock app — and asked for its modes to become a QuizMint tool, with the speech-timer features strictly excluded (company IP). Grep found 145 speech/event/orb references inside `FlipClockTimer.tsx` — full rewrite of the container was cheaper than surgical de-linting.
+
+**Extracted, reskinned:** `FlipDigit.tsx` and `FlipClockDisplay.tsx` → `src/components/timer/` — zinc gradients swapped for `var(--c-surface)` + `var(--c-border)`, digits in JetBrains Mono via existing `font-mono`. Hinge line re-done as a mint gradient (`from-transparent via-emerald-500/40`). Colon separators go emerald with a soft halo.
+
+**Rewritten:** `src/lib/useTimer.ts` — timestamp-based tick (`Date.now()` + refs, immune to tab throttling), 4 modes, hybrid phase handling. Clock mode reads `new Date()` on a 1s interval so system time stays authoritative (no drift). `startRef > 0` gate in `tick()` prevents a spurious finish chime firing when modes switch mid-run.
+
+**New UI:** `TimerPage.tsx` splits into `TimerMenu` (centered 4-card mode selector with breathing glow) and `TimerView` (picked-mode runner). Dashboard grew a "Tools" subsection below the Generate hero with a Flip timer card. Fullscreen wraps the digits in a rounded card with emerald-ringed shadow and a pill-style status badge; content centers vertically in both normal and fullscreen modes.
+
+**Audio, minimal:** Ported only `start` / `pause` / `alert` / `finish` chimes (Web Audio API, no external files, no speech IP). Alerts fire once at 60s and 10s remaining in countdown/hybrid-countdown phases; digits tint amber at ≤60s, red at ≤10s. No settings UI — the knob configuration was part of the speech-timer scope.
+
+**Deleted:** entire `chronoflip/` folder after extraction (types/screens/segment cards/speech docs — all gone).
+
+**Keyboard:** Space = start/pause/resume, F = fullscreen, Esc = exit fullscreen.
+
+#### Task 45: Timer plan presented and iterated
+Before writing any code, presented a 7-section plan covering scope, aesthetic mapping, file structure, and UX flow. User pushed back on three decisions:
+- "why are we rewriting hybrid?" — clarified: hybrid *logic* (~15 lines) is reused, only the 1432-line container is rewritten.
+- "why ticking?" for clock — clarified: it's live `new Date()` on every interval, not counted. OS is authoritative.
+- "no audio?" — user wanted audio A (port the chimes). Fallback to synthesized-only sounds, no file dependencies.
+
+Alerts dialed down to "minimal" per user taste ("color edits ruin the vibe") — two hard-coded thresholds, no UI.
+
+#### Task 44: Tiny cleanup in Dashboard + preset centering on TimerPage
+Presets stack was aligned left inside an `items-center` main — corrected with `flex-col items-center` wrapper and `justify-center` on the chip row.
+
+#### Task 43: Fullscreen bugs + mint branding iteration
+Two round trips with the user:
+- Fullscreen wasn't centering vertically — `justify-center` on the main container fixed it.
+- User asked for chronoflip-style bordered card in fullscreen — added emerald-ringed card (`border-emerald-500/30`, `shadow-[0_0_60px_-12px_rgba(16,185,129,0.35)]`).
+- Tried emerald gradient on digit card faces — user rejected ("digit cards are a no no"). Reverted to flat `var(--c-surface)`. Kept emerald hinge + colon dots — those were liked.
+
+#### Task 42: Phantom audio on mode switch (bug)
+Switching from Clock → Countdown played the finish chime. Root cause: tick interval effect fires with `[status, mode, tick]` deps; when mode changed, the effect re-ran with the **old** `status='running'` before the reset effect flushed `setStatus('idle')`. The stale tick computed elapsed against `startRef.current = 0`, hit `remaining <= 0`, played `finish`. Fixed by (a) gating `tick()` on `startRef.current > 0` and (b) zeroing `startRef` / `totalPausedRef` / `pausedAtRef` inside the mode-change reset effect.
 
 #### Task 41: Per-attempt option shuffling + letter re-mapping
 User flagged a real teaching-side issue: a lot of AI-generated quizzes bias the correct answer toward a specific letter, so students memorize position instead of content. Fix in `src/lib/shuffle.ts` + `QuizPlayer.tsx`:

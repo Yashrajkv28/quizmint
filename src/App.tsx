@@ -7,11 +7,12 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { Dashboard } from './components/Dashboard';
+import { TimerPage } from './components/timer/TimerPage';
 import { QuizData } from './types';
 import { useAuth } from './lib/auth';
 
 type Theme = 'light' | 'dark';
-type View = 'landing' | 'login' | 'dashboard' | 'app';
+type View = 'landing' | 'login' | 'dashboard' | 'app' | 'timer';
 
 export default function App() {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
@@ -29,7 +30,7 @@ export default function App() {
   // Once the user signs in, land on the dashboard. If they sign out while inside, bounce to landing.
   useEffect(() => {
     if (user && view === 'login') setView('dashboard');
-    if (!user && (view === 'app' || view === 'dashboard')) {
+    if (!user && (view === 'app' || view === 'dashboard' || view === 'timer')) {
       setQuizData(null);
       setView('landing');
     }
@@ -80,7 +81,18 @@ export default function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onStartGenerate={() => setView('app')}
-        onBackToLanding={() => setView('landing')}
+        onStartTimer={() => setView('timer')}
+        onLogoHome={() => setView(user ? 'dashboard' : 'landing')}
+      />
+    );
+  }
+
+  if (view === 'timer') {
+    return (
+      <TimerPage
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onBack={() => setView('dashboard')}
       />
     );
   }
