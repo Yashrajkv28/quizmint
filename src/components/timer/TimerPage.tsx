@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   Sun, Moon, ArrowLeft, Play, Pause, RotateCcw, Maximize2, Minimize2,
-  Clock as ClockIcon, Timer as TimerIcon, TrendingUp, Repeat,
+  Clock as ClockIcon, Timer as TimerIcon, TrendingUp, Repeat, Music,
 } from 'lucide-react';
 import { QuizMintLogo } from '../QuizMintLogo';
 import { secondsToParts } from '../../lib/formatTime';
 import { useTimer, TimerMode } from '../../lib/useTimer';
 import { audioService } from '../../lib/audioService';
 import FlipClockDisplay from './FlipClockDisplay';
+import { SpotifyEmbed } from './SpotifyEmbed';
+import { parseSpotifyUrl, useSpotifyEnabled, useSpotifyUrl } from '../../lib/spotify';
 
 type Theme = 'light' | 'dark';
 
@@ -143,6 +145,29 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
   const [duration, setDuration] = useState<number>(DEFAULT_DURATION);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [spotifyEnabled] = useSpotifyEnabled();
+  const [spotifyUrl, setSpotifyUrl] = useSpotifyUrl();
+  const [spotifyInput, setSpotifyInput] = useState('');
+  const [spotifyError, setSpotifyError] = useState(false);
+  const parsedSpotify = useMemo(() => parseSpotifyUrl(spotifyUrl), [spotifyUrl]);
+
+  const handleSpotifySubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const parsed = parseSpotifyUrl(spotifyInput);
+    if (!parsed) {
+      setSpotifyError(true);
+      return;
+    }
+    setSpotifyError(false);
+    setSpotifyUrl(spotifyInput.trim());
+    setSpotifyInput('');
+  };
+
+  const handleSpotifyClose = () => {
+    setSpotifyUrl('');
+    setSpotifyInput('');
+    setSpotifyError(false);
+  };
 
   const { seconds, status, hybridPhase, start, pause, resume, reset } = useTimer({
     mode,
@@ -396,7 +421,43 @@ function TimerView({ theme, onToggleTheme, onChangeMode, onBack, mode }: TimerVi
             </div>
           </div>
         )}
+
+        {!isFullscreen && spotifyEnabled && !parsedSpotify && (
+          <form onSubmit={handleSpotifySubmit} className="w-full max-w-[480px] flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Music className="w-3.5 h-3.5 text-emerald-500" />
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--c-text-faint)]">Music</p>
+              <span className="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-[9px] font-bold tracking-[0.15em] uppercase text-amber-600 [.light_&]:text-amber-700">
+                Beta
+              </span>
+            </div>
+            <div className="w-full flex gap-2">
+              <input
+                type="url"
+                value={spotifyInput}
+                onChange={(e) => { setSpotifyInput(e.target.value); if (spotifyError) setSpotifyError(false); }}
+                placeholder="Paste a Spotify playlist, album, or track link"
+                className={`flex-1 rounded-xl bg-[var(--c-surface)] border px-4 py-2.5 text-[13px] text-[var(--c-text)] placeholder:text-[var(--c-text-faint)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-colors ${
+                  spotifyError ? 'border-red-500/60' : 'border-[var(--c-border)]'
+                }`}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[13px] font-medium transition-colors"
+              >
+                Load
+              </button>
+            </div>
+            {spotifyError && (
+              <p className="text-[11px] text-red-500 self-start">Not a Spotify link.</p>
+            )}
+          </form>
+        )}
       </main>
+
+      {spotifyEnabled && parsedSpotify && (
+        <SpotifyEmbed parsed={parsedSpotify} theme={theme} onClose={handleSpotifyClose} />
+      )}
     </div>
   );
 }

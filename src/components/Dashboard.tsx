@@ -1,11 +1,12 @@
 import { useState, ReactNode } from 'react';
 import {
   Sun, Moon, LogOut, Sparkles, KeyRound, Mail, Trash2,
-  ArrowRight, FileText, Clock, ShieldCheck, Timer,
+  ArrowRight, FileText, Clock, ShieldCheck, Timer, Music,
 } from 'lucide-react';
 import { QuizMintLogo } from './QuizMintLogo';
 import { AccountModal } from './AccountModal';
 import { useAuth } from '../lib/auth';
+import { useSpotifyEnabled } from '../lib/spotify';
 
 type Theme = 'light' | 'dark';
 
@@ -19,6 +20,7 @@ interface DashboardProps {
 
 export function Dashboard({ theme, onToggleTheme, onStartGenerate, onStartTimer, onLogoHome }: DashboardProps) {
   const { user, signOut, sendPasswordReset, deleteAccount } = useAuth();
+  const [spotifyEnabled, setSpotifyEnabled] = useSpotifyEnabled();
   const [accountOpen, setAccountOpen] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
   const [resetStatus, setResetStatus] = useState<string | null>(null);
@@ -156,6 +158,39 @@ export function Dashboard({ theme, onToggleTheme, onStartGenerate, onStartTimer,
             <div className="bg-[var(--c-surface)] border border-[var(--c-border)] rounded-2xl p-5 md:sticky md:top-6">
               <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--c-text-faint)] mb-4">Account</p>
               <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3 p-2.5 rounded-lg">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 grid place-items-center text-emerald-500 shrink-0">
+                    <Music className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[13px] font-medium text-[var(--c-text)] truncate">Spotify player</p>
+                      <span className="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-[9px] font-bold tracking-[0.15em] uppercase text-amber-600 [.light_&]:text-amber-700 shrink-0">
+                        Beta
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[var(--c-text-subtle)] truncate">Music on the flip timer</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={spotifyEnabled}
+                    aria-label="Toggle Spotify mini player"
+                    onClick={() => setSpotifyEnabled(!spotifyEnabled)}
+                    className={`relative shrink-0 w-10 h-5.5 rounded-full border transition-colors ${
+                      spotifyEnabled
+                        ? 'bg-emerald-500 border-emerald-500'
+                        : 'bg-[var(--c-app)] border-[var(--c-border)]'
+                    }`}
+                    style={{ width: '40px', height: '22px' }}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-[16px] h-[16px] rounded-full bg-white shadow transition-transform ${
+                        spotifyEnabled ? 'translate-x-[18px]' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
                 <AccountRow
                   icon={<Mail className="w-3.5 h-3.5" />}
                   title="Change email"

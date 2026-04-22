@@ -51,7 +51,26 @@ Right now sharing the URL in iMessage / Slack / Twitter gives a blank preview.
 - Actual favicon PNG fallbacks for browsers that don't handle SVG favicons well
 - Telemetry: just a single Vercel Analytics counter on CTA click would answer "does anyone actually press the button"
 
-## 7. Logo-home: guard against losing unsaved input
+## 7. Spotify "Now Playing" for the flip timer
+Personal want: a small music window alongside the focus timer. Two pieces:
+
+- **Now Playing card** — floating bottom-corner card on `TimerView`: album art thumb, title + artist, next track from `/v1/me/player/queue`. Poll `/v1/me/player` every 5s (pause polling when tab hidden).
+- **Dynamic accent from album art** — extract dominant color with `node-vibrant` or `colorthief`, smoothly animate `--c-brand` / `--c-brand-deep` / glow shadows to match. Cinematic, not jarring. Respect `prefers-reduced-motion`.
+
+Blockers (why this is parked, not scheduled):
+- Spotify dev mode is capped at **25 allowlisted users** and needs each tester's email pasted into the Spotify dashboard. Extended quota mode requires a formal review.
+- Some `/v1/me/player/*` endpoints require the end user to have **Spotify Premium** — free-tier listeners get 403s on parts of this.
+- Our current CSP (`vercel.json`, Task 35) blocks it. Would need `connect-src` additions for `https://api.spotify.com` + `https://accounts.spotify.com` and `img-src` for `https://i.scdn.co`.
+
+Implementation shape when revisited:
+- OAuth 2.0 **Authorization Code + PKCE** (SPA-friendly, no client secret in browser). Callback handled by a Vercel serverless function under `api/spotify/`.
+- Store refresh tokens server-side keyed on Supabase `auth.uid` (new `spotify_tokens` table). Access token refresh runs server-side; client only sees short-lived tokens.
+- `useSpotifyNowPlaying` hook mirrors `useTimer`'s shape — owns polling + state, no UI. `NowPlayingCard` component is purely presentational.
+- Feature-flag per user (dashboard toggle, default off). Only surface the UI when the user is in the allowlist.
+- Scope to Countdown / Count up / Hybrid modes — skip Clock mode (pure decoration there).
+- Wrap Spotify calls in a `SpotifyClient` class with one method per endpoint so playback controls can drop in later without restructuring.
+
+## 8. Logo-home: guard against losing unsaved input
 The sidebar QuizMint logo now navigates back to the landing page (Task 27). It unconditionally wipes `quizData` and `showLanding = true`, which means a user mid-paste or mid-quiz loses their state silently.
 
 Upgrade: before navigating, check for unsaved work — non-empty `rawText` in `QuizGenerator`, an `uploadedFile`, or an in-progress `quizData` with unanswered questions — and show a confirm dialog ("Leave? Your input will be cleared."). Only nuke state on confirm. The check needs `QuizGenerator` to lift or expose its dirty state (currently local), or App can track it via a callback ref.
