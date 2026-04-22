@@ -1,5 +1,68 @@
 # QuizMint Development Chat Log
 
+## Session: 2026-04-23
+
+### Summary
+Shipped the Spotify "Now Playing" mini player as a BETA feature on the flip timer, after rejecting the OAuth / Web API path (25-user dev cap + Premium requirement). Embed-iframe approach — user pastes any `open.spotify.com` link, card renders inline. Full playback controls belong to Spotify, not us. Per-user dashboard toggle, Compact (80px) / Standard (152px) size picker, mobile fully gated. Along the way: widened main to 1400px + `min-w-fit` root to fix horizontal-overflow chrome breaks, and disabled the fullscreen button on mobile where `requestFullscreen()` isn't supported.
+
+#### Task 54: Malwarebytes heuristic flags fullscreen usage
+MBG blocks `quizmint.me` with "abuse of your device's full screen functionality" — pattern-matches tech-support-scam fullscreen lockers. Our usage is legit (user-initiated button + `F` shortcut, never programmatic on load), so the only real fix is a false-positive report to Malwarebytes. User deferred that, will allowlist the domain manually for now. No code change.
+
+#### Task 53: Mobile gate for Spotify + fullscreen
+User reported the fullscreen button doesn't work on any mobile browser (iOS Safari has no `Element.requestFullscreen()`, Android Chrome is partial). Also Spotify embed's interactivity (hover states, skip chevrons) is poor on touch. New `src/lib/useIsMobile.ts` — `matchMedia('(max-width: 767px)')` hook with live updates. Gated:
+- Dashboard Spotify toggle + size picker: not rendered under 768px (stored preference preserved for desktop sessions)
+- TimerView paste input + embed: same
+- Fullscreen `Maximize2` button: hidden
+- `F` keyboard shortcut: no-op on mobile
+Viewport-based not user-agent — resizing the window across 768px live-toggles the UI.
+
+#### Task 52: Deploy + merge to main
+`song-include` merged into `main` with `--no-ff`, pushed, then `vercel --prod`. Deploy policy stays manual (GitHub still not linked to Vercel).
+
+#### Task 51: Header border discontinuity + horizontal overflow
+Screenshot showed two problems at narrow viewports: (a) clock + Standard player (~1150px combined) pushes past `max-w-[1100px] mx-auto` main, causing horizontal scroll, and (b) scrolling right revealed raw background — the `<header>`'s `border-b` ended at viewport edge while content continued. Fix:
+- `max-w-[1100px]` → `max-w-[1400px]` on the main (fits clock+standard on ≥1400px viewports without scroll)
+- `min-w-fit` on the root `<div>` so the whole page (header included) stretches to natural content width. Horizontal scroll now reveals a fully styled page, border-b continues all the way, and users can scroll both ways to see the leftmost hour digits.
+
+Rejected an earlier attempt: pulling Change mode + theme toggle out of the header flow into a `fixed top-4 right-6` pill. User called it "horrible," reverted.
+
+#### Task 50: Spotify player placement iterations
+Three rounds of positioning, landed on a hybrid:
+- **Compact (80px)**: always `fixed bottom-6 left-1/2 -translate-x-1/2` — both normal and fullscreen modes. Small enough not to compete with the timer buttons.
+- **Standard (152px)**: flex sibling of the clock column, *outside* the emerald fullscreen card. `items-start` in normal mode (player top aligns with digit top edge), `items-center` in fullscreen (vertical center against the big card). Because it's the same DOM node in both modes, the iframe persists through fullscreen toggles — no playback reload.
+
+Earlier attempts rejected:
+- Fixed bottom-center only — "messes with the timer buttons in Standard/Full"
+- Absolute `xl:left-full xl:ml-8` on the clock wrapper — put the player inside the emerald card, user hated it
+- Flex-row keeping clock in center via absolute positioning — overflowed on narrow viewports
+
+Hardcoded iframe theme to `theme=0` (dark) — app theme toggle was reloading the iframe and cutting off playback. The iframe now survives both fullscreen toggle AND light/dark swap.
+
+Dropped **Full** size (352px) — tracklist-heavy variant looked bad in either placement.
+
+#### Task 49: Spotify embed feature (BETA)
+User drops a `https://open.spotify.com/<type>/<id>` link on the flip timer. Card renders a dark-themed iframe; user controls playback themselves (play / pause / next / prev / seek — full interactivity inside the iframe). Free-tier listeners get 30s previews unless they're logged into Spotify in the same browser with 3rd-party cookies allowed; Premium listeners get full tracks. We don't mediate any of that.
+
+Files:
+- `src/lib/spotify.ts` — URL parser accepts `/track/`, `/album/`, `/playlist/`, `/artist/`, `/episode/`, `/show/` (with optional `intl-xx/` prefix, query strings, and `spotify:*:id` URIs). 22-char base62 ID validation. `useSpotifyEnabled` / `useSpotifySize` / `useSpotifyUrl` hooks — localStorage-backed, cross-tab via the `storage` event and same-tab via a custom `qm-spotify-change` event.
+- `src/components/timer/SpotifyEmbed.tsx` — `relative` card with emerald ring + green-tinted drop shadow. Close `X` centered at `top-1` to avoid colliding with Spotify's own top-right controls (first attempt at top-right was ugly, user caught it).
+- `src/components/Dashboard.tsx` — first row in the account sidebar: mint Music icon, "Spotify player · BETA" (amber pill), caption "Music on the flip timer · login required on open.spotify.com" (login phrase in red, links to `open.spotify.com`). Segmented `Compact / Standard` picker appears below the toggle when enabled, tucked inside an inset bg-app pill.
+- `src/components/timer/TimerPage.tsx` — URL input below presets when toggle on and no URL saved; valid paste stashes the URL, input disappears, card appears.
+- `vercel.json` — `frame-src https://open.spotify.com` added to the CSP from Task 35.
+
+Rejected the OAuth/Web API path before starting:
+- Spotify dev mode caps at 25 allowlisted emails; extended quota needs review
+- Web Playback SDK requires Premium
+- Our CSP would need `connect-src` + `img-src` additions, not just `frame-src`
+- Color extraction from album art (cinematic theming) was the one thing OAuth offered that the embed can't do — decided not worth the cost. Parked in `future.md` section 7.
+
+### URLs
+- **Production:** https://quizmint.me
+- **GitHub:** https://github.com/Yashrajkv28/quizmint
+- **Branch:** merged `song-include` → `main`
+
+---
+
 ## Session: 2026-04-22
 
 ### Summary
