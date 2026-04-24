@@ -2,35 +2,32 @@
 
 Short brief for Claude at the start of the next session. Read this first, then `chat.md` for history and `future.md` for the parked-work index.
 
-## Current state (post 2026-04-24)
+## Current state (post 2026-04-24 afternoon)
 - **Live:** https://quizmint.me — deployed via `vercel --prod` (manual, GitHub not linked to Vercel)
-- **Self-rated:** ~8.9/10. Feature-complete but visible polish gaps remain.
-- **Shipped so far:** auth (Gmail-only signup + strong password), dashboard, 4-mode flip timer, Spotify mini player BETA, custom domain, Resend SMTP, security headers, CSP, per-user uploads w/ daily cron cleanup, auth email token-hash flow (same-domain `/auth/callback`).
+- **Self-rated:** ~9.2/10. P0+P1+P2 backlog from last brief is fully shipped.
+- **Shipped this session:** auth email token-hash flow, OG/Twitter meta, route-level code-split, mobile polish 360–480px, animated DemoCard section, global `:focus-visible`, error boundary, unsaved-work confirm on logo/back.
 
-## What to work on next (priority order)
+## What to work on next
 
-### P0 — biggest perceived-quality gap
-1. **Social preview / OG metadata** (`future.md` §5)
-   - Create `/og.png` (1200×630, Leaf Q + tagline)
-   - Add `og:title`, `og:description`, `og:image`, `og:url`, `twitter:card=summary_large_image`, `<meta name="description">`, `<link rel="canonical">` to `index.html`
-   - Verify via https://opengraph.dev or iMessage self-send
+### Blocking follow-ups
+1. **Create `/og.png`** (1200×630, Leaf Q + tagline) and drop it in `public/og.png`. Meta tags already reference it — right now social scrapers 404 on the image and fall back to text-only.
+2. **Deploy the batch.** All commits are on `main`; still need `vercel --prod` to push today's changes live.
 
-2. **Bundle code-split** (`future.md` §1)
-   - Current: `dist/assets/index-*.js` ~995 KB / 270 KB gzipped — everyone downloads it, including landing-only visitors
-   - Convert `QuizGenerator`, `QuizPlayer`, `TimerPage` imports in `App.tsx` to `React.lazy` + `<Suspense fallback=...>`
-   - Target: landing-only first paint <100 KB gzipped
-
-### P1 — polish
-3. **Mobile polish on landing** (`future.md` §2) — landing was never tested at 360–480px
-4. **Animated DemoCard** (`future.md` §3) — port the Editorial `DemoCard` from `QuizMint Home Redesign.html` lines 176–296
-
-### P2 — nice-to-have
-5. **A11y audit** (`future.md` §4) — focus rings, ARIA, contrast, keyboard nav
-6. **Error boundary** around the app route
-7. **Logo-home dirty-state guard** (`future.md` §9) — confirm before discarding unsaved quiz input
+### Parked work (see `future.md`)
+- Full a11y audit (axe-devtools + screen-reader pass) — only baseline focus ring shipped
+- Further bundle reduction (landing-only <100 KB gz; currently 128 KB gz) — would require splitting `LandingPage` or dropping `Motion`/`Lucide` bulk
+- Spotify OAuth upgrade (parked indefinitely)
+- Ambient play-state animation (`future.md`)
 
 ### Done 2026-04-24
-- ✅ **Auth email link domain mismatch** — switched all 3 Supabase templates to `{{ .TokenHash }}` flow. New `/auth/callback` page calls `supabase.auth.verifyOtp` and cleans the URL; `vercel.json` has SPA rewrite. Links now go to `quizmint.me/auth/callback?...` — no more cross-domain spam signal. Plan: `docs/superpowers/plans/2026-04-24-auth-email-callback.md`.
+- ✅ **Auth email link domain mismatch** — token-hash flow, `/auth/callback` + SPA rewrite. Plan: `docs/superpowers/plans/2026-04-24-auth-email-callback.md`.
+- ✅ **OG / Twitter / canonical / description meta** — `index.html`. Missing `/og.png` (see follow-up 1).
+- ✅ **Route-level code-split** — `QuizGenerator`, `QuizPlayer`, `TimerPage` lazy. Main bundle 998→452 KB (269→128 KB gz, ~53% drop).
+- ✅ **Mobile polish** — landing padding, letter-spacing, card density at ≤560px.
+- ✅ **Animated DemoCard** — `src/components/DemoCard.tsx`, inserted between marquee and features.
+- ✅ **A11y baseline** — global `:focus-visible` ring in `src/index.css`. A full audit is still parked.
+- ✅ **Error boundary** — `src/components/ErrorBoundary.tsx`, wraps `<App />` in `main.tsx`.
+- ✅ **Dirty-state guard** — `leaveAppRoute` in `App.tsx` confirms before discarding quiz in progress or dirty generator input. Bridge: `window.__quizmintDirty` set by `QuizGenerator`.
 
 ## Things NOT to touch
 - **Auth / Supabase / Resend config** — stable, tested
