@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         // When the user clicks the confirmation link, they come back to whichever origin they signed up on.
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     if (error) throw error;
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const sendPasswordReset = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
+      redirectTo: `${window.location.origin}/auth/callback`,
     });
     if (error) throw error;
   };
