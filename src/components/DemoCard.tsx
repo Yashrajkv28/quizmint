@@ -22,39 +22,82 @@ const dot = (c: string): React.CSSProperties => ({
   display: 'inline-block',
 });
 
+// Each quiz question: prompt, four options, and the index of the correct one.
+const QUIZ_QUESTIONS = [
+  {
+    prompt: 'Which organ is primarily responsible for regulating blood sugar levels?',
+    options: ['Liver', 'Pancreas', 'Kidney', 'Spleen'],
+    correct: 1,
+    why: 'The pancreas secretes insulin and glucagon, the two hormones that raise and lower glucose in the bloodstream.',
+    meta: 'MEDIUM · 00:47',
+    numLabel: 'QUESTION 1 OF 24',
+  },
+  {
+    prompt: "The mitochondrion's inner membrane is folded into structures called what?",
+    options: ['Cristae', 'Thylakoids', 'Stroma', 'Matrix'],
+    correct: 0,
+    why: 'The cristae increase the inner-membrane surface area, giving the electron transport chain more room to run.',
+    meta: 'MEDIUM · 00:52',
+    numLabel: 'QUESTION 2 OF 24',
+  },
+] as const;
+
 export function DemoCard() {
   const [stage, setStage] = useState<Stage>(0);
+  const [questionIdx, setQuestionIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
 
+  // Top-level stage timeline. Stage 2 is self-managed so it can walk through both questions.
   useEffect(() => {
+    if (stage === 2) return;
     const loop = setTimeout(
       () => {
         if (stage === 0) setStage(1);
-        else if (stage === 1) setStage(2);
-        else {
-          setStage(0);
-          setSelected(null);
-          setProgress(0);
-        }
+        else setStage(2);
       },
-      stage === 1 ? 2600 : 4800,
+      stage === 1 ? 5200 : 4800,
     );
     return () => clearTimeout(loop);
   }, [stage]);
 
+  // Slower progress fill during the "AI engine working" phase — reads more deliberate.
   useEffect(() => {
     if (stage !== 1) return;
     let p = 0;
     const iv = setInterval(() => {
-      p = Math.min(100, p + 7);
+      p = Math.min(100, p + 4);
       setProgress(p);
-    }, 170);
+    }, 200);
     return () => clearInterval(iv);
   }, [stage]);
 
+  // Stage 2 orchestration: for each question, pause briefly, auto-select the correct answer,
+  // hold the explanation, then either advance to the next question or loop back to stage 0.
+  useEffect(() => {
+    if (stage !== 2) return;
+    setSelected(null);
+    const q = QUIZ_QUESTIONS[questionIdx];
+    const pick = setTimeout(() => setSelected(q.correct), 1600);
+    const next = setTimeout(() => {
+      if (questionIdx < QUIZ_QUESTIONS.length - 1) {
+        setQuestionIdx((i) => i + 1);
+      } else {
+        setStage(0);
+        setQuestionIdx(0);
+        setSelected(null);
+        setProgress(0);
+      }
+    }, 4400);
+    return () => {
+      clearTimeout(pick);
+      clearTimeout(next);
+    };
+  }, [stage, questionIdx]);
+
   return (
     <div
+      aria-hidden="true"
       style={{
         background: '#15161A',
         border: '1px solid #2D2E35',
@@ -62,6 +105,8 @@ export function DemoCard() {
         overflow: 'hidden',
         boxShadow:
           '0 40px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(16,185,129,0.08)',
+        pointerEvents: 'none',
+        userSelect: 'none',
       }}
     >
       <div
@@ -240,86 +285,87 @@ export function DemoCard() {
         </div>
       )}
 
-      {stage === 2 && (
-        <div style={{ padding: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1.4, color: '#10B981' }}>QUESTION 1 OF 24</div>
-            <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'JetBrains Mono, ui-monospace, monospace' }}>
-              MEDIUM · 00:47
+      {stage === 2 && (() => {
+        const q = QUIZ_QUESTIONS[questionIdx];
+        return (
+          <div style={{ padding: 24, pointerEvents: 'none', userSelect: 'none' }} aria-hidden="true">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1.4, color: '#10B981' }}>{q.numLabel}</div>
+              <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'JetBrains Mono, ui-monospace, monospace' }}>
+                {q.meta}
+              </div>
             </div>
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.35, marginBottom: 16, color: '#fff' }}>
-            Which organ is primarily responsible for regulating blood sugar levels?
-          </div>
-          {['Liver', 'Pancreas', 'Kidney', 'Spleen'].map((opt, i) => {
-            const isCorrect = i === 1;
-            const picked = selected === i;
-            const bg = picked ? (isCorrect ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)') : '#0A0A0C';
-            const br = picked ? (isCorrect ? '#10B981' : '#EF4444') : '#2D2E35';
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setSelected(i)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '12px 14px',
-                  margin: '6px 0',
-                  background: bg,
-                  border: '1px solid ' + br,
-                  borderRadius: 10,
-                  color: '#fff',
-                  fontSize: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  cursor: 'pointer',
-                  transition: 'all .15s',
-                }}
-              >
-                <span
+            <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.35, marginBottom: 16, color: '#fff' }}>
+              {q.prompt}
+            </div>
+            {q.options.map((opt, i) => {
+              const isCorrect = i === q.correct;
+              const picked = selected === i;
+              const bg = picked ? 'rgba(16,185,129,0.15)' : '#0A0A0C';
+              const br = picked ? '#10B981' : '#2D2E35';
+              return (
+                <div
+                  key={i}
                   style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 6,
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '12px 14px',
+                    margin: '6px 0',
+                    background: bg,
                     border: '1px solid ' + br,
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontSize: 11,
-                    fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-                    color: '#94A3B8',
+                    borderRadius: 10,
+                    color: '#fff',
+                    fontSize: 14,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    transition: 'background .35s ease, border-color .35s ease',
                   }}
                 >
-                  {String.fromCharCode(65 + i)}
-                </span>
-                {opt}
-                {picked && isCorrect && (
-                  <span style={{ marginLeft: 'auto', color: '#10B981', fontSize: 12, fontWeight: 600 }}>
-                    ✓ Correct
+                  <span
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      border: '1px solid ' + br,
+                      display: 'grid',
+                      placeItems: 'center',
+                      fontSize: 11,
+                      fontFamily: 'JetBrains Mono, ui-monospace, monospace',
+                      color: '#94A3B8',
+                      transition: 'border-color .35s ease',
+                    }}
+                  >
+                    {String.fromCharCode(65 + i)}
                   </span>
-                )}
-              </button>
-            );
-          })}
-          {selected === 1 && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: '12px 14px',
-                background: 'rgba(16,185,129,0.08)',
-                border: '1px solid rgba(16,185,129,0.25)',
-                borderRadius: 10,
-                fontSize: 13,
-                color: '#A7F3D0',
-                lineHeight: 1.55,
-              }}
-            >
-              <b style={{ color: '#10B981' }}>Why:</b> The pancreas secretes insulin and glucagon, the two hormones that raise and lower glucose in the bloodstream.
-            </div>
-          )}
-        </div>
-      )}
+                  {opt}
+                  {picked && isCorrect && (
+                    <span style={{ marginLeft: 'auto', color: '#10B981', fontSize: 12, fontWeight: 600 }}>
+                      ✓ Correct
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            {selected === q.correct && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: '12px 14px',
+                  background: 'rgba(16,185,129,0.08)',
+                  border: '1px solid rgba(16,185,129,0.25)',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  color: '#A7F3D0',
+                  lineHeight: 1.55,
+                }}
+              >
+                <b style={{ color: '#10B981' }}>Why:</b> {q.why}
+              </div>
+            )}
+          </div>
+        );
+      })()}
       <style>{`@keyframes qmDemoBlink { 50% { opacity: 0 } }`}</style>
     </div>
   );
