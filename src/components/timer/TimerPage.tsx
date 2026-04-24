@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ComponentType } from 'react';
 import {
   Sun, Moon, ArrowLeft, Play, Pause, RotateCcw, Maximize2, Minimize2,
   Clock as ClockIcon, Timer as TimerIcon, TrendingUp, Repeat, Music,
@@ -23,7 +23,7 @@ interface TimerPageProps {
 const PRESETS = [5, 10, 15, 20, 30, 45, 60];
 const DEFAULT_DURATION = 5 * 60;
 
-const MODE_META: Record<TimerMode, { label: string; icon: React.ComponentType<{ className?: string }>; desc: string }> = {
+const MODE_META: Record<TimerMode, { label: string; icon: ComponentType<{ className?: string }>; desc: string }> = {
   clock:     { label: 'Clock',     icon: ClockIcon,   desc: 'Live system time, always on' },
   countdown: { label: 'Countdown', icon: TimerIcon,   desc: 'Count down to zero' },
   countup:   { label: 'Count up',  icon: TrendingUp,  desc: 'Start from zero, no limit' },
