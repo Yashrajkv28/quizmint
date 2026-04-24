@@ -6,7 +6,11 @@ begin;
 
 -- 1. Tables -----------------------------------------------------------------
 
-create type if not exists room_status as enum ('waiting', 'active', 'finished');
+-- CREATE TYPE has no IF NOT EXISTS clause in Postgres, so guard with DO block.
+do $$ begin
+  create type room_status as enum ('waiting', 'active', 'finished');
+exception when duplicate_object then null;
+end $$;
 
 create table if not exists public.rooms (
   id                  uuid primary key default gen_random_uuid(),
