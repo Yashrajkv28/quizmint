@@ -30,7 +30,7 @@ const QUIZ_QUESTIONS = [
     correct: 1,
     why: 'The pancreas secretes insulin and glucagon, the two hormones that raise and lower glucose in the bloodstream.',
     meta: 'MEDIUM · 00:47',
-    numLabel: 'QUESTION 1 OF 24',
+    numLabel: 'QUESTION 1 OF 2',
   },
   {
     prompt: "The mitochondrion's inner membrane is folded into structures called what?",
@@ -38,7 +38,7 @@ const QUIZ_QUESTIONS = [
     correct: 0,
     why: 'The cristae increase the inner-membrane surface area, giving the electron transport chain more room to run.',
     meta: 'MEDIUM · 00:52',
-    numLabel: 'QUESTION 2 OF 24',
+    numLabel: 'QUESTION 2 OF 2',
   },
 ] as const;
 
@@ -223,7 +223,7 @@ export function DemoCard() {
           {(
             [
               ['Parsing document structure', progress > 10],
-              ['Identifying 24 questions', progress > 35],
+              ['Identifying 2 questions', progress > 35],
               ['Grading difficulty (Medium)', progress > 60],
               ['Writing explanations', progress > 85],
             ] as Array<[string, boolean]>
