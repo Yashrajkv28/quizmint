@@ -119,6 +119,18 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Keyboard-only focus ring — visible for tab users, hidden for mouse/touch.
+   Uses a 2px offset outline in brand color so it stays visible on both themes. */
+:focus-visible {
+  outline: 2px solid var(--c-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Suppress the default blue ring when clicking; :focus-visible handles the rest. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Flip clock card faces */
 .upper-card,
 .lower-card {
