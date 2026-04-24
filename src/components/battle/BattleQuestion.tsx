@@ -27,6 +27,11 @@ export function BattleQuestion({
   roomId, playerId, question, questionIndex, questionStartTime, existingAnswer,
   answersReceived = 0, totalPlayers = 0,
 }: Props) {
+  // endsAt is derived from the SERVER's question_start_time, but `now` is local
+  // Date.now(). If the client's clock is skewed, the visible countdown drifts,
+  // but scoring is server-side (see api/rooms/answer.ts), so drift only affects
+  // the local timer bar — not fairness. The 500ms grace window on the server
+  // additionally forgives a half-second of network/clock slop.
   const endsAt = useMemo(
     () => (questionStartTime ? new Date(questionStartTime).getTime() + QUESTION_WINDOW_MS : Date.now() + QUESTION_WINDOW_MS),
     [questionStartTime],
