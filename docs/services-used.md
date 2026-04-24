@@ -2,7 +2,7 @@
 
 Quick reference for every external service this project depends on, what it does, which tier we're on, and when anything expires.
 
-Last updated: **2026-04-21**
+Last updated: **2026-04-25**
 
 ---
 
@@ -23,7 +23,7 @@ Last updated: **2026-04-21**
 - **Expires:** never (no paid subscription).
 - **Limits that matter:**
   - 500 MB database / 1 GB file storage (we only store transient uploads that get deleted after generation).
-  - Project auto-pauses after **7 days of inactivity** on free tier — open the dashboard periodically if the project sits idle.
+  - Project auto-pauses after **7 days of inactivity** on free tier. In practice our daily `/api/cron/cleanup-uploads` job hits Supabase Storage every 24h and counts as activity, so the pause timer never reaches 7 days as long as that cron is running. If you ever disable or remove the cleanup cron, the pause risk comes back — either re-enable it, or add a lightweight ping cron.
 - **Dashboard:** https://supabase.com/dashboard
 
 ## Resend — transactional email (SMTP for Supabase)
@@ -71,6 +71,6 @@ Last updated: **2026-04-21**
 | Date          | What expires                                   |
 |---------------|------------------------------------------------|
 | 2027-04-21    | `quizmint.me` domain (Namecheap)               |
-| when inactive | Supabase project (auto-pause after 7 days idle) |
+| when inactive | Supabase project (auto-pause after 7 days idle — mitigated by daily cleanup cron) |
 
 Everything else is free-forever as long as we stay within limits.

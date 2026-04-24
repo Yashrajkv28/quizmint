@@ -8,6 +8,10 @@ const MAX_AGE_MS = 15 * 60 * 1000;
 // Vercel Cron jobs hit this endpoint on a schedule (configured in vercel.json). Vercel
 // injects an Authorization: Bearer <CRON_SECRET> header — we verify it so nobody else
 // can trigger a bucket wipe.
+//
+// Secondary purpose: this daily Supabase Storage call doubles as a keep-alive ping that
+// resets the 7-day inactivity timer on the free tier. If you ever disable or remove
+// this cron, add a replacement ping or the project will auto-pause during quiet stretches.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   if (secret) {
