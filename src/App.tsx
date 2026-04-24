@@ -1,16 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Sun, Moon, ArrowLeft } from 'lucide-react';
-import { QuizGenerator } from './components/QuizGenerator';
-import { QuizPlayer } from './components/QuizPlayer';
 import { QuizMintLogo } from './components/QuizMintLogo';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { AuthCallback } from './components/AuthCallback';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { Dashboard } from './components/Dashboard';
-import { TimerPage } from './components/timer/TimerPage';
 import { QuizData } from './types';
 import { useAuth } from './lib/auth';
+
+// Heavy routes — not needed for landing/login, so we defer the download.
+// QuizGenerator pulls in pdf.js (~450 KB) and is the biggest win.
+const QuizGenerator = lazy(() =>
+  import('./components/QuizGenerator').then((m) => ({ default: m.QuizGenerator })),
+);
+const QuizPlayer = lazy(() =>
+  import('./components/QuizPlayer').then((m) => ({ default: m.QuizPlayer })),
+);
+const TimerPage = lazy(() =>
+  import('./components/timer/TimerPage').then((m) => ({ default: m.TimerPage })),
+);
+
+function RouteFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[var(--c-app)] text-[var(--c-text-subtle)] text-[14px]">
+      Loading…
+    </div>
+  );
+}
 
 type Theme = 'light' | 'dark';
 type View = 'landing' | 'login' | 'dashboard' | 'app' | 'timer';
@@ -94,11 +111,13 @@ export default function App() {
 
   if (view === 'timer') {
     return (
-      <TimerPage
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onBack={() => setView('dashboard')}
-      />
+      <Suspense fallback={<RouteFallback />}>
+        <TimerPage
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onBack={() => setView('dashboard')}
+        />
+      </Suspense>
     );
   }
 
@@ -179,16 +198,18 @@ export default function App() {
       </aside>
 
       <main className="flex-1 relative flex flex-col h-screen overflow-y-auto">
-        {quizData ? (
-          <QuizPlayer
-            questions={quizData.questions}
-            onReset={() => setQuizData(null)}
-          />
-        ) : (
-          <QuizGenerator
-            onGenerate={(generatedData) => setQuizData(generatedData)}
-          />
-        )}
+        <Suspense fallback={<RouteFallback />}>
+          {quizData ? (
+            <QuizPlayer
+              questions={quizData.questions}
+              onReset={() => setQuizData(null)}
+            />
+          ) : (
+            <QuizGenerator
+              onGenerate={(generatedData) => setQuizData(generatedData)}
+            />
+          )}
+        </Suspense>
       </main>
 
     </div>
