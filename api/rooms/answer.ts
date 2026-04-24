@@ -70,10 +70,13 @@ export async function POST(request: Request) {
   }
 
   if (pointsEarned > 0) {
-    const { error: scoreErr } = await supabaseAdmin
-      .from("room_players")
-      .update({ score: player.score + pointsEarned })
-      .eq("id", playerId);
+    // Atomic increment via SQL function — a read-modify-write here would lose
+    // points if two scored answers from the same player (e.g. retry, fast
+    // host advance) raced on the same row.
+    const { error: scoreErr } = await supabaseAdmin.rpc("increment_player_score", {
+      p_player_id: playerId,
+      p_delta: pointsEarned,
+    });
     if (scoreErr) console.error("score update failed", scoreErr);
   }
 

@@ -85,6 +85,14 @@ create policy "room_answers readable"
   using (true);
 
 -- No INSERT/UPDATE/DELETE policies — service role bypasses RLS.
+--
+-- NOTE ON ANSWER-KEY VISIBILITY: `rooms.quiz_data` contains `correctOptionId`
+-- for every question, and the SELECT policy above is public. A player in a
+-- room (or anyone who guesses a code) can read the key over REST before
+-- answering. This is an accepted tradeoff for the v1 classroom use case —
+-- clients need to render question text and options from the same column.
+-- If competitive integrity is ever required, split the key into a separate
+-- table without a public SELECT policy and have the server join for scoring.
 
 -- 3. Realtime publication ---------------------------------------------------
 -- Enables postgres_changes subscriptions for these tables.
@@ -102,10 +110,31 @@ alter publication supabase_realtime add table public.room_answers;
 -- Enable pg_cron (no-op if already enabled).
 create extension if not exists pg_cron;
 
-select cron.schedule(
-  'quizmint-room-cleanup',
-  '*/15 * * * *',
-  $$delete from public.rooms where created_at < now() - interval '2 hours'$$
-);
+-- cron.schedule inserts into cron.job and will error on re-run with a
+-- duplicate jobname. Wrap so the migration is idempotent.
+do $$ begin
+  perform cron.schedule(
+    'quizmint-room-cleanup',
+    '*/15 * * * *',
+    $cleanup$delete from public.rooms where created_at < now() - interval '2 hours'$cleanup$
+  );
+exception when unique_violation then null;
+end $$;
+
+-- 5. RPCs -------------------------------------------------------------------
+-- Atomic score increment — avoids the read-modify-write race in /api/rooms/answer
+-- when two concurrent scored answers hit the same player row.
+create or replace function public.increment_player_score(p_player_id uuid, p_delta int)
+returns int
+language sql
+security definer
+as $$
+  update public.room_players set score = score + p_delta where id = p_player_id
+  returning score;
+$$;
+
+-- Lock it down — only service role should call this. Revoke from anon/authenticated
+-- so a compromised anon key can't inflate scores directly.
+revoke execute on function public.increment_player_score(uuid, int) from anon, authenticated;
 
 commit;

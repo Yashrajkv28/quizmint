@@ -51,7 +51,9 @@ export default function App() {
   // Once the user signs in, land on the dashboard. If they sign out while inside, bounce to landing.
   useEffect(() => {
     if (user && view === 'login') setView('dashboard');
-    if (!user && (view === 'app' || view === 'dashboard' || view === 'timer' || view === 'battle')) {
+    // 'battle' is NOT in this guard — guests (unauthenticated users) need to stay
+    // on the battle view to join a room via a shared code.
+    if (!user && (view === 'app' || view === 'dashboard' || view === 'timer')) {
       setQuizData(null);
       setView('landing');
     }
