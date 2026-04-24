@@ -28,16 +28,17 @@ export function useBattleRoom({ roomId, roomCode, playerId, displayName }: Param
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [{ data: r, error: rErr }, { data: p }, { data: a }] = await Promise.all([
+      const [roomRes, playersRes, answersRes] = await Promise.all([
         supabase.from('rooms').select('*').eq('id', roomId).maybeSingle(),
         supabase.from('room_players').select('*').eq('room_id', roomId),
         supabase.from('room_answers').select('*').eq('room_id', roomId),
       ]);
       if (cancelled) return;
-      if (rErr) setError(rErr.message);
-      if (r) setRoom(r as BattleRoom);
-      if (p) setPlayers(p as BattlePlayer[]);
-      if (a) setAnswers(a as BattleAnswer[]);
+      const firstErr = roomRes.error || playersRes.error || answersRes.error;
+      if (firstErr) setError(firstErr.message);
+      if (roomRes.data) setRoom(roomRes.data as BattleRoom);
+      if (playersRes.data) setPlayers(playersRes.data as BattlePlayer[]);
+      if (answersRes.data) setAnswers(answersRes.data as BattleAnswer[]);
     })();
     return () => { cancelled = true; };
   }, [roomId]);
@@ -71,15 +72,9 @@ export function useBattleRoom({ roomId, roomCode, playerId, displayName }: Param
       .on('broadcast', { event: 'battle' }, ({ payload }) => {
         setLastBroadcast(payload as BattleBroadcast);
       })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          setConnected(true);
-          if (playerId && displayName) {
-            await channel.track({ playerId, displayName });
-          }
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          setConnected(false);
-        }
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setConnected(true);
+        else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setConnected(false);
       });
 
     channelRef.current = channel;
@@ -88,7 +83,24 @@ export function useBattleRoom({ roomId, roomCode, playerId, displayName }: Param
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [roomId, roomCode, playerId, displayName]);
+    // playerId/displayName intentionally excluded — those are pushed via a
+    // separate presence effect below so renaming or late player-id assignment
+    // doesn't tear down the channel and drop in-flight broadcasts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, roomCode]);
+
+  // Presence tracking ---------------------------------------------------------
+  // Runs whenever the player identity changes. track() is idempotent on the
+  // same key, so re-calling it just updates the payload without a resubscribe.
+  useEffect(() => {
+    const ch = channelRef.current;
+    if (!ch || !connected) return;
+    if (playerId && displayName) {
+      void ch.track({ playerId, displayName });
+    } else {
+      void ch.untrack();
+    }
+  }, [connected, playerId, displayName]);
 
   const broadcast = useMemo(() => async (msg: BattleBroadcast) => {
     const ch = channelRef.current;

@@ -12,8 +12,7 @@ export function BattleResults({ players, myPlayerId, onPlayAgain, onExit }: Prop
   const ranked = [...players].sort((a, b) => b.score - a.score);
   const [first, second, third] = ranked;
 
-  const Podium = ({ p, place, h }: { p: BattlePlayer | undefined; place: 1 | 2 | 3; h: string }) => {
-    if (!p) return <div className={`flex-1 ${h}`} />;
+  const Podium = ({ p, place, h }: { p: BattlePlayer; place: 1 | 2 | 3; h: string }) => {
     const icon = place === 1 ? <Crown className="w-5 h-5 text-amber-400" />
       : place === 2 ? <Medal className="w-5 h-5 text-slate-300" />
       : <Award className="w-5 h-5 text-orange-400" />;
@@ -35,10 +34,10 @@ export function BattleResults({ players, myPlayerId, onPlayAgain, onExit }: Prop
         <h2 className="text-[28px] font-semibold">Final standings</h2>
       </div>
 
-      <div className="flex items-end gap-2 h-[180px]">
-        <Podium p={second} place={2} h="h-[120px]" />
-        <Podium p={first}  place={1} h="h-[160px]" />
-        <Podium p={third}  place={3} h="h-[90px]" />
+      <div className="flex items-end justify-center gap-2 h-[180px]">
+        {second && <Podium p={second} place={2} h="h-[120px]" />}
+        {first  && <Podium p={first}  place={1} h="h-[160px]" />}
+        {third  && <Podium p={third}  place={3} h="h-[90px]" />}
       </div>
 
       <ol className="flex flex-col gap-2">

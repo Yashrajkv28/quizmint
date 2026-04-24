@@ -6,7 +6,7 @@ import { battleApi } from '../../lib/battleApi';
 
 interface Props {
   quizData: QuizData | null;
-  onHosted: (args: { roomId: string; roomCode: string; asHost: true }) => void;
+  onHosted: (args: { roomId: string; roomCode: string }) => void;
   onJoined: (args: { roomId: string; roomCode: string; playerId: string; displayName: string }) => void;
   onNeedQuiz: () => void;
 }
@@ -23,7 +23,7 @@ export function BattleEntry({ quizData, onHosted, onJoined, onNeedQuiz }: Props)
     setBusy('host'); setError(null);
     try {
       const { roomId, roomCode } = await battleApi.create(quizData);
-      onHosted({ roomId, roomCode, asHost: true });
+      onHosted({ roomId, roomCode });
     } catch (e: any) { setError(e.message); } finally { setBusy(null); }
   };
 

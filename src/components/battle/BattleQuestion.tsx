@@ -18,10 +18,14 @@ interface Props {
   questionIndex: number;
   questionStartTime: string | null;
   existingAnswer: BattleAnswer | undefined;
+  // Host-view extras — when playerId is null (host), we show a different panel.
+  answersReceived?: number;
+  totalPlayers?: number;
 }
 
 export function BattleQuestion({
   roomId, playerId, question, questionIndex, questionStartTime, existingAnswer,
+  answersReceived = 0, totalPlayers = 0,
 }: Props) {
   const endsAt = useMemo(
     () => (questionStartTime ? new Date(questionStartTime).getTime() + QUESTION_WINDOW_MS : Date.now() + QUESTION_WINDOW_MS),
@@ -65,6 +69,10 @@ export function BattleQuestion({
     ? { optionId: existingAnswer.option_id, isCorrect: existingAnswer.is_correct, points: existingAnswer.points_earned }
     : localAnswer;
 
+  // Host view: show the question + live "X/Y answered" indicator instead of a
+  // grid of disabled-looking buttons.
+  const isHostView = !playerId;
+
   return (
     <div className="w-full max-w-[820px] mx-auto px-4 py-6 flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -81,32 +89,61 @@ export function BattleQuestion({
 
       <h2 className="text-[22px] md:text-[28px] font-semibold leading-tight text-[var(--c-text)]">{question.question}</h2>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {question.options.map((opt, i) => {
-          const c = OPTION_COLORS[i % OPTION_COLORS.length];
-          const isPicked = shownAnswer?.optionId === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={locked || submitting}
-              onClick={() => answer(opt.id)}
-              className={`text-left p-5 rounded-xl border ${c.bg} ${c.border} disabled:cursor-not-allowed transition-all ${
-                isPicked ? `ring-2 ${c.ring}` : 'hover:brightness-110'
-              } ${locked && !isPicked ? 'opacity-40' : ''}`}
-            >
-              <div className="flex items-start gap-3">
-                <span className={`w-8 h-8 rounded-lg ${c.bg} border ${c.border} grid place-items-center font-bold ${c.text}`}>
-                  {opt.id}
-                </span>
-                <span className="text-[15px] text-[var(--c-text)] flex-1">{opt.text}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {isHostView ? (
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            {question.options.map((opt, i) => {
+              const c = OPTION_COLORS[i % OPTION_COLORS.length];
+              return (
+                <div
+                  key={opt.id}
+                  className={`text-left p-5 rounded-xl border ${c.bg} ${c.border}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className={`w-8 h-8 rounded-lg ${c.bg} border ${c.border} grid place-items-center font-bold ${c.text}`}>
+                      {opt.id}
+                    </span>
+                    <span className="text-[15px] text-[var(--c-text)] flex-1">{opt.text}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="p-4 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] text-center">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--c-text-faint)]">Answers received</p>
+            <p className="text-[24px] font-mono tabular-nums font-semibold text-[var(--c-text)]">
+              {answersReceived}/{totalPlayers}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2">
+          {question.options.map((opt, i) => {
+            const c = OPTION_COLORS[i % OPTION_COLORS.length];
+            const isPicked = shownAnswer?.optionId === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                disabled={locked || submitting}
+                onClick={() => answer(opt.id)}
+                className={`text-left p-5 rounded-xl border ${c.bg} ${c.border} disabled:cursor-not-allowed transition-all ${
+                  isPicked ? `ring-2 ${c.ring}` : 'hover:brightness-110'
+                } ${locked && !isPicked ? 'opacity-40' : ''}`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className={`w-8 h-8 rounded-lg ${c.bg} border ${c.border} grid place-items-center font-bold ${c.text}`}>
+                    {opt.id}
+                  </span>
+                  <span className="text-[15px] text-[var(--c-text)] flex-1">{opt.text}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {shownAnswer?.isCorrect !== undefined && (
+      {!isHostView && shownAnswer?.isCorrect !== undefined && (
         <div className={`p-4 rounded-xl border text-[14px] ${
           shownAnswer.isCorrect
             ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
@@ -116,9 +153,6 @@ export function BattleQuestion({
         </div>
       )}
 
-      {!playerId && (
-        <p className="text-[13px] text-[var(--c-text-subtle)]">You're the host — answers are disabled for you.</p>
-      )}
       {error && <p className="text-[13px] text-red-500">{error}</p>}
     </div>
   );

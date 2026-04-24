@@ -73,10 +73,14 @@ function InsideRoom({
   useEffect(() => {
     if (!room || room.status !== 'active' || !room.question_start_time) return;
     const endsAt = new Date(room.question_start_time).getTime() + QUESTION_WINDOW_MS;
+    // Participant count = rows in room_players. The host does NOT have a row,
+    // so this is the correct denominator. If the host ever becomes a player
+    // row too, update this to exclude them explicitly.
+    const participantCount = players.length;
     const tick = () => {
       const qIdx = room.current_question;
       const answered = (answersByQuestion[qIdx] || []).length;
-      if (Date.now() >= endsAt || answered >= players.length) {
+      if (Date.now() >= endsAt || (participantCount > 0 && answered >= participantCount)) {
         setPhase('reveal');
       }
     };
@@ -127,6 +131,8 @@ function InsideRoom({
         questionIndex={room.current_question}
         questionStartTime={room.question_start_time}
         existingAnswer={myAnswer}
+        answersReceived={(answersByQuestion[room.current_question] || []).length}
+        totalPlayers={players.length}
       />
     );
   }

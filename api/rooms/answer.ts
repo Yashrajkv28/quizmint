@@ -49,8 +49,14 @@ export async function POST(request: Request) {
 
   const startedAt = room.question_start_time ? new Date(room.question_start_time).getTime() : Date.now();
   const elapsed = Date.now() - startedAt;
+  // Small server-side grace window: accept answers up to 500ms past the visible
+  // timer to forgive network latency, but reject anything further out so a player
+  // who fell offline can't submit late. Late rejections are a 409.
+  const GRACE_MS = 500;
+  if (elapsed > WINDOW_MS + GRACE_MS) {
+    return Response.json({ error: "Answer window has closed." }, { status: 409 });
+  }
   const isCorrect = q.correctOptionId === optionId;
-  // Beyond the window, answer is accepted but scores 0 (if correct) — matches "unanswered = 0".
   const pointsEarned = isCorrect && elapsed <= WINDOW_MS ? calcPoints(elapsed) : 0;
 
   const { error: insErr } = await supabaseAdmin
