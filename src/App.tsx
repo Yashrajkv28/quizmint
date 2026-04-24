@@ -20,6 +20,9 @@ const QuizPlayer = lazy(() =>
 const TimerPage = lazy(() =>
   import('./components/timer/TimerPage').then((m) => ({ default: m.TimerPage })),
 );
+const BattleRoute = lazy(() =>
+  import('./components/battle/BattleRoute').then((m) => ({ default: m.BattleRoute })),
+);
 
 function RouteFallback() {
   return (
@@ -30,7 +33,7 @@ function RouteFallback() {
 }
 
 type Theme = 'light' | 'dark';
-type View = 'landing' | 'login' | 'dashboard' | 'app' | 'timer';
+type View = 'landing' | 'login' | 'dashboard' | 'app' | 'timer' | 'battle';
 
 export default function App() {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
@@ -48,7 +51,7 @@ export default function App() {
   // Once the user signs in, land on the dashboard. If they sign out while inside, bounce to landing.
   useEffect(() => {
     if (user && view === 'login') setView('dashboard');
-    if (!user && (view === 'app' || view === 'dashboard' || view === 'timer')) {
+    if (!user && (view === 'app' || view === 'dashboard' || view === 'timer' || view === 'battle')) {
       setQuizData(null);
       setView('landing');
     }
@@ -119,6 +122,7 @@ export default function App() {
         onToggleTheme={toggleTheme}
         onStartGenerate={() => setView('app')}
         onStartTimer={() => setView('timer')}
+        onStartBattle={() => setView('battle')}
         onLogoHome={() => setView(user ? 'dashboard' : 'landing')}
       />
     );
@@ -131,6 +135,18 @@ export default function App() {
           theme={theme}
           onToggleTheme={toggleTheme}
           onBack={() => setView('dashboard')}
+        />
+      </Suspense>
+    );
+  }
+
+  if (view === 'battle') {
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <BattleRoute
+          quizData={quizData}
+          onNeedQuiz={() => setView('app')}
+          onExit={() => setView('dashboard')}
         />
       </Suspense>
     );

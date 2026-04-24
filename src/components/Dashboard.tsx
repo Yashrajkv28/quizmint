@@ -1,7 +1,7 @@
 import { useState, ReactNode } from 'react';
 import {
   Sun, Moon, LogOut, Sparkles, KeyRound, Mail, Trash2,
-  ArrowRight, FileText, Clock, ShieldCheck, Timer, Music,
+  ArrowRight, FileText, Clock, ShieldCheck, Timer, Music, Swords,
 } from 'lucide-react';
 import { QuizMintLogo } from './QuizMintLogo';
 import { AccountModal } from './AccountModal';
@@ -16,10 +16,11 @@ interface DashboardProps {
   onToggleTheme: () => void;
   onStartGenerate: () => void;
   onStartTimer: () => void;
+  onStartBattle: () => void;
   onLogoHome: () => void;
 }
 
-export function Dashboard({ theme, onToggleTheme, onStartGenerate, onStartTimer, onLogoHome }: DashboardProps) {
+export function Dashboard({ theme, onToggleTheme, onStartGenerate, onStartTimer, onStartBattle, onLogoHome }: DashboardProps) {
   const { user, signOut, sendPasswordReset, deleteAccount } = useAuth();
   const [spotifyEnabled, setSpotifyEnabled] = useSpotifyEnabled();
   const [spotifySize, setSpotifySize] = useSpotifySize();
@@ -131,28 +132,56 @@ export function Dashboard({ theme, onToggleTheme, onStartGenerate, onStartTimer,
 
             <div className="mt-6">
               <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--c-text-faint)] mb-3">Tools</p>
-              <button
-                type="button"
-                onClick={onStartTimer}
-                className="relative overflow-hidden w-full text-left p-5 bg-gradient-to-br from-emerald-500/[0.08] to-transparent border border-emerald-500/30 rounded-2xl hover:border-emerald-500/60 transition-colors group"
-              >
-                <span className="shimmer-hover" />
-                <div className="relative flex items-start gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/40 grid place-items-center shrink-0 text-emerald-500 transition-colors">
-                    <Timer className="w-5 h-5" />
+              <div className="grid gap-3 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={onStartTimer}
+                  className="relative overflow-hidden w-full text-left p-5 bg-gradient-to-br from-emerald-500/[0.08] to-transparent border border-emerald-500/30 rounded-2xl hover:border-emerald-500/60 transition-colors group"
+                >
+                  <span className="shimmer-hover" />
+                  <div className="relative flex items-start gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/40 grid place-items-center shrink-0 text-emerald-500 transition-colors">
+                      <Timer className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-semibold text-[var(--c-text)]">Flip timer</p>
+                      <p className="text-[12px] text-[var(--c-text-subtle)] mt-1">
+                        Live clock, countdown, count up, hybrid. Useful for timed study.
+                      </p>
+                      <span className="inline-flex items-center gap-1.5 mt-3 text-[12px] font-medium text-[var(--c-text-subtle)] group-hover:text-emerald-500 group-hover:gap-2 transition-all">
+                        Open timer
+                        <ArrowRight className="w-3 h-3" strokeWidth={2.5} />
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-semibold text-[var(--c-text)]">Flip timer</p>
-                    <p className="text-[12px] text-[var(--c-text-subtle)] mt-1">
-                      Live clock, countdown, count up, hybrid. Useful for timed study.
-                    </p>
-                    <span className="inline-flex items-center gap-1.5 mt-3 text-[12px] font-medium text-[var(--c-text-subtle)] group-hover:text-emerald-500 group-hover:gap-2 transition-all">
-                      Open timer
-                      <ArrowRight className="w-3 h-3" strokeWidth={2.5} />
-                    </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onStartBattle}
+                  className="relative overflow-hidden w-full text-left p-5 bg-gradient-to-br from-emerald-500/[0.08] to-transparent border border-emerald-500/30 rounded-2xl hover:border-emerald-500/60 transition-colors group"
+                >
+                  <span className="shimmer-hover" />
+                  <div className="relative flex items-start gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/40 grid place-items-center shrink-0 text-emerald-500 transition-colors">
+                      <Swords className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[15px] font-semibold text-[var(--c-text)]">Battle mode</p>
+                        <span className="px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-[9px] font-bold tracking-[0.15em] uppercase text-amber-600 [.light_&]:text-amber-700 shrink-0">New</span>
+                      </div>
+                      <p className="text-[12px] text-[var(--c-text-subtle)] mt-1">
+                        Kahoot-style live battles. Host from a generated quiz, share a code, up to 20 players.
+                      </p>
+                      <span className="inline-flex items-center gap-1.5 mt-3 text-[12px] font-medium text-[var(--c-text-subtle)] group-hover:text-emerald-500 group-hover:gap-2 transition-all">
+                        Open battle
+                        <ArrowRight className="w-3 h-3" strokeWidth={2.5} />
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             </div>
           </div>
 
