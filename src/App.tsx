@@ -5,6 +5,7 @@ import { QuizPlayer } from './components/QuizPlayer';
 import { QuizMintLogo } from './components/QuizMintLogo';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
+import { AuthCallback } from './components/AuthCallback';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { Dashboard } from './components/Dashboard';
 import { TimerPage } from './components/timer/TimerPage';
@@ -42,6 +43,10 @@ export default function App() {
     if (user) setView('dashboard');
     else setView('login');
   };
+
+  if (typeof window !== 'undefined' && window.location.pathname === '/auth/callback') {
+    return <AuthCallback />;
+  }
 
   if (loading) {
     return (
