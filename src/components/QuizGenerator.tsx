@@ -40,6 +40,17 @@ export function QuizGenerator({ onGenerate }: QuizGeneratorProps) {
   const hasTypedText = rawText.trim().length > 0 && !uploadedFile;
   const hasFile = !!uploadedFile;
 
+  // Lightweight dirty-state bridge: App reads `window.__quizmintDirty` before
+  // discarding generator input (logo / Dashboard back). Reset on unmount so the
+  // flag only reflects the currently mounted generator.
+  useEffect(() => {
+    (window as unknown as { __quizmintDirty?: boolean }).__quizmintDirty =
+      rawText.trim().length > 0 || !!uploadedFile;
+    return () => {
+      (window as unknown as { __quizmintDirty?: boolean }).__quizmintDirty = false;
+    };
+  }, [rawText, uploadedFile]);
+
   const processFile = async (file: File) => {
     setError(null);
 

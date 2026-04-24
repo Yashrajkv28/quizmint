@@ -61,6 +61,21 @@ export default function App() {
     else setView('login');
   };
 
+  // Guard navigation away from the app route when there's unsaved work: either
+  // a quiz in progress (quizData set) or dirty generator input (flagged by QuizGenerator).
+  const leaveAppRoute = () => {
+    const dirtyInput = (window as unknown as { __quizmintDirty?: boolean }).__quizmintDirty === true;
+    const quizInProgress = !!quizData;
+    if (dirtyInput || quizInProgress) {
+      const msg = quizInProgress
+        ? 'Leave this quiz? Your progress will be lost.'
+        : 'Discard your current input?';
+      if (!window.confirm(msg)) return;
+    }
+    setQuizData(null);
+    setView('dashboard');
+  };
+
   if (typeof window !== 'undefined' && window.location.pathname === '/auth/callback') {
     return <AuthCallback />;
   }
@@ -127,10 +142,7 @@ export default function App() {
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => {
-              setQuizData(null);
-              setView('dashboard');
-            }}
+            onClick={leaveAppRoute}
             aria-label="Back to dashboard"
             className="text-[18px] font-bold tracking-tight flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
           >
@@ -148,10 +160,7 @@ export default function App() {
 
         <button
           type="button"
-          onClick={() => {
-            setQuizData(null);
-            setView('dashboard');
-          }}
+          onClick={leaveAppRoute}
           className="flex items-center gap-2 text-[12px] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] transition-colors self-start"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
