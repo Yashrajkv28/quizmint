@@ -1,5 +1,6 @@
 import { Sun, Moon } from 'lucide-react';
 import { QuizMintLogo } from './QuizMintLogo';
+import { DemoCard } from './DemoCard';
 
 type Theme = 'light' | 'dark';
 
@@ -25,6 +26,7 @@ export function LandingPage({ theme, onToggleTheme, onStart }: LandingPageProps)
       <LandingNav theme={theme} onToggleTheme={onToggleTheme} onStart={onStart} />
       <LandingHero onStart={onStart} />
       <LandingMarquee />
+      <LandingDemo />
       <LandingFeatures />
       <LandingCTA onStart={onStart} />
       <LandingFooter />
@@ -295,6 +297,62 @@ function LandingMarquee() {
   );
 }
 
+function LandingDemo() {
+  return (
+    <section
+      className="landing-demo"
+      style={{
+        padding: '96px 40px',
+        maxWidth: 1040,
+        margin: '0 auto',
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: 48,
+      }}
+    >
+      <div style={{ textAlign: 'center' }}>
+        <div
+          style={{
+            fontSize: 12,
+            letterSpacing: 2.4,
+            color: 'var(--c-brand)',
+            fontWeight: 700,
+            marginBottom: 16,
+          }}
+        >
+          ✦ &nbsp;LIVE DEMO
+        </div>
+        <h2
+          className="landing-demo-h2"
+          style={{
+            fontFamily: serif,
+            fontWeight: 600,
+            fontSize: 'clamp(32px, 4.5vw, 52px)',
+            letterSpacing: -1.5,
+            margin: 0,
+            lineHeight: 1.05,
+          }}
+        >
+          Paste in. <em style={{ color: 'var(--c-brand)' }}>Quiz out.</em>
+        </h2>
+        <p
+          style={{
+            marginTop: 16,
+            fontSize: 16,
+            color: 'var(--c-text-subtle)',
+            lineHeight: 1.55,
+            maxWidth: 560,
+            margin: '16px auto 0',
+          }}
+        >
+          A 30-second loop of what actually happens when you drop in a messy document.
+        </p>
+      </div>
+      <DemoCard />
+    </section>
+  );
+}
+
 function LandingFeatures() {
   const items = [
     { n: '01', t: 'It parses the mess', d: 'Numbered? Lettered? Footnoted answer key? Scan of a page? Yes, yes, yes, yes.' },
@@ -498,6 +556,7 @@ function LandingStyles() {
         .landing-feature-card p { font-size: 15px !important; }
         .landing-cta { padding: 0 20px 80px !important; }
         .landing-footer { padding: 24px 20px 36px !important; }
+        .landing-demo { padding: 64px 20px !important; gap: 32px !important; }
       }
       @media (prefers-reduced-motion: reduce) {
         .landing-floating > div { animation: none !important; }
