@@ -36,6 +36,7 @@ export function LandingPage({ theme, onToggleTheme, onStart }: LandingPageProps)
 function LandingNav({ theme, onToggleTheme, onStart }: LandingPageProps) {
   return (
     <header
+      className="landing-nav"
       style={{
         padding: '24px 40px',
         display: 'flex',
@@ -99,6 +100,7 @@ function LandingNav({ theme, onToggleTheme, onStart }: LandingPageProps) {
 function LandingHero({ onStart }: { onStart: () => void }) {
   return (
     <section
+      className="landing-hero"
       style={{
         position: 'relative',
         padding: '80px 40px 120px',
@@ -301,8 +303,9 @@ function LandingFeatures() {
     { n: '04', t: 'It stays out of the way', d: 'No account. No email. No pricing page. You paste, it quizzes. That is the whole contract.' },
   ];
   return (
-    <section style={{ padding: '120px 40px', maxWidth: 1280, margin: '0 auto' }}>
+    <section className="landing-features" style={{ padding: '120px 40px', maxWidth: 1280, margin: '0 auto' }}>
       <h2
+        className="landing-features-h2"
         style={{
           fontFamily: serif,
           fontWeight: 600,
@@ -332,6 +335,7 @@ function LandingFeatures() {
         {items.map((it) => (
           <div
             key={it.n}
+            className="landing-feature-card"
             style={{
               background: 'var(--c-app)',
               padding: 48,
@@ -377,7 +381,7 @@ function LandingFeatures() {
 
 function LandingCTA({ onStart }: { onStart: () => void }) {
   return (
-    <section style={{ padding: '0 40px 120px', maxWidth: 1280, margin: '0 auto' }}>
+    <section className="landing-cta" style={{ padding: '0 40px 120px', maxWidth: 1280, margin: '0 auto' }}>
       <div
         style={{
           background: 'var(--c-brand)',
@@ -436,6 +440,7 @@ function LandingCTA({ onStart }: { onStart: () => void }) {
 function LandingFooter() {
   return (
     <footer
+      className="landing-footer"
       style={{
         padding: '32px 40px 48px',
         borderTop: '1px solid var(--c-border)',
@@ -480,6 +485,19 @@ function LandingStyles() {
       }
       @media (max-width: 720px) {
         .landing-feature-grid { grid-template-columns: 1fr !important; }
+      }
+      @media (max-width: 560px) {
+        .landing-nav { padding: 18px 20px !important; }
+        .landing-nav button:last-child { padding: 9px 14px !important; font-size: 13px !important; }
+        .landing-hero { padding: 56px 20px 80px !important; }
+        .landing-headline { letter-spacing: -2px !important; line-height: 0.95 !important; }
+        .landing-features { padding: 72px 20px !important; }
+        .landing-features-h2 { letter-spacing: -1px !important; margin-bottom: 40px !important; }
+        .landing-feature-card { padding: 28px !important; min-height: 0 !important; }
+        .landing-feature-card h3 { font-size: 24px !important; }
+        .landing-feature-card p { font-size: 15px !important; }
+        .landing-cta { padding: 0 20px 80px !important; }
+        .landing-footer { padding: 24px 20px 36px !important; }
       }
       @media (prefers-reduced-motion: reduce) {
         .landing-floating > div { animation: none !important; }
