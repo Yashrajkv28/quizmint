@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Crown, Medal, Award } from 'lucide-react';
 import type { BattlePlayer } from '../../types/battle';
 import { battleApi } from '../../lib/battleApi';
+
+// How long the leaderboard sits between questions before auto-advancing.
+// Host's browser is the only one that fires the API call; non-hosts just
+// run a local countdown for visual feedback. If the host disconnects the
+// room stalls (and is reaped by pg_cron after 2h) — accepted tradeoff.
+const REVEAL_HOLD_MS = 6000;
 
 interface Props {
   roomId: string;
@@ -16,15 +22,29 @@ interface Props {
 export function BattleLeaderboard({
   roomId, players, isHost, isLastQuestion, currentQuestion, totalQuestions, myPlayerId,
 }: Props) {
-  const [busy, setBusy] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(Math.ceil(REVEAL_HOLD_MS / 1000));
   const [error, setError] = useState<string | null>(null);
   const ranked = [...players].sort((a, b) => b.score - a.score);
 
-  const advance = async () => {
-    setBusy(true); setError(null);
-    try { await battleApi.next(roomId); }
-    catch (e: any) { setError(e.message); setBusy(false); }
-  };
+  // Visual countdown — runs on every client so players see the same thing.
+  useEffect(() => {
+    const start = Date.now();
+    const id = window.setInterval(() => {
+      const remaining = Math.max(0, REVEAL_HOLD_MS - (Date.now() - start));
+      setSecondsLeft(Math.ceil(remaining / 1000));
+      if (remaining === 0) window.clearInterval(id);
+    }, 200);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Authoritative advance — only the host fires the API call.
+  useEffect(() => {
+    if (!isHost) return;
+    const id = window.setTimeout(() => {
+      battleApi.next(roomId).catch((e) => setError(e.message));
+    }, REVEAL_HOLD_MS);
+    return () => window.clearTimeout(id);
+  }, [isHost, roomId]);
 
   const trim = (i: number) => {
     if (i === 0) return { icon: <Crown className="w-4 h-4" />, cls: 'text-amber-400 bg-amber-500/10 border-amber-500/40' };
@@ -60,20 +80,12 @@ export function BattleLeaderboard({
         })}
       </ol>
 
-      {isHost && (
-        <>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={advance}
-            className="px-5 py-2.5 rounded-xl bg-emerald-500 text-[#0A0A0C] font-semibold text-[14px] disabled:opacity-50 hover:bg-emerald-400 transition-colors"
-          >
-            {busy ? 'Advancing…' : isLastQuestion ? 'End battle' : 'Next question'}
-          </button>
-          {error && <p className="text-[13px] text-red-500">{error}</p>}
-        </>
-      )}
-      {!isHost && <p className="text-[13px] text-[var(--c-text-subtle)]">Waiting for the host…</p>}
+      <div className="flex items-center justify-center gap-2 text-[13px] text-[var(--c-text-subtle)]">
+        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span>{isLastQuestion ? 'Final results' : 'Next question'} in {secondsLeft}s…</span>
+      </div>
+
+      {error && <p className="text-[13px] text-red-500 text-center">{error}</p>}
     </div>
   );
 }
