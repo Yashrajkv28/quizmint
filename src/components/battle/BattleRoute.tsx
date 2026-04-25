@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { QuizData } from '../../types';
 import { QUESTION_WINDOW_MS } from '../../types/battle';
 import { useAuth } from '../../lib/auth';
 import { useBattleRoom } from '../../lib/useBattleRoom';
+import { battleApi } from '../../lib/battleApi';
 import { BattleEntry } from './BattleEntry';
 import { BattleLobby } from './BattleLobby';
 import { BattleQuestion } from './BattleQuestion';
 import { BattleLeaderboard } from './BattleLeaderboard';
 import { BattleResults } from './BattleResults';
+
+// How long the host can be missing from Realtime presence before a non-host
+// participant marks the room finished. Tuned to forgive a single brief network
+// blip without making the wait painful.
+const HOST_GRACE_MS = 20_000;
 
 interface Props {
   quizData: QuizData | null;
@@ -60,7 +66,7 @@ function InsideRoom({
   onExit: () => void;
   onPlayAgain: () => void;
 }) {
-  const { room, players, answersByQuestion, connected } = useBattleRoom({
+  const { room, players, answersByQuestion, connected, presentPlayerIds } = useBattleRoom({
     roomId: session.roomId,
     roomCode: session.roomCode,
     playerId: session.playerId,
@@ -69,6 +75,29 @@ function InsideRoom({
 
   const [phase, setPhase] = useState<'question' | 'reveal'>('question');
   useEffect(() => { setPhase('question'); }, [room?.current_question]);
+
+  // Detect host disconnection via Supabase Realtime presence. The host's
+  // playerId is whichever room_players row matches room.host_id (host
+  // auto-joins as a player on create). If they vanish from presenceState
+  // for HOST_GRACE_MS, any non-host participant calls /api/rooms/abandon.
+  // The endpoint is idempotent so multiple racing callers are fine.
+  const hostPlayerId = useMemo(
+    () => players.find((p) => room && p.user_id === room.host_id)?.id ?? null,
+    [players, room],
+  );
+  const hostPresent = !!hostPlayerId && presentPlayerIds.has(hostPlayerId);
+
+  useEffect(() => {
+    if (isHostUser) return;                              // I'm the host — N/A
+    if (!room || room.status === 'finished') return;     // game's over already
+    if (!hostPlayerId) return;                           // host not in players yet
+    if (hostPresent) return;                             // host is here — nothing to do
+
+    const id = window.setTimeout(() => {
+      battleApi.abandon(session.roomId).catch(() => {/* room will reflect via realtime */});
+    }, HOST_GRACE_MS);
+    return () => window.clearTimeout(id);
+  }, [isHostUser, room, hostPlayerId, hostPresent, session.roomId]);
 
   useEffect(() => {
     if (!room || room.status !== 'active' || !room.question_start_time) return;

@@ -21,6 +21,7 @@ export function useBattleRoom({ roomId, roomCode, playerId, displayName }: Param
   const [answers, setAnswers] = useState<BattleAnswer[]>([]);
   const [connected, setConnected] = useState(false);
   const [lastBroadcast, setLastBroadcast] = useState<BattleBroadcast | null>(null);
+  const [presentPlayerIds, setPresentPlayerIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
@@ -72,6 +73,13 @@ export function useBattleRoom({ roomId, roomCode, playerId, displayName }: Param
       .on('broadcast', { event: 'battle' }, ({ payload }) => {
         setLastBroadcast(payload as BattleBroadcast);
       })
+      .on('presence', { event: 'sync' }, () => {
+        // presenceState is keyed by the channel's `presence.key` config — we
+        // pass the playerId as the key, so the keys here are playerIds of
+        // every connected participant.
+        const state = channel.presenceState();
+        setPresentPlayerIds(new Set(Object.keys(state)));
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') setConnected(true);
         else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setConnected(false);
@@ -114,5 +122,5 @@ export function useBattleRoom({ roomId, roomCode, playerId, displayName }: Param
     return byQ;
   }, [answers]);
 
-  return { room, players, answers, answersByQuestion, connected, lastBroadcast, error, broadcast };
+  return { room, players, answers, answersByQuestion, connected, lastBroadcast, presentPlayerIds, error, broadcast };
 }

@@ -19,6 +19,26 @@ interface Props {
   myPlayerId: string | null;
 }
 
+// Up to 3 retries on /api/rooms/next, with linear backoff. Server is
+// idempotent on the (roomId, fromQuestion) tuple, so duplicate calls are
+// safe — even if the first call succeeded server-side but the client never
+// got the response, subsequent calls return current state without
+// double-advancing.
+async function advanceWithRetry(roomId: string, fromQuestion: number): Promise<void> {
+  const delaysMs = [0, 1000, 2500];
+  let lastErr: unknown = null;
+  for (let i = 0; i < delaysMs.length; i++) {
+    if (delaysMs[i] > 0) await new Promise((r) => setTimeout(r, delaysMs[i]));
+    try {
+      await battleApi.next(roomId, fromQuestion);
+      return;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Failed to advance after retries.');
+}
+
 export function BattleLeaderboard({
   roomId, players, isHost, isLastQuestion, currentQuestion, totalQuestions, myPlayerId,
 }: Props) {
@@ -37,14 +57,14 @@ export function BattleLeaderboard({
     return () => window.clearInterval(id);
   }, []);
 
-  // Authoritative advance — only the host fires the API call.
+  // Authoritative advance — only the host fires the API call (with retries).
   useEffect(() => {
     if (!isHost) return;
     const id = window.setTimeout(() => {
-      battleApi.next(roomId).catch((e) => setError(e.message));
+      advanceWithRetry(roomId, currentQuestion).catch((e) => setError(e.message));
     }, REVEAL_HOLD_MS);
     return () => window.clearTimeout(id);
-  }, [isHost, roomId]);
+  }, [isHost, roomId, currentQuestion]);
 
   const trim = (i: number) => {
     if (i === 0) return { icon: <Crown className="w-4 h-4" />, cls: 'text-amber-400 bg-amber-500/10 border-amber-500/40' };

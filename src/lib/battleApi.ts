@@ -37,9 +37,11 @@ export const battleApi = {
       '/api/rooms/answer',
       { roomId, playerId, questionIndex, optionId },
     ),
-  next: (roomId: string) =>
+  next: (roomId: string, fromQuestion?: number) =>
     post<{ status: 'active' | 'finished'; currentQuestion: number }>(
       '/api/rooms/next',
-      { roomId },
+      { roomId, fromQuestion },
     ),
+  abandon: (roomId: string) =>
+    post<{ status: 'finished' }>('/api/rooms/abandon', { roomId }),
 };
