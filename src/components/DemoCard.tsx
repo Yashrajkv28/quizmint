@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 
 type Stage = 0 | 1 | 2;
 
-const btnPrimary: React.CSSProperties = {
+const btnPrimary: CSSProperties = {
   background: '#10B981',
   color: '#052E24',
   border: 'none',
@@ -14,7 +14,7 @@ const btnPrimary: React.CSSProperties = {
   letterSpacing: -0.1,
 };
 
-const dot = (c: string): React.CSSProperties => ({
+const dot = (c: string): CSSProperties => ({
   width: 10,
   height: 10,
   borderRadius: 99,
