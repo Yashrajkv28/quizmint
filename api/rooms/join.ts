@@ -1,12 +1,12 @@
-import { requireActor, supabaseAdmin } from "../../server/auth.js";
+import { requireUser, supabaseAdmin } from "../../server/auth.js";
 
 const MAX_PLAYERS = 20;
 const NAME_MIN = 1;
 const NAME_MAX = 32;
 
 export async function POST(request: Request) {
-  const actor = await requireActor(request);
-  if (actor instanceof Response) return actor;
+  const auth = await requireUser(request);
+  if (auth instanceof Response) return auth;
 
   let body: any;
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid body." }, { status: 400 }); }
@@ -31,12 +31,12 @@ export async function POST(request: Request) {
   // Reject late joiners once the battle has started — easier UX than letting players into the middle of a question.
   if (room.status === "active") return Response.json({ error: "Battle already in progress." }, { status: 409 });
 
-  // If the same actor is already in the room, return the existing player row (idempotent rejoin).
+  // If the same user is already in the room, return the existing player row (idempotent rejoin).
   const { data: existing, error: exErr } = await supabaseAdmin
     .from("room_players")
     .select("id")
     .eq("room_id", room.id)
-    .eq(actor.kind === "user" ? "user_id" : "guest_id", actor.kind === "user" ? actor.userId : actor.guestId)
+    .eq("user_id", auth.id)
     .maybeSingle();
   if (exErr) return Response.json({ error: exErr.message }, { status: 500 });
   if (existing) {
@@ -55,8 +55,8 @@ export async function POST(request: Request) {
     .from("room_players")
     .insert({
       room_id: room.id,
-      user_id: actor.kind === "user" ? actor.userId : null,
-      guest_id: actor.kind === "guest" ? actor.guestId : null,
+      user_id: auth.id,
+      guest_id: null,
       display_name: displayName,
     })
     .select("id")

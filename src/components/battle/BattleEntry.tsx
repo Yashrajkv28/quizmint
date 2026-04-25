@@ -105,9 +105,12 @@ export function BattleEntry({ quizData, onHosted, onJoined, onNeedQuiz }: Props)
             className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-app)] border border-[var(--c-border)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-[14px]"
           />
         </label>
+        {!user && (
+          <p className="text-[12px] text-amber-500">Joining requires a signed-in account.</p>
+        )}
         <button
           type="button"
-          disabled={busy === 'join' || code.length !== 6 || name.trim().length === 0}
+          disabled={!user || busy === 'join' || code.length !== 6 || name.trim().length === 0}
           onClick={join}
           className="mt-auto px-4 py-2.5 rounded-lg bg-emerald-500 text-[#0A0A0C] font-semibold text-[14px] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-400 transition-colors"
         >

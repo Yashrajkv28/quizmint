@@ -1,20 +1,20 @@
 import { supabase } from './supabase';
-import { getGuestId } from './guestId';
 import type { QuizData } from '../types';
 
-async function authHeaders(includeGuest: boolean): Promise<HeadersInit> {
+async function authHeaders(): Promise<HeadersInit> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) h['Authorization'] = `Bearer ${token}`;
-  if (!token && includeGuest) h['X-Guest-Id'] = getGuestId();
-  return h;
+  if (!token) throw new Error('Sign in to use battle mode.');
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
 }
 
-async function post<T>(path: string, body: unknown, allowGuest: boolean): Promise<T> {
+async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(path, {
     method: 'POST',
-    headers: await authHeaders(allowGuest),
+    headers: await authHeaders(),
     body: JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({} as any));
@@ -24,21 +24,19 @@ async function post<T>(path: string, body: unknown, allowGuest: boolean): Promis
 
 export const battleApi = {
   create: (quizData: QuizData) =>
-    post<{ roomId: string; roomCode: string }>('/api/rooms/create', { quizData }, false),
+    post<{ roomId: string; roomCode: string }>('/api/rooms/create', { quizData }),
   join: (code: string, displayName: string) =>
-    post<{ roomId: string; playerId: string }>('/api/rooms/join', { code, displayName }, true),
+    post<{ roomId: string; playerId: string }>('/api/rooms/join', { code, displayName }),
   start: (roomId: string) =>
-    post<{ ok: true }>('/api/rooms/start', { roomId }, false),
+    post<{ ok: true }>('/api/rooms/start', { roomId }),
   answer: (roomId: string, playerId: string, questionIndex: number, optionId: string) =>
     post<{ isCorrect: boolean; pointsEarned: number }>(
       '/api/rooms/answer',
       { roomId, playerId, questionIndex, optionId },
-      true,
     ),
   next: (roomId: string) =>
     post<{ status: 'active' | 'finished'; currentQuestion: number }>(
       '/api/rooms/next',
       { roomId },
-      false,
     ),
 };

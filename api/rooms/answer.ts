@@ -1,4 +1,4 @@
-import { requireActor, supabaseAdmin } from "../../server/auth.js";
+import { requireUser, supabaseAdmin } from "../../server/auth.js";
 
 const WINDOW_MS = 10_000;
 const BASE_POINTS = 1000;
@@ -10,8 +10,8 @@ function calcPoints(elapsedMs: number): number {
 }
 
 export async function POST(request: Request) {
-  const actor = await requireActor(request);
-  if (actor instanceof Response) return actor;
+  const auth = await requireUser(request);
+  if (auth instanceof Response) return auth;
 
   let body: any;
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid body." }, { status: 400 }); }
@@ -23,16 +23,15 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid payload." }, { status: 400 });
   }
 
-  // Player must belong to the room AND to this actor.
+  // Player must belong to the room AND to this user.
   const { data: player, error: playerErr } = await supabaseAdmin
     .from("room_players")
-    .select("id, room_id, user_id, guest_id, score")
+    .select("id, room_id, user_id, score")
     .eq("id", playerId)
     .maybeSingle();
   if (playerErr) return Response.json({ error: playerErr.message }, { status: 500 });
   if (!player || player.room_id !== roomId) return Response.json({ error: "Player not in room." }, { status: 403 });
-  if (actor.kind === "user" && player.user_id !== actor.userId) return Response.json({ error: "Not your player." }, { status: 403 });
-  if (actor.kind === "guest" && player.guest_id !== actor.guestId) return Response.json({ error: "Not your player." }, { status: 403 });
+  if (player.user_id !== auth.id) return Response.json({ error: "Not your player." }, { status: 403 });
 
   const { data: room, error: roomErr } = await supabaseAdmin
     .from("rooms")

@@ -48,32 +48,3 @@ export async function requireUser(request: Request): Promise<AuthedUser | Respon
   }
   return { id: data.user.id, email: data.user.email ?? null };
 }
-
-// Battle endpoints accept either a signed-in user (Bearer token) or a guest
-// (X-Guest-Id header with a client-generated UUID). The UUID is not trusted for
-// identity — it's only a stable handle so the same browser can't double-join a
-// room and so answers tie back to the right player row.
-
-export type Actor =
-  | { kind: "user"; userId: string; email: string | null }
-  | { kind: "guest"; guestId: string };
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export async function requireActor(request: Request): Promise<Actor | Response> {
-  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice("Bearer ".length).trim();
-    if (token) {
-      const { data, error } = await supabaseAdmin.auth.getUser(token);
-      if (!error && data.user) {
-        return { kind: "user", userId: data.user.id, email: data.user.email ?? null };
-      }
-    }
-  }
-  const guestId = request.headers.get("x-guest-id") || request.headers.get("X-Guest-Id");
-  if (guestId && UUID_RE.test(guestId)) {
-    return { kind: "guest", guestId };
-  }
-  return Response.json({ error: "Not authenticated." }, { status: 401 });
-}
