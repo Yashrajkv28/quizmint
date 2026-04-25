@@ -18,8 +18,8 @@ interface Props {
 interface Session {
   roomId: string;
   roomCode: string;
-  playerId: string | null;
-  displayName: string | null;
+  playerId: string;
+  displayName: string;
   asHost: boolean;
 }
 
@@ -31,8 +31,8 @@ export function BattleRoute({ quizData, onNeedQuiz, onExit }: Props) {
     return (
       <BattleEntry
         quizData={quizData}
-        onHosted={({ roomId, roomCode }) =>
-          setSession({ roomId, roomCode, playerId: null, displayName: null, asHost: true })
+        onHosted={({ roomId, roomCode, playerId, displayName }) =>
+          setSession({ roomId, roomCode, playerId, displayName, asHost: true })
         }
         onJoined={({ roomId, roomCode, playerId, displayName }) =>
           setSession({ roomId, roomCode, playerId, displayName, asHost: false })
@@ -118,9 +118,9 @@ function InsideRoom({
 
   // status === 'active'
   const q = room.quiz_data.questions[room.current_question];
-  const myAnswer = session.playerId
-    ? (answersByQuestion[room.current_question] || []).find((a) => a.player_id === session.playerId)
-    : undefined;
+  const myAnswer = (answersByQuestion[room.current_question] || []).find(
+    (a) => a.player_id === session.playerId,
+  );
 
   if (phase === 'question' && q) {
     return (

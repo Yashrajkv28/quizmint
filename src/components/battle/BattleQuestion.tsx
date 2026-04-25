@@ -13,19 +13,20 @@ const OPTION_COLORS = [
 
 interface Props {
   roomId: string;
-  playerId: string | null;
+  playerId: string;
   question: Question;
   questionIndex: number;
   questionStartTime: string | null;
   existingAnswer: BattleAnswer | undefined;
-  // Host-view extras — when playerId is null (host), we show a different panel.
-  answersReceived?: number;
-  totalPlayers?: number;
+  // Live "X / Y answered" counter — shown to everyone so players can see
+  // how many of their opponents are still deciding.
+  answersReceived: number;
+  totalPlayers: number;
 }
 
 export function BattleQuestion({
   roomId, playerId, question, questionIndex, questionStartTime, existingAnswer,
-  answersReceived = 0, totalPlayers = 0,
+  answersReceived, totalPlayers,
 }: Props) {
   // endsAt is derived from the SERVER's question_start_time, but `now` is local
   // Date.now(). If the client's clock is skewed, the visible countdown drifts,
@@ -53,10 +54,10 @@ export function BattleQuestion({
 
   const remaining = Math.max(0, endsAt - now);
   const pct = Math.max(0, Math.min(100, (remaining / QUESTION_WINDOW_MS) * 100));
-  const locked = !!localAnswer || !!existingAnswer || remaining === 0 || !playerId;
+  const locked = !!localAnswer || !!existingAnswer || remaining === 0;
 
   const answer = async (optionId: string) => {
-    if (locked || !playerId) return;
+    if (locked) return;
     setSubmitting(true); setError(null);
     setLocalAnswer({ optionId });
     try {
@@ -74,15 +75,15 @@ export function BattleQuestion({
     ? { optionId: existingAnswer.option_id, isCorrect: existingAnswer.is_correct, points: existingAnswer.points_earned }
     : localAnswer;
 
-  // Host view: show the question + live "X/Y answered" indicator instead of a
-  // grid of disabled-looking buttons.
-  const isHostView = !playerId;
-
   return (
     <div className="w-full max-w-[820px] mx-auto px-4 py-6 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--c-text-faint)]">Question {questionIndex + 1}</p>
-        <p className="text-[13px] font-mono tabular-nums text-[var(--c-text-subtle)]">{(remaining / 1000).toFixed(1)}s</p>
+        <div className="flex items-center gap-3 text-[13px] font-mono tabular-nums text-[var(--c-text-subtle)]">
+          <span>{answersReceived}/{totalPlayers} answered</span>
+          <span className="text-[var(--c-text-faint)]">·</span>
+          <span>{(remaining / 1000).toFixed(1)}s</span>
+        </div>
       </div>
 
       <div className="h-1.5 w-full bg-[var(--c-border)] rounded-full overflow-hidden">
@@ -94,61 +95,32 @@ export function BattleQuestion({
 
       <h2 className="text-[22px] md:text-[28px] font-semibold leading-tight text-[var(--c-text)]">{question.question}</h2>
 
-      {isHostView ? (
-        <div className="flex flex-col gap-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            {question.options.map((opt, i) => {
-              const c = OPTION_COLORS[i % OPTION_COLORS.length];
-              return (
-                <div
-                  key={opt.id}
-                  className={`text-left p-5 rounded-xl border ${c.bg} ${c.border}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className={`w-8 h-8 rounded-lg ${c.bg} border ${c.border} grid place-items-center font-bold ${c.text}`}>
-                      {opt.id}
-                    </span>
-                    <span className="text-[15px] text-[var(--c-text)] flex-1">{opt.text}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="p-4 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] text-center">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--c-text-faint)]">Answers received</p>
-            <p className="text-[24px] font-mono tabular-nums font-semibold text-[var(--c-text)]">
-              {answersReceived}/{totalPlayers}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {question.options.map((opt, i) => {
-            const c = OPTION_COLORS[i % OPTION_COLORS.length];
-            const isPicked = shownAnswer?.optionId === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={locked || submitting}
-                onClick={() => answer(opt.id)}
-                className={`text-left p-5 rounded-xl border ${c.bg} ${c.border} disabled:cursor-not-allowed transition-all ${
-                  isPicked ? `ring-2 ${c.ring}` : 'hover:brightness-110'
-                } ${locked && !isPicked ? 'opacity-40' : ''}`}
-              >
-                <div className="flex items-start gap-3">
-                  <span className={`w-8 h-8 rounded-lg ${c.bg} border ${c.border} grid place-items-center font-bold ${c.text}`}>
-                    {opt.id}
-                  </span>
-                  <span className="text-[15px] text-[var(--c-text)] flex-1">{opt.text}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="grid gap-3 md:grid-cols-2">
+        {question.options.map((opt, i) => {
+          const c = OPTION_COLORS[i % OPTION_COLORS.length];
+          const isPicked = shownAnswer?.optionId === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={locked || submitting}
+              onClick={() => answer(opt.id)}
+              className={`text-left p-5 rounded-xl border ${c.bg} ${c.border} disabled:cursor-not-allowed transition-all ${
+                isPicked ? `ring-2 ${c.ring}` : 'hover:brightness-110'
+              } ${locked && !isPicked ? 'opacity-40' : ''}`}
+            >
+              <div className="flex items-start gap-3">
+                <span className={`w-8 h-8 rounded-lg ${c.bg} border ${c.border} grid place-items-center font-bold ${c.text}`}>
+                  {opt.id}
+                </span>
+                <span className="text-[15px] text-[var(--c-text)] flex-1">{opt.text}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-      {!isHostView && shownAnswer?.isCorrect !== undefined && (
+      {shownAnswer?.isCorrect !== undefined && (
         <div className={`p-4 rounded-xl border text-[14px] ${
           shownAnswer.isCorrect
             ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'

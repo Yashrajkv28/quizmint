@@ -23,8 +23,11 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const battleApi = {
-  create: (quizData: QuizData) =>
-    post<{ roomId: string; roomCode: string }>('/api/rooms/create', { quizData }),
+  create: (quizData: QuizData, displayName: string) =>
+    post<{ roomId: string; roomCode: string; playerId: string }>(
+      '/api/rooms/create',
+      { quizData, displayName },
+    ),
   join: (code: string, displayName: string) =>
     post<{ roomId: string; playerId: string }>('/api/rooms/join', { code, displayName }),
   start: (roomId: string) =>

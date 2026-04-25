@@ -2,6 +2,8 @@ import { requireUser, supabaseAdmin } from "../../server/auth.js";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L for legibility
 const CODE_LEN = 6;
+const NAME_MIN = 1;
+const NAME_MAX = 32;
 
 function genCode(): string {
   let out = "";
@@ -34,10 +36,15 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid quizData." }, { status: 400 });
   }
 
+  const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : "";
+  if (displayName.length < NAME_MIN || displayName.length > NAME_MAX) {
+    return Response.json({ error: `Display name must be ${NAME_MIN}-${NAME_MAX} characters.` }, { status: 400 });
+  }
+
   // Retry up to 5x on (extremely unlikely) code collision.
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = genCode();
-    const { data, error } = await supabaseAdmin
+    const { data: room, error: roomErr } = await supabaseAdmin
       .from("rooms")
       .insert({
         code,
@@ -48,14 +55,33 @@ export async function POST(request: Request) {
       })
       .select("id, code")
       .single();
-    if (!error && data) {
-      return Response.json({ roomId: data.id, roomCode: data.code });
+    if (roomErr || !room) {
+      // 23505 = unique_violation on code; retry. Anything else is a real failure.
+      if ((roomErr as any)?.code === "23505") continue;
+      console.error("create room failed", roomErr);
+      return Response.json({ error: roomErr?.message || "Could not create room." }, { status: 500 });
     }
-    // 23505 = unique_violation — try a new code; anything else is a real failure.
-    if ((error as any)?.code !== "23505") {
-      console.error("create room failed", error);
-      return Response.json({ error: error?.message || "Could not create room." }, { status: 500 });
+
+    // Host auto-joins as a player so they can compete and appear on the
+    // leaderboard. Host-only "spectator" mode would be a separate feature.
+    const { data: player, error: playerErr } = await supabaseAdmin
+      .from("room_players")
+      .insert({
+        room_id: room.id,
+        user_id: auth.id,
+        guest_id: null,
+        display_name: displayName,
+      })
+      .select("id")
+      .single();
+    if (playerErr || !player) {
+      // Roll back the room so we don't leave an orphan if the player insert failed.
+      await supabaseAdmin.from("rooms").delete().eq("id", room.id);
+      console.error("create host player failed", playerErr);
+      return Response.json({ error: playerErr?.message || "Could not create host player." }, { status: 500 });
     }
+
+    return Response.json({ roomId: room.id, roomCode: room.code, playerId: player.id });
   }
   return Response.json({ error: "Could not allocate room code." }, { status: 500 });
 }
