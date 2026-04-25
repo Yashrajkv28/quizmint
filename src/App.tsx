@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Sun, Moon, ArrowLeft } from 'lucide-react';
 import { QuizMintLogo } from './components/QuizMintLogo';
+import { QuizMintSplash } from './components/QuizMintSplash';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { AuthCallback } from './components/AuthCallback';
@@ -24,12 +25,12 @@ const BattleRoute = lazy(() =>
   import('./components/battle/BattleRoute').then((m) => ({ default: m.BattleRoute })),
 );
 
-function RouteFallback() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--c-app)] text-[var(--c-text-subtle)] text-[14px]">
-      Loading…
-    </div>
-  );
+// Reuse the boot splash for lazy-route fallbacks so the loading state matches
+// what the user sees on a hard refresh. minDurationMs is set very high so the
+// splash never auto-fades on its own — Suspense unmounts it the moment the
+// chunk resolves, which is the only signal we want to drive dismissal here.
+function RouteFallback({ theme }: { theme: 'light' | 'dark' }) {
+  return <QuizMintSplash theme={theme} minDurationMs={3_600_000} />;
 }
 
 type Theme = 'light' | 'dark';
@@ -84,11 +85,7 @@ export default function App() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--c-app)] text-[var(--c-text-subtle)] text-[14px]">
-        Loading…
-      </div>
-    );
+    return <RouteFallback theme={theme} />;
   }
 
   if (isPasswordRecovery) {
@@ -130,7 +127,7 @@ export default function App() {
 
   if (view === 'timer') {
     return (
-      <Suspense fallback={<RouteFallback />}>
+      <Suspense fallback={<RouteFallback theme={theme} />}>
         <TimerPage
           theme={theme}
           onToggleTheme={toggleTheme}
@@ -142,7 +139,7 @@ export default function App() {
 
   if (view === 'battle') {
     return (
-      <Suspense fallback={<RouteFallback />}>
+      <Suspense fallback={<RouteFallback theme={theme} />}>
         <BattleRoute
           quizData={quizData}
           onNeedQuiz={() => setView('app')}
@@ -223,7 +220,7 @@ export default function App() {
       </aside>
 
       <main className="flex-1 relative flex flex-col h-screen overflow-y-auto">
-        <Suspense fallback={<RouteFallback />}>
+        <Suspense fallback={<RouteFallback theme={theme} />}>
           {quizData ? (
             <QuizPlayer
               questions={quizData.questions}
