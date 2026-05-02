@@ -66,9 +66,20 @@ Asked to rate the landing. Standout strength: the note-fragment Stage B physical
 
 Gaps to 9.5+ (filed as `future.md §11`): no inline value preview before the hero CTA, no social proof anywhere on the page, the "vs ChatGPT" question goes unanswered, mobile is uninvestigated, bundle is 500 KB+ on landing-only visit. Not a redesign — a sanding-down list.
 
+#### Task 79: Stem invisible in dark mode — splash + sidebar logo
+User caught the splash on dark mode showing the leaf with no visible stem (slate `#334155` vein/dot disappear against `#0A0A0C` bg). Same root cause as Task 78's footer bug, but throughout the app — the entire `QuizMintLogo` component used hard-coded slate for the default variant, so the sidebar (App.tsx), Dashboard, LoginPage, ResetPassword, and TimerPage all rendered an invisible stem in dark theme.
+
+Sweep across the codebase for every place the default Leaf Q renders:
+- `QuizMintLogo.tsx` (default variant) — vein/dot changed `#334155` → `currentColor`. Now inherits the parent's `color`, which in our themes is `var(--c-text)` (dark in light, light in dark). One change covers all 6 React consumers (Sidebar header, Dashboard, LoginPage, ResetPassword, two TimerPage spots).
+- `QuizMintSplash.tsx` + `QuizMintSplash.css` — vein/dot fill/stroke changed to `currentColor`; CSS sets `color: #FFFFFF` on `.qm-splash.dark` and `color: #0A0A0C` on `.qm-splash.light` so the SVG inherits the right contrast in each theme. Wordmark color rules are now redundant but harmless.
+- Landing nav + footer — already on `currentColor` from Tasks 71 + 78.
+- `public/favicon.svg` — left alone. Favicons can't use `currentColor` (browsers paint them against their own UI bg, not the page), and slate at 0.85 is fine on Chrome's neutral tab strip.
+
+Vein opacity bumped 0.85 → 0.9 in both files for slightly stronger contrast now that we're not on a tinted slate. This is a deliberate departure from the Task 18 universal-slate spec — that spec optimized for "any background" but didn't account for our deepest dark `--c-bg` (`#0A0A0C`) where slate has near-zero contrast. `currentColor` is the actually-correct primitive for a stem that should always read.
+
 ### URLs
 - **Production:** https://quizmint.me
-- Latest deploy: `quizmint-1rksgc364-yashrajs-projects-82d81fc8.vercel.app`
+- Latest deploy: `quizmint-a0t49nbyn-yashrajs-projects-82d81fc8.vercel.app`
 
 ---
 

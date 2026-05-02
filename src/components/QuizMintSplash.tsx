@@ -32,8 +32,8 @@ export function QuizMintSplash({ minDurationMs = 2800, theme, onDone }: Props) {
           <path className="qm-leaf-r" d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981" />
           <path className="qm-leaf-l" d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#059669" />
           <path className="qm-vein" d="M50 14 L 50 64 C 50 74, 60 76, 60 84"
-                fill="none" stroke="#334155" strokeWidth={5.5} strokeLinecap="round" opacity={0.85} />
-          <circle className="qm-dot" cx={60} cy={92} r={3.4} fill="#334155" />
+                fill="none" stroke="currentColor" strokeWidth={5.5} strokeLinecap="round" opacity={0.9} />
+          <circle className="qm-dot" cx={60} cy={92} r={3.4} fill="currentColor" />
         </svg>
         <div className="qm-word">Quiz<span style={{ color: '#10B981' }}>Mint</span></div>
         <div className="qm-loader"><div className="qm-loader-bar" /></div>

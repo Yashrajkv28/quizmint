@@ -17,11 +17,13 @@ export function QuizMintLogo({
               : variant === 'mono-white' ? '#FFFFFF'
               : '#0A0A0C';
   const leafB = variant === 'default' ? '#059669' : leafA;
+  // Default variant uses currentColor for vein/dot so the stem stays visible
+  // against any theme background (dark stem on light, light stem on dark).
   const vein  = variant === 'mono-ink' ? '#FFFFFF'
               : variant === 'mono-white' ? '#0A0A0C'
-              : '#334155';
-  const dot   = variant === 'default' ? '#334155' : leafA;
-  const veinOpacity = variant === 'default' ? 0.85 : 1;
+              : 'currentColor';
+  const dot   = variant === 'default' ? 'currentColor' : leafA;
+  const veinOpacity = variant === 'default' ? 0.9 : 1;
 
   return (
     <svg

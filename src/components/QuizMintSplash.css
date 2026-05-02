@@ -5,8 +5,8 @@
 }
 .qm-splash.fade-out { opacity: 0; pointer-events: none; }
 
-.qm-splash.dark  { background: #0A0A0C; }
-.qm-splash.light { background: #F6F7F9; }
+.qm-splash.dark  { background: #0A0A0C; color: #FFFFFF; }
+.qm-splash.light { background: #F6F7F9; color: #0A0A0C; }
 
 .qm-ambient {
   position: absolute; inset: 0; pointer-events: none; opacity: 0;
