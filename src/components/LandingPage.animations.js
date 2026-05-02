@@ -95,15 +95,25 @@ export function runLandingAnimations() {
     const surface2 = light ? '#FAF7F0' : '#15161A';
     const mint = '#10B981';
 
+    // Stages — strictly non-overlapping with explicit cross-fade gutters.
+    //  0.05 .. 0.12     doc fades in
+    //  0.12 .. 0.36     parse        highlighter sweeps; fragments lift
+    //  0.36 .. 0.42     drift        all fragments finish flying out
+    //  0.42 .. 0.48     doc fades to 0
+    //  0.48 .. 0.54     grade panel fades in
+    //  0.54 .. 0.70     grade bars fill
+    //  0.70 .. 0.74     grade fades out
+    //  0.74 .. 0.78     quiz fades in
+    //  0.78 .. 1.00     quiz options reveal + ✓
     const docVis =
-      clamp((p - 0.05) / 0.07, 0, 1) * (1 - clamp((p - 0.3) / 0.06, 0, 1));
-    const parseScan = clamp((p - 0.12) / 0.18, 0, 1);
+      clamp((p - 0.05) / 0.07, 0, 1) * (1 - clamp((p - 0.42) / 0.06, 0, 1));
+    const parseScan = clamp((p - 0.12) / 0.24, 0, 1);
+    const fragDrift = clamp((p - 0.36) / 0.06, 0, 1);
     const gradeVis =
-      clamp((p - 0.36) / 0.06, 0, 1) * (1 - clamp((p - 0.62) / 0.06, 0, 1));
-    const gradeFill = clamp((p - 0.42) / 0.2, 0, 1);
-    const quizVis = clamp((p - 0.68) / 0.06, 0, 1);
-    const quizReveal = clamp((p - 0.74) / 0.2, 0, 1);
-    const stageB = parseScan;
+      clamp((p - 0.48) / 0.06, 0, 1) * (1 - clamp((p - 0.7) / 0.04, 0, 1));
+    const gradeFill = clamp((p - 0.54) / 0.16, 0, 1);
+    const quizVis = clamp((p - 0.74) / 0.04, 0, 1);
+    const quizReveal = clamp((p - 0.78) / 0.2, 0, 1);
 
     if (docVis > 0.001) {
       const docX = cx - 180;
@@ -158,23 +168,249 @@ export function runLandingAnimations() {
       ctx.restore();
     }
 
-    if (docVis > 0.5 && parseScan > 0.05 && parseScan < 0.95) {
-      const pCount = 50;
+    // ------- Glyph fragments lifting off the page -------
+    // Recognizable scraps of "messy notes" — circled question numbers, arrows,
+    // underlined terms, formulas — detach as the highlighter sweeps past them.
+    if (parseScan > 0.02 && (docVis > 0.001 || fragDrift < 1)) {
+      const docX = cx - 180,
+        docY = cy - 230,
+        docW = 360,
+        docH = 460;
+      const fragments = [
+        { kind: 'circle-num', text: '1' },
+        { kind: 'circle-num', text: '2' },
+        { kind: 'circle-num', text: '3' },
+        { kind: 'circle-num', text: '7' },
+        { kind: 'underline', text: 'mitosis' },
+        { kind: 'underline', text: 'enzyme' },
+        { kind: 'underline', text: 'pancreas' },
+        { kind: 'underline', text: 'osmosis' },
+        { kind: 'underline', text: 'glucose' },
+        { kind: 'glyph', text: '→' },
+        { kind: 'glyph', text: '∴' },
+        { kind: 'glyph', text: '≈' },
+        { kind: 'glyph', text: '★' },
+        { kind: 'glyph', text: '※' },
+        { kind: 'glyph', text: '?' },
+        { kind: 'glyph', text: '✎' },
+        { kind: 'glyph', text: '§' },
+        { kind: 'glyph', text: '¶' },
+        { kind: 'highlight', text: 'KEY' },
+        { kind: 'highlight', text: 'def:' },
+        { kind: 'highlight', text: 'eg.' },
+        { kind: 'highlight', text: 'NB' },
+        { kind: 'highlight', text: 'TEST' },
+        { kind: 'formula', text: 'H₂O' },
+        { kind: 'formula', text: 'pH' },
+        { kind: 'formula', text: 'ATP' },
+        { kind: 'formula', text: 'CO₂' },
+        { kind: 'formula', text: 'C₆H₁₂O₆' },
+        { kind: 'formula', text: 'N=mc²' },
+        { kind: 'formula', text: 'Δt' },
+        { kind: 'tag', text: '(a)' },
+        { kind: 'tag', text: '(b)' },
+        { kind: 'tag', text: '(iii)' },
+        { kind: 'tag', text: 'p.42' },
+        { kind: 'tag', text: 'fig 2' },
+        { kind: 'tag', text: 'ch. 4' },
+        { kind: 'check', text: '✓' },
+        { kind: 'check', text: '✓' },
+        { kind: 'cross', text: '✗' },
+        { kind: 'sticky', text: 'review' },
+        { kind: 'sticky', text: 'memorize' },
+        { kind: 'sticky', text: 'on test' },
+        { kind: 'strike', text: 'wrong' },
+        { kind: 'strike', text: 'idk' },
+        { kind: 'scribble' },
+        { kind: 'scribble' },
+        { kind: 'scribble' },
+        { kind: 'bracket' },
+        { kind: 'bracket' },
+        { kind: 'note-arrow', text: 'see' },
+        { kind: 'note-arrow', text: 'imp.' },
+        { kind: 'quote', text: '"…cells use…"' },
+        { kind: 'quote', text: '"…in 1854…"' },
+        { kind: 'formula', text: 'F = ma' },
+        { kind: 'formula', text: 'a² + b²' },
+      ];
+      const pCount = fragments.length;
+
+      const baseScan = ease(parseScan);
+      const extendedScan = baseScan + fragDrift * 0.4;
+      const scanY = docY + 30 + extendedScan * (docH - 60);
+      const driftBoost = fragDrift * 1.0;
+
       for (let i = 0; i < pCount; i++) {
-        const seed = i * 0.137;
-        const lp = (stageB * 1.2 + seed) % 1;
-        const sx = cx - 180 + 360 - 30;
-        const sy = cy - 230 + 60 + ((i * 41) % (460 - 100));
-        const ex = cx + 140;
-        const ey = cy + Math.sin(i) * 60;
-        const x = lerp(sx, ex, ease(lp));
-        const y = lerp(sy, ey, ease(lp)) + Math.sin(lp * Math.PI * 2 + i) * 14;
-        const a = Math.sin(lp * Math.PI) * 0.85;
-        ctx.globalAlpha = a * docVis;
-        ctx.fillStyle = mint;
-        ctx.beginPath();
-        ctx.arc(x, y, 1.5 + Math.sin(lp * Math.PI) * 1.8, 0, Math.PI * 2);
-        ctx.fill();
+        const lineIdx = i % 14;
+        const yJitter = ((i * 73) % 18) - 9;
+        const sy = docY + 76 + lineIdx * 24 + yJitter;
+        const sxJitter = (i * 53) % 200;
+        const sx = docX + docW - 36 - sxJitter;
+
+        const triggered = scanY > sy - 4;
+        if (!triggered) continue;
+
+        const sinceTrigger = clamp((scanY - sy) / 160 + driftBoost, 0, 1);
+        const tl = ease(sinceTrigger);
+
+        const ex = cx + 200 + (i % 3) * 14;
+        const ey = cy + Math.sin(i * 1.7) * 70;
+        const x = lerp(sx, ex, tl);
+        const y = lerp(sy, ey, tl) - Math.sin(tl * Math.PI) * 28;
+
+        const fadeIn = clamp(sinceTrigger * 6, 0, 1);
+        const fadeOut = 1 - clamp((sinceTrigger - 0.7) / 0.3, 0, 1);
+        const a = fadeIn * fadeOut;
+        if (a < 0.02) continue;
+
+        const f = fragments[i];
+        const rot = Math.sin(i * 2.3) * 0.18 * (1 - tl * 0.6);
+
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+
+        if (f.kind === 'circle-num') {
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 11, 9, 0.2, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.ellipse(0.5, 0.5, 12, 10, 0.2, -0.2, Math.PI * 1.7);
+          ctx.stroke();
+          ctx.fillStyle = mint;
+          ctx.font = '600 11px "JetBrains Mono", monospace';
+          ctx.fillText(f.text, 0, 1);
+        } else if (f.kind === 'underline') {
+          ctx.fillStyle = mint;
+          ctx.font = 'italic 500 13px "Fraunces", serif';
+          const w = ctx.measureText(f.text).width;
+          ctx.fillText(f.text, 0, 0);
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          for (let k = 0; k <= 12; k++) {
+            const xx = -w / 2 + (w * k) / 12;
+            const yy = 9 + Math.sin(k * 1.2) * 1.2;
+            if (k === 0) ctx.moveTo(xx, yy);
+            else ctx.lineTo(xx, yy);
+          }
+          ctx.stroke();
+        } else if (f.kind === 'glyph') {
+          ctx.fillStyle = mint;
+          ctx.font = '600 18px "Fraunces", serif';
+          ctx.fillText(f.text, 0, 0);
+        } else if (f.kind === 'highlight') {
+          ctx.font = '700 10px "JetBrains Mono", monospace';
+          const w = ctx.measureText(f.text).width;
+          ctx.fillStyle = 'rgba(167,243,208,0.35)';
+          ctx.fillRect(-w / 2 - 4, -7, w + 8, 14);
+          ctx.fillStyle = mint;
+          ctx.fillText(f.text, 0, 0);
+        } else if (f.kind === 'formula') {
+          ctx.fillStyle = mint;
+          ctx.font = '500 12px "JetBrains Mono", monospace';
+          ctx.fillText(f.text, 0, 0);
+        } else if (f.kind === 'tag') {
+          ctx.fillStyle = muted;
+          ctx.font = '500 11px "JetBrains Mono", monospace';
+          ctx.fillText(f.text, 0, 0);
+        } else if (f.kind === 'check') {
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-7, 1);
+          ctx.lineTo(-2, 6);
+          ctx.lineTo(8, -6);
+          ctx.stroke();
+        } else if (f.kind === 'cross') {
+          ctx.strokeStyle = '#059669';
+          ctx.lineWidth = 1.8;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-7, -7);
+          ctx.lineTo(7, 7);
+          ctx.moveTo(7, -7);
+          ctx.lineTo(-7, 7);
+          ctx.stroke();
+        } else if (f.kind === 'sticky') {
+          ctx.font = '600 9px "JetBrains Mono", monospace';
+          const w = ctx.measureText(f.text).width + 12;
+          ctx.fillStyle = '#A7F3D0';
+          ctx.fillRect(-w / 2, -7, w, 14);
+          ctx.fillStyle = mint;
+          ctx.beginPath();
+          ctx.moveTo(w / 2 - 5, -7);
+          ctx.lineTo(w / 2, -7);
+          ctx.lineTo(w / 2, -2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#052E24';
+          ctx.fillText(f.text, 0, 0);
+        } else if (f.kind === 'strike') {
+          ctx.fillStyle = muted;
+          ctx.font = '500 12px "Inter", sans-serif';
+          const w = ctx.measureText(f.text).width;
+          ctx.fillText(f.text, 0, 0);
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 1.4;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-w / 2 - 2, 1);
+          ctx.lineTo(w / 2 + 2, -1);
+          ctx.stroke();
+        } else if (f.kind === 'scribble') {
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 1.4;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          for (let k = 0; k <= 20; k++) {
+            const t = k / 20;
+            const xx = -14 + t * 28;
+            const yy = Math.sin(t * Math.PI * 3) * 4;
+            if (k === 0) ctx.moveTo(xx, yy);
+            else ctx.lineTo(xx, yy);
+          }
+          ctx.stroke();
+        } else if (f.kind === 'bracket') {
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 1.4;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-3, -10);
+          ctx.lineTo(0, -10);
+          ctx.moveTo(0, -10);
+          ctx.lineTo(0, 10);
+          ctx.moveTo(0, 10);
+          ctx.lineTo(-3, 10);
+          ctx.stroke();
+        } else if (f.kind === 'note-arrow') {
+          ctx.fillStyle = mint;
+          ctx.font = 'italic 600 11px "Fraunces", serif';
+          const w = ctx.measureText(f.text).width;
+          ctx.fillText(f.text, -7, 0);
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 1.3;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(w / 2 - 4, 0);
+          ctx.lineTo(w / 2 + 8, 0);
+          ctx.moveTo(w / 2 + 8, 0);
+          ctx.lineTo(w / 2 + 4, -3);
+          ctx.moveTo(w / 2 + 8, 0);
+          ctx.lineTo(w / 2 + 4, 3);
+          ctx.stroke();
+        } else if (f.kind === 'quote') {
+          ctx.fillStyle = muted;
+          ctx.font = 'italic 500 11px "Fraunces", serif';
+          ctx.fillText(f.text, 0, 0);
+        }
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
     }
