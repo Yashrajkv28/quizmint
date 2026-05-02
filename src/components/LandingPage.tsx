@@ -772,7 +772,12 @@ const LANDING_BODY = `
   <footer class="footer">
     <div class="footer-inner footer-row">
       <div class="footer-brand">
-        <svg width="18" height="18" viewBox="0 0 100 100"><path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/><path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#10B981" opacity="0.85"/></svg>
+        <svg width="20" height="20" viewBox="0 0 100 100" aria-hidden="true">
+          <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/>
+          <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#059669"/>
+          <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="#334155" stroke-width="5.5" stroke-linecap="round" opacity="0.85"/>
+          <circle cx="60" cy="92" r="3.4" fill="#334155"/>
+        </svg>
         <span>Quiz<span class="mint">Mint</span></span>
         <span class="made">Made with mint.</span>
       </div>

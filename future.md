@@ -109,3 +109,59 @@ Out of scope for now (park):
 The sidebar QuizMint logo now navigates back to the landing page (Task 27). It unconditionally wipes `quizData` and `showLanding = true`, which means a user mid-paste or mid-quiz loses their state silently.
 
 Upgrade: before navigating, check for unsaved work — non-empty `rawText` in `QuizGenerator`, an `uploadedFile`, or an in-progress `quizData` with unanswered questions — and show a confirm dialog ("Leave? Your input will be cleared."). Only nuke state on confirm. The check needs `QuizGenerator` to lift or expose its dirty state (currently local), or App can track it via a callback ref.
+
+
+## 11. Landing-page polish to push 8.7 → 9.5
+Honest critique of the v3 landing as it stands on 2026-05-03 (live at quizmint.me). Page lands at ~8.7/10 — top-quartile for an indie SaaS landing — but a handful of concrete gaps keep it short of 9.5+.
+
+What's already standout (do not regress):
+- The note-fragments scene (Stage B of `drawStory`) physically demonstrates "we read between the lines" in a way generic agency landings can't. Single best panel on the page.
+- Stage D quiz card now visually matches the real `QuizPlayer.tsx` — landing aesthetics pattern-match to product aesthetics, which buys trust.
+- The flip clock is a real `FlipClockDisplay`, not a mockup.
+- Both light and dark themes ship.
+- Honest copy ("Free. Login with Gmail." vs. fabricated "trusted by 10k educators").
+
+Gaps to close, ordered by impact-to-effort:
+
+**a. Hero needs an inline value preview before the click.**
+Right now the hero is pure typography + "Try it free →". A skeptical visitor in 2026 has to scroll through the whole story before seeing what they get. Consider:
+- A small inline demo right of/below the hero h1: paste-or-pick-sample-text input, "Generate sample" button that shows 2-3 generated questions inline (not the full app — a canned demo that runs client-side or pulls a pre-baked response).
+- Or: a hero-side static screenshot of a real generated quiz with realistic content.
+The CTA should be a *consequence* of value already shown, not a leap of faith.
+
+**b. Add real social proof.**
+None on the page. Friends-and-family scale doesn't need it; strangers do. Cheapest wins:
+- GitHub star count surfaced near the brand or in the footer (live badge or scraped at build time).
+- One real testimonial — even from a friend who used it for a real exam — with name + course. Authentic > anonymous "★★★★★ Amazing tool!".
+- "Built by [you]" line linking to your site/Twitter — credentials build trust faster than logos.
+Skip fake "Trusted by 10,000+ educators" copy. The honest tone is part of the page's appeal.
+
+**c. The "vs. ChatGPT" question is unanswered.**
+A 2026 visitor will ask "why not just paste my notes into ChatGPT?". The page never addresses it directly. One short section or a callout that argues:
+- Difficulty mix (Easy / Medium / Hard) — ChatGPT doesn't structure quizzes this way without prompting.
+- Real quiz interface with verification — not a wall of text.
+- Files processed transiently (vs. ChatGPT training data concerns).
+Doesn't have to be combative. A "Why not just use a chatbot?" mini-FAQ would do it.
+
+**d. Mobile is uninvestigated.**
+This session only saw desktop screenshots. The page has:
+- Sticky-pinned canvases (`#story` 700vh)
+- 3 × 380vh feature pins
+- 140vh parallax with floating cards
+On a phone these can feel like a treadmill. A real-device pass is needed before claiming the page is ready for stranger traffic. Particular suspects: parallax cards (now 280px wide — may overflow narrow viewports), feature visuals at 340px height (still a lot of vertical real estate on a 360px-wide phone), the canvas Stage B fragment positions (`docX = cx - 180` assumes wide enough for a 360px doc).
+
+**e. Bundle weight on landing-only visit.**
+Already filed as `future.md §1` — landing ships the full Gemini/PDF stack (~500 KB+ JS). Code-splitting the landing from the app pulls first paint well under 100 KB gzipped, which directly affects perceived "wow this is fast" the moment someone clicks the link. High signal for cold visitors.
+
+**f. The 4 floating "2 am session" cards are decorative but static.**
+Now that they're readable (Task 76), they could carry slight animation — a gentle parallax tilt with mouse position, or a slow drift on scroll past their initial reveal. Apple-website-style. Currently they pop in via `.reveal` and then sit still.
+
+**g. The CTA card's leaf watermark is fixed but the card itself is one-note.**
+Mint gradient + huge serif copy + black pill button. Clean but predictable. A small detail — micro-interaction on the button (the leaf opacity ticks up slightly on hover, or a subtle particle / glow pulse on first reveal) — would make it feel as crafted as the story scroll.
+
+Out of scope (don't bother):
+- Cookie banner (no marketing/analytics cookies set).
+- A11y audit beyond what we've done — buttons have labels, focus states inherit from the design system; revisit only if a screen-reader user reports issues.
+- A "pricing" section. The product is free; adding a pricing block would invite the question "what's the catch?".
+
+The page does not need a redesign. It needs the rough edges around it sanded down: hero proves value before asking, page answers the obvious-objection question, mobile gets a real pass, bundle gets split. That's the path from 8.7 to 9.3+.

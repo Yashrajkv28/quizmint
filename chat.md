@@ -54,9 +54,19 @@ Saved a future plan at `future.md §9`: real `/terms` + `/privacy` routes are ne
 #### Cybersec sanity check (re: `innerHTML`)
 User (cybersec background) asked whether our `innerHTML` usage is XSS-safe. It is: every `innerHTML` assignment in `LandingPage.animations.js` and the `dangerouslySetInnerHTML` in `LandingPage.tsx` interpolates **only hard-coded marketing copy** — zero user/URL/server-derived data. Plus the production CSP is `script-src 'self'` (memory `feedback_csp_no_eval.md`), so any injected `<script>` or inline event handler would be blocked anyway. Real user inputs (pasted notes, uploaded PDFs, quiz answers) all flow through React's `{value}` interpolation, which auto-escapes.
 
+#### Task 78: Footer logo bug — incomplete Leaf Q
+The footer was shipping the v0 mark — two leaf halves only (`#10B981` × 2 with one at opacity 0.85), missing the slate vein + dot from the Task 18 brand handoff. Looked the same in both light and dark mode, which is the giveaway: a correct render would inherit the universal slate `#334155` for vein/dot. Replaced with the canonical default-variant SVG matching `QuizMintLogo.tsx`: leafA `#10B981`, leafB `#059669` (the deeper right half), vein + dot in slate `#334155` at 0.85 / 1 opacity. Bumped size 18 → 20 to match the nav.
+
+The nav SVG still uses `currentColor` for vein/dot (inherits text color, not slate) — technically off-spec per Task 18 but the user only flagged the footer, leaving the nav alone for now.
+
+#### Page rating: 8.7/10 (saved breakdown to `future.md §11`)
+Asked to rate the landing. Standout strength: the note-fragment Stage B physically demonstrates "we read between the lines" in a way generic agency landings can't. Stage D matching the real `QuizPlayer` buys trust via aesthetic continuity. Real flip clock, both themes shipped, honest copy.
+
+Gaps to 9.5+ (filed as `future.md §11`): no inline value preview before the hero CTA, no social proof anywhere on the page, the "vs ChatGPT" question goes unanswered, mobile is uninvestigated, bundle is 500 KB+ on landing-only visit. Not a redesign — a sanding-down list.
+
 ### URLs
 - **Production:** https://quizmint.me
-- Latest deploy: `quizmint-5az8uuagr-yashrajs-projects-82d81fc8.vercel.app`
+- Latest deploy: `quizmint-k6y6mdzzd-yashrajs-projects-82d81fc8.vercel.app`
 
 ---
 
