@@ -44,9 +44,19 @@ Second pass had too much empty space at the bottom — shrunk `.feature-visual` 
 #### Task 76: Parallax "2 am session" cards readable
 The 4 floating Q cards in `.parallax` were tiny — 200px wide with 14px serif text. Bumped: width 200→280, padding 16→24, `.tag` 9→11px, `.q` 14→19px (margin-top 6→10).
 
+#### Task 77: Final-CTA leaf clip + footer disclaimer + future legal plan
+The "Stop formatting / Start studying" CTA card had its decorative leaf watermark's dot clipped at the card's bottom edge — leaf was `clamp(420, 60vw, 720)` centered with `top: 50%`, taller than the card on most viewports. Fixed two ways: shrunk the leaf to `clamp(380, 52vw, 620)`, shifted to `top: 46%`, and bumped the card's bottom padding to `clamp(96, 14vw, 180)` so the dot sits inside the card on every viewport.
+
+Footer rebuilt to carry a generic legal disclaimer paragraph (no links — user wanted no T&C/Privacy routes yet). Disclaimer covers: as-is, AI may be wrong / verify with source, files processed transiently and not retained, not affiliated with any institution, no warranty / no liability. First pass put `max-width: 1280px` on `.footer` itself, which constrained the top border + inter-row divider to that width — looked wrong on wider monitors (lines floating in space). Restructure: `.footer` is full-width and owns the borders; content sits in `.footer-inner` (max-width 1280px). Vertical padding tightened to `18px 32px` per row so the lines hug the text. Em-dashes in the legal text replaced with commas per user.
+
+Saved a future plan at `future.md §9`: real `/terms` + `/privacy` routes are needed once traffic ramps (Google OAuth + Gemini sub-processor disclosure trigger GDPR / CCPA / India DPDP Act obligations). Explicit guardrail: don't hand-write legal copy — generate via Termly / iubenda / Termsfeed; also need an account-deletion path for GDPR Art. 17.
+
+#### Cybersec sanity check (re: `innerHTML`)
+User (cybersec background) asked whether our `innerHTML` usage is XSS-safe. It is: every `innerHTML` assignment in `LandingPage.animations.js` and the `dangerouslySetInnerHTML` in `LandingPage.tsx` interpolates **only hard-coded marketing copy** — zero user/URL/server-derived data. Plus the production CSP is `script-src 'self'` (memory `feedback_csp_no_eval.md`), so any injected `<script>` or inline event handler would be blocked anyway. Real user inputs (pasted notes, uploaded PDFs, quiz answers) all flow through React's `{value}` interpolation, which auto-escapes.
+
 ### URLs
 - **Production:** https://quizmint.me
-- Latest deploy: `quizmint-k0u1x3ac4-yashrajs-projects-82d81fc8.vercel.app`
+- Latest deploy: `quizmint-5az8uuagr-yashrajs-projects-82d81fc8.vercel.app`
 
 ---
 
