@@ -1,5 +1,55 @@
 # QuizMint Development Chat Log
 
+## Session: 2026-05-03
+
+### Summary
+Ported the v3 landing redesign for the "How it works" canvas + the "It explains." feature card, mirroring the real in-app `QuizPlayer` styling. Also up-sized the parallax "2 am session" cards (they were tiny) and lengthened the feature pin scroll. Live at https://quizmint.me, deploy `quizmint-k0u1x3ac4-...`.
+
+#### Task 73: Note-fragments + retimed story stages (`drawStory`)
+Replaced the generic ~50 floating mint dots in canvas Stage B with a typed-fragment system from `QuizMint Landing v3.html` — ~55 hand-scribbled scraps of student notes (`circle-num`, `underline`, `glyph`, `highlight`, `formula`, `tag`, `check`, `cross`, `sticky`, `strike`, `scribble`, `bracket`, `note-arrow`, `quote`), each with bespoke canvas drawing. Fragments are anchored to body lines via `lineIdx = i % 14` plus `yJitter`/`sxJitter`, trigger only after the highlighter sweep passes (`scanY > sy - 4`), arc up-and-right toward `(cx + 200, cy + sin(i)*70)` with `Math.sin(tl * π) * 28` peel-up arc, and rotate `sin(i * 2.3) * 0.18` so they read as scribbles not stamps.
+
+Retimed the four story stages so nothing clips:
+```
+0.05–0.12  doc fade-in
+0.12–0.36  parse scan + fragments lift
+0.36–0.42  drift window — sweep overshoots past page bottom
+0.42–0.48  doc fade-out
+0.48–0.54  grade fade-in
+0.54–0.70  bars fill
+0.70–0.74  grade fade-out
+0.74–0.78  quiz fade-in
+0.78–1.00  options reveal + ✓
+```
+New `fragDrift` ramp (0→1 across 0.36..0.42) extends `scanY` past the doc bottom (`extendedScan = baseScan + fragDrift * 0.4`) so any not-yet-triggered fragment still gets triggered, and feeds a `driftBoost` added to each fragment's `sinceTrigger` so in-flight ones accelerate to the off-canvas point before doc fade-out begins. Decoupled fragment alpha from `docVis` (was `fadeIn * fadeOut * docVis` — fragments died when the page faded). Render gate now `parseScan > 0.02 && (docVis > 0.001 || fragDrift < 1)`. The doc rect (`docX/docY/docW/docH`) is redeclared inside the fragment block since the doc-rendering block's `const`s are scoped to its `if (docVis > 0.001)`.
+
+#### Task 74: Stage D quiz card → mirror `QuizPlayer.tsx`
+Stage D was a generic mint-glow card with a `● BIOLOGY · Q7` mono chip, italic Fraunces question, and `A.` options with a tiny ✓. Rebuilt to match the actual quiz UI:
+- 540×380 frame, surface bg + hairline border (no mint glow — real UI doesn't have one)
+- Top-edge progress bar: ~30% emerald fill, holds during read/select, then ramps 30%→100% only once `quizReveal > 0.85` (the "user picked correct, bar finishes" beat the user explicitly asked for)
+- "Question 07" emerald 14px semibold eyebrow
+- Question in Inter 24px medium (dropped italic Fraunces)
+- 4 option pills with `A) Pancreas` format, full-width, bordered. On reveal: correct gets emerald border + `rgba(16,185,129,0.05)` fill + a "CORRECT ANSWER" pill on the right; wrong options dim to 50% opacity
+
+#### Task 75: "03. It explains." card → mirror `QuizPlayer.tsx` (HTML version)
+`buildVisual2()` previously rendered with a `● QUESTION 7 · ORGANIC CHEM` mono chip, Fraunces serif h4, small option pills with `A.` format and a ✓, and a dashed-border explanation panel labeled `WHY ↓`. Restyled (animation flow untouched — `data-explain` still does `opacity 0→1` + `translateY 16→0` driven by scroll progress):
+- "Question 07" emerald 14px semibold eyebrow (no mono chip)
+- Question Inter 21px medium (dropped Fraunces)
+- Option pills `A) X` format, wrong options dimmed to 55%, correct pill gets emerald border + tint and a compact "CORRECT ANSWER" badge
+- Explanation panel: solid `rgba(16,185,129,0.10)` bg + `rgba(16,185,129,0.20)` border (was dashed), labeled "Explanation:" semibold emerald (was `WHY ↓` mono)
+
+First pass overflowed `.feature-visual` (fixed 480px) — bled out the bottom of the card. Tightened sizes (h4 26→21px, gap 18→12, option pad 14×20→10×14, font 15→13px, explanation pad 16→12×14, font 14→12.5px) and added `overflow:hidden` on the card as a safety net.
+
+Second pass had too much empty space at the bottom — shrunk `.feature-visual` 480→420px (mobile 360→340), and per user request lengthened `.feature` 280vh→380vh (mobile 220→300) so the pin holds for ~3.8 viewports of scroll instead of 2.8.
+
+#### Task 76: Parallax "2 am session" cards readable
+The 4 floating Q cards in `.parallax` were tiny — 200px wide with 14px serif text. Bumped: width 200→280, padding 16→24, `.tag` 9→11px, `.q` 14→19px (margin-top 6→10).
+
+### URLs
+- **Production:** https://quizmint.me
+- Latest deploy: `quizmint-k0u1x3ac4-yashrajs-projects-82d81fc8.vercel.app`
+
+---
+
 ## Session: 2026-05-02
 
 ### Summary
