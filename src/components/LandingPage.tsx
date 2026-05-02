@@ -491,16 +491,16 @@ html.light .qm-landing .timer-card { box-shadow: 0 32px 80px -20px rgba(26,23,19
 .qm-landing .cta-card {
   position: relative; overflow: hidden;
   border-radius: 32px;
-  padding: clamp(72px, 12vw, 140px) clamp(32px, 6vw, 80px);
+  padding: clamp(72px, 12vw, 140px) clamp(32px, 6vw, 80px) clamp(96px, 14vw, 180px);
   background: linear-gradient(135deg, var(--mintDeep) 0%, var(--mint) 100%);
   text-align: center;
 }
 .qm-landing .cta-leaf {
   position: absolute;
-  top: 50%; left: 50%;
+  top: 46%; left: 50%;
   transform: translate(-50%, -50%);
-  width: clamp(420px, 60vw, 720px);
-  height: clamp(420px, 60vw, 720px);
+  width: clamp(380px, 52vw, 620px);
+  height: clamp(380px, 52vw, 620px);
   opacity: 0.12;
   pointer-events: none;
 }
@@ -529,16 +529,29 @@ html.light .qm-landing .timer-card { box-shadow: 0 32px 80px -20px rgba(26,23,19
 
 /* ---------- FOOTER ---------- */
 .qm-landing .footer {
-  padding: 32px;
   border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--subtle);
+}
+.qm-landing .footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 18px 32px;
+}
+.qm-landing .footer-row {
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 16px;
-  font-size: 13px; color: var(--subtle);
 }
 .qm-landing .footer-brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; }
 .qm-landing .footer-brand .made { color: var(--subtle); font-weight: 400; margin-left: 12px; }
 .qm-landing .footer-links { display: flex; gap: 24px; }
 .qm-landing .footer-links a { color: var(--muted); }
+.qm-landing .footer-divider {
+  height: 1px; background: var(--border); width: 100%;
+}
+.qm-landing .footer-legal {
+  font-size: 11.5px; line-height: 1.6; color: var(--muted);
+  letter-spacing: 0.01em;
+}
+.qm-landing .footer-legal .copy { color: var(--text); font-weight: 600; }
 
 /* ---------- entrance helpers ---------- */
 .qm-landing .reveal { opacity: 0; transform: translateY(36px); transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2,.7,.2,1); }
@@ -757,13 +770,19 @@ const LANDING_BODY = `
   </section>
 
   <footer class="footer">
-    <div class="footer-brand">
-      <svg width="18" height="18" viewBox="0 0 100 100"><path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/><path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#10B981" opacity="0.85"/></svg>
-      <span>Quiz<span class="mint">Mint</span></span>
-      <span class="made">Made with mint.</span>
+    <div class="footer-inner footer-row">
+      <div class="footer-brand">
+        <svg width="18" height="18" viewBox="0 0 100 100"><path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/><path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#10B981" opacity="0.85"/></svg>
+        <span>Quiz<span class="mint">Mint</span></span>
+        <span class="made">Made with mint.</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/Yashrajkv28/quizmint" target="_blank" rel="noreferrer">GitHub ↗</a>
+      </div>
     </div>
-    <div class="footer-links">
-      <a href="https://github.com/Yashrajkv28/quizmint" target="_blank" rel="noreferrer">GitHub ↗</a>
+    <div class="footer-divider"></div>
+    <div class="footer-inner footer-legal">
+      <span class="copy">© 2026 QuizMint.</span> All rights reserved. QuizMint is provided as-is for educational and personal study purposes only. Generated quiz content is produced by AI and may contain inaccuracies, always verify against your original source material before relying on it. Uploaded files are processed transiently and are not stored or shared. QuizMint is an independent project and is not affiliated with, endorsed by, or sponsored by any educational institution, publisher, or examination board. All trademarks and source materials remain the property of their respective owners. By using this site you accept that the service is offered without warranty of any kind, and that the operators are not liable for any outcome, academic, financial, or otherwise, arising from its use.
     </div>
   </footer>
 </div>

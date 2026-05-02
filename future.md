@@ -81,7 +81,31 @@ What we *can* do: honest ambient animation. Load Spotify's IFrame API (`https://
 
 Not a visualizer — more like "vibe mode." Fits the focus-timer aesthetic. Respect `prefers-reduced-motion`. Per-user toggle or bundled into the Spotify BETA feature.
 
-## 9. Logo-home: guard against losing unsaved input
+## 9. Real legal pages (Terms, Privacy, possibly Cookies)
+The footer currently carries a generic disclaimer paragraph (© line + as-is / not-affiliated / no-warranty / files-not-retained) but **no actual T&C or Privacy Policy pages**. Good enough for a side project shown to friends; not good enough once the site sees real traffic, especially given:
+- We auth via Google OAuth (Gmail) — privacy law (GDPR / CCPA / India DPDP Act) requires a Privacy Policy that names what we collect, why, retention, and the user's rights
+- We process user-uploaded study material — needs an explicit data-handling clause (we currently process transiently with no retention; that should be stated formally and enforced by the cleanup cron)
+- Gemini calls send file content to a third-party LLM — Privacy Policy must disclose this sub-processor
+
+What to build:
+- `/terms` route with **Terms of Service** — license to use, AUP, no-warranty, limitation of liability, governing law, termination, changes-to-terms clause
+- `/privacy` route with **Privacy Policy** — data we collect (email, OAuth profile, uploaded files transiently, generated quizzes), purposes, sub-processors (Google OAuth, Google Gemini, Vercel, Supabase), retention (transient for files, indefinite for account data until deletion request), user rights (access / delete / export), contact email, last-updated date
+- Footer-link both pages from the disclaimer paragraph (the disclaimer becomes a teaser; the real text lives on the routes)
+- Add a "Last updated: YYYY-MM-DD" line at the top of each
+- Don't write the legal text by hand — use a generator like Termly / iubenda / Termsfeed and paste the output. Skill agents should NOT invent legal copy.
+- Account-deletion path: a button in the user settings or a `mailto:` to a project email that triggers a manual delete from Supabase. Required by GDPR Art. 17 ("right to erasure").
+
+Implementation shape:
+- Pages live under `src/components/legal/Terms.tsx` and `src/components/legal/Privacy.tsx`, rendered by a thin route layout with the same nav as the landing
+- React Router (or whatever routing the app uses post-Task-65) gets two new routes
+- Update `vercel.json` if needed (probably not — same SPA fallback)
+- After deploy: re-run the Lighthouse "Best Practices" audit, which currently flags missing privacy policy
+
+Out of scope for now (park):
+- Cookie banner — we don't currently set marketing/analytics cookies, only session auth ones (essential, no consent required under GDPR). Re-evaluate if/when Vercel Analytics gets added per Task 6.
+- DPA (Data Processing Agreement) for institutional customers — needed only if we go B2B.
+
+## 10. Logo-home: guard against losing unsaved input
 The sidebar QuizMint logo now navigates back to the landing page (Task 27). It unconditionally wipes `quizData` and `showLanding = true`, which means a user mid-paste or mid-quiz loses their state silently.
 
 Upgrade: before navigating, check for unsaved work — non-empty `rawText` in `QuizGenerator`, an `uploadedFile`, or an in-progress `quizData` with unanswered questions — and show a confirm dialog ("Leave? Your input will be cleared."). Only nuke state on confirm. The check needs `QuizGenerator` to lift or expose its dirty state (currently local), or App can track it via a callback ref.
