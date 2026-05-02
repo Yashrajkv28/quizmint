@@ -1,6 +1,8 @@
+﻿import { useEffect, useRef, useState } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { Sun, Moon } from 'lucide-react';
-import { QuizMintLogo } from './QuizMintLogo';
-import { DemoCard } from './DemoCard';
+import FlipClockDisplay from './timer/FlipClockDisplay';
+import { runLandingAnimations } from './LandingPage.animations.js';
 
 type Theme = 'light' | 'dark';
 
@@ -10,557 +12,760 @@ interface LandingPageProps {
   onStart: () => void;
 }
 
-const serif = "'Fraunces', ui-serif, Georgia, serif";
-
 export function LandingPage({ theme, onToggleTheme, onStart }: LandingPageProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const flipRootRef = useRef<Root | null>(null);
+  const themeRootRef = useRef<Root | null>(null);
+
+  // Mount markup + wire interactions + run animation script
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    // Mount our real FlipClockDisplay into the timer card
+    const timerRow = root.querySelector('.timer-row');
+    if (timerRow) {
+      timerRow.innerHTML = '<div id="qm-flip-mount" style="display:flex;justify-content:center;"></div>';
+      const mount = timerRow.querySelector('#qm-flip-mount') as HTMLElement;
+      flipRootRef.current = createRoot(mount);
+      flipRootRef.current.render(<TimerDemo />);
+    }
+
+    // Mount the dashboard-style theme toggle into the nav slot
+    const themeMount = root.querySelector('#qm-theme-mount') as HTMLElement | null;
+    if (themeMount) {
+      themeRootRef.current = createRoot(themeMount);
+    }
+
+    // Wire all CTAs (nav button, hero primary, CTA card button)
+    const ctas = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('.nav-cta, .btn-primary, .cta-btn')
+    );
+    const onCtaClick = (e: Event) => {
+      e.preventDefault();
+      onStart();
+    };
+    ctas.forEach((b) => b.addEventListener('click', onCtaClick));
+
+    // Hijack in-page nav anchors to land INSIDE the sticky sections (otherwise
+    // jumping to the section's top lands on a blank entry zone before the
+    // sticky/fade-in animations kick in).
+    const stickyOffsets: Record<string, number> = {
+      story: 1.5,    // 700vh sticky — 1.5vh in puts you mid stage A (doc)
+      features: 1.2, // 280vh sticky — 1.2vh in puts you past entrance fade
+      timer: 0,      // not sticky, default behavior fine
+    };
+    const navAnchors = Array.from(
+      root.querySelectorAll<HTMLAnchorElement>('.nav-links a[href^="#"]')
+    );
+    const onAnchorClick = (e: Event) => {
+      const a = e.currentTarget as HTMLAnchorElement;
+      const href = a.getAttribute('href') || '';
+      const id = href.slice(1);
+      const target = document.getElementById(id);
+      if (!target) return;
+      e.preventDefault();
+      const offsetVh = stickyOffsets[id] ?? 0;
+      const top = target.getBoundingClientRect().top + window.scrollY + offsetVh * window.innerHeight;
+      window.scrollTo({ top, behavior: 'smooth' });
+    };
+    navAnchors.forEach((a) => a.addEventListener('click', onAnchorClick));
+
+    // Run the animation script
+    try {
+      runLandingAnimations();
+    } catch (err) {
+      console.error('[LandingPage] animation script failed', err);
+    }
+
+    return () => {
+      ctas.forEach((b) => b.removeEventListener('click', onCtaClick));
+      navAnchors.forEach((a) => a.removeEventListener('click', onAnchorClick));
+      const cleanup = (window as unknown as { __qmLandingCleanup?: () => void }).__qmLandingCleanup;
+      if (typeof cleanup === 'function') cleanup();
+      const flipR = flipRootRef.current;
+      const themeR = themeRootRef.current;
+      flipRootRef.current = null;
+      themeRootRef.current = null;
+      if (flipR) setTimeout(() => flipR.unmount(), 0);
+      if (themeR) setTimeout(() => themeR.unmount(), 0);
+    };
+  }, [onStart]);
+
+  // Render/refresh the theme button whenever theme or handler changes
+  useEffect(() => {
+    themeRootRef.current?.render(
+      <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+    );
+  }, [theme, onToggleTheme]);
+
   return (
-    <div
-      style={{
-        background: 'var(--c-app)',
-        color: 'var(--c-text)',
-        minHeight: '100vh',
-        width: '100%',
-        overflowX: 'hidden',
-      }}
+    <>
+      <style>{LANDING_STYLES}</style>
+      <div ref={containerRef} dangerouslySetInnerHTML={{ __html: LANDING_BODY }} />
+    </>
+  );
+}
+
+// ---------- Theme toggle (same styling as Dashboard.tsx) ----------
+function ThemeToggle({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggleTheme}
+      aria-label="Toggle theme"
+      className="p-2 rounded-lg border border-[var(--c-border)] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] hover:bg-[var(--c-hover)] transition-colors"
     >
-      <LandingNav theme={theme} onToggleTheme={onToggleTheme} onStart={onStart} />
-      <LandingHero onStart={onStart} />
-      <LandingMarquee />
-      <LandingDemo />
-      <LandingFeatures />
-      <LandingCTA onStart={onStart} />
-      <LandingFooter />
-      <LandingStyles />
+      {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+    </button>
+  );
+}
+
+// ---------- Real flip clock demo (countdown 5:00 → 0, loops) ----------
+function TimerDemo() {
+  const TOTAL = 5 * 60;
+  const [secs, setSecs] = useState(4 * 60 + 37);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setSecs((s) => (s <= 0 ? TOTAL : s - 1));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <FlipClockDisplay
+      hours={0}
+      minutes={Math.floor(secs / 60)}
+      seconds={secs % 60}
+      showHours={false}
+      isRunning
+    />
+  );
+}
+
+// ============================================================
+//                       STYLES
+// ============================================================
+const LANDING_STYLES = `
+:root {
+  --bg: #0A0A0C;
+  --bg2: #15161A;
+  --surface: #1B1C20;
+  --text: #FFFFFF;
+  --muted: #94A3B8;
+  --subtle: #64748B;
+  --border: #2D2E35;
+  --mint: #10B981;
+  --mintDeep: #059669;
+  --mintSoft: #A7F3D0;
+}
+html.light {
+  --bg: #FAF7F0;
+  --bg2: #FFFDF8;
+  --surface: #FFFDF8;
+  --text: #1A1713;
+  --muted: #5C5346;
+  --subtle: #837866;
+  --border: #ECE6D8;
+}
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg); color: var(--text);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  transition: background-color 0.5s ease, color 0.5s ease;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body { overflow-x: hidden; }
+.qm-landing, .qm-landing *, .qm-landing *::before, .qm-landing *::after { box-sizing: border-box; }
+.qm-landing .serif { font-family: 'Fraunces', ui-serif, Georgia, serif; font-weight: 500; letter-spacing: -0.04em; }
+.qm-landing .mono  { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.qm-landing .mint  { color: var(--mint); }
+.qm-landing .italic { font-style: italic; }
+.qm-landing .eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--mint);
+}
+.qm-landing button { font-family: inherit; }
+.qm-landing a { color: inherit; text-decoration: none; }
+
+/* ---------- NAV ---------- */
+.qm-landing .nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 14px 32px;
+  display: flex; justify-content: space-between; align-items: center;
+  transition: backdrop-filter 0.3s, background 0.3s, border-color 0.3s;
+  border-bottom: 1px solid transparent;
+}
+.qm-landing .nav.scrolled {
+  background: color-mix(in oklab, var(--bg) 72%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.qm-landing .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.qm-landing .nav-links { display: flex; align-items: center; gap: 4px; }
+.qm-landing .nav-links a {
+  color: var(--muted); font-size: 13px; font-weight: 500;
+  padding: 8px 14px; border-radius: 99px; transition: color 0.2s, background 0.2s;
+}
+.qm-landing .nav-links a:hover { color: var(--text); background: color-mix(in oklab, var(--text) 6%, transparent); }
+.qm-landing .nav-cta {
+  padding: 9px 18px; border-radius: 99px;
+  background: var(--text); color: var(--bg); border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.qm-landing .icon-btn {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  display: grid; place-items: center; font-size: 14px;
+  margin-right: 8px;
+}
+.qm-landing .nav-divider {
+  width: 1px; height: 22px; background: var(--border);
+  margin: 0 12px 0 4px; display: inline-block;
+}
+@media (max-width: 720px) {
+  .qm-landing .nav { padding: 12px 18px; }
+  .qm-landing .nav-links a { display: none; }
+}
+
+/* ---------- HERO ---------- */
+.qm-landing .hero {
+  position: relative; min-height: 100vh;
+  padding: 140px 32px 80px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; overflow: hidden;
+}
+.qm-landing .hero-aurora { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.qm-landing .hero-blob { position: absolute; border-radius: 50%; filter: blur(80px); will-change: transform; }
+.qm-landing .hero-blob.a {
+  top: 15%; left: 10%; width: 480px; height: 480px;
+  background: radial-gradient(circle, color-mix(in oklab, var(--mint) 25%, transparent), transparent 70%);
+}
+.qm-landing .hero-blob.b {
+  bottom: 10%; right: 5%; width: 540px; height: 540px;
+  background: radial-gradient(circle, color-mix(in oklab, var(--mint) 18%, transparent), transparent 70%);
+}
+.qm-landing .hero-blob.c {
+  top: 50%; left: 50%; width: 320px; height: 320px;
+  background: radial-gradient(circle, color-mix(in oklab, var(--mintSoft) 15%, transparent), transparent 70%);
+  transform: translate(-50%, -50%);
+}
+.qm-landing .hero-eyebrow { margin-bottom: 32px; z-index: 2; position: relative; }
+.qm-landing .hero-h1 {
+  font-size: clamp(56px, 11vw, 168px);
+  line-height: 1.05; margin: 0;
+  max-width: 1500px;
+  z-index: 2; position: relative;
+  overflow: visible;
+}
+.qm-landing .hero-h1 .line {
+  display: block;
+  padding-bottom: 0.18em;
+  line-height: 1.05;
+}
+.qm-landing .hero-h1 .gradient {
+  background: linear-gradient(135deg, var(--mint), var(--mintDeep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.22em;
+}
+.qm-landing .hero-sub {
+  font-size: clamp(16px, 1.6vw, 22px);
+  color: var(--muted); max-width: 640px;
+  line-height: 1.55; margin: 40px auto 0;
+  z-index: 2; position: relative;
+}
+.qm-landing .hero-cta {
+  display: flex; gap: 14px; margin-top: 48px;
+  align-items: center; justify-content: center; flex-wrap: wrap;
+  z-index: 2; position: relative;
+}
+.qm-landing .btn-primary {
+  padding: 16px 28px; border-radius: 99px;
+  background: var(--mint); color: #fff; border: none;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 14px 40px -8px color-mix(in oklab, var(--mint) 60%, transparent);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.qm-landing .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 44px -6px color-mix(in oklab, var(--mint) 70%, transparent); }
+.qm-landing .scroll-cue {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  z-index: 2;
+}
+.qm-landing .scroll-cue-line {
+  width: 1px; height: 32px;
+  background: linear-gradient(180deg, transparent, var(--mint), transparent);
+  animation: qmScrollCue 2s ease-in-out infinite;
+}
+@keyframes qmScrollCue {
+  0% { transform: translateY(-12px); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateY(12px); opacity: 0; }
+}
+
+/* ---------- CANVAS REVEAL (story 1) ---------- */
+.qm-landing .story { position: relative; height: 700vh; }
+.qm-landing .story-sticky {
+  position: sticky; top: 0; height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  overflow: hidden;
+  padding-top: 120px;
+}
+.qm-landing .story-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, color-mix(in oklab, var(--mint) 6%, var(--bg)) 0%, var(--bg) 70%);
+  transition: background 0.5s ease;
+}
+.qm-landing .story-eyebrow { position: relative; z-index: 5; text-align: center; margin-bottom: 18px; }
+.qm-landing .story-h2 {
+  position: relative; z-index: 5; text-align: center;
+  font-size: clamp(32px, 5vw, 64px); line-height: 1; margin: 0 0 36px;
+  padding: 0 32px; max-width: 1100px;
+  transition: opacity 0.4s ease;
+}
+.qm-landing #storyCanvas {
+  width: min(1100px, 92vw); height: min(520px, 56vh);
+  position: relative; z-index: 4;
+}
+.qm-landing .story-steps {
+  position: relative; z-index: 5;
+  display: flex; gap: 32px;
+  margin-top: 32px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  flex-wrap: wrap; justify-content: center; padding: 0 16px;
+}
+.qm-landing .story-step {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--subtle); font-weight: 500; letter-spacing: 0.2em;
+  transition: color 0.3s;
+}
+.qm-landing .story-step .dot {
+  width: 6px; height: 6px; border-radius: 99px;
+  background: var(--border); transition: all 0.3s;
+}
+.qm-landing .story-step.active { color: var(--mint); font-weight: 700; }
+.qm-landing .story-step.active .dot {
+  background: var(--mint);
+  box-shadow: 0 0 8px var(--mint);
+}
+
+/* ---------- PINNED FEATURE ---------- */
+.qm-landing .feature { position: relative; height: 280vh; }
+.qm-landing .feature-sticky {
+  position: sticky; top: 0; height: 100vh;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 80px; padding: 0 64px; align-items: center;
+  overflow: hidden;
+}
+.qm-landing .feature-text { will-change: transform, opacity; }
+.qm-landing .feature-num {
+  font-family: 'Fraunces', serif; font-style: italic;
+  font-size: 88px; color: var(--mint);
+  line-height: 1; font-weight: 500; margin-bottom: 24px;
+}
+.qm-landing .feature-title { font-size: clamp(40px, 5vw, 72px); line-height: 1; margin: 0; }
+.qm-landing .feature-body {
+  margin-top: 24px; font-size: 19px; line-height: 1.55;
+  color: var(--muted); max-width: 520px;
+}
+.qm-landing .feature-visual { position: relative; height: 480px; will-change: transform, opacity; }
+@media (max-width: 900px) {
+  .qm-landing .feature-sticky { grid-template-columns: 1fr; gap: 40px; padding: 80px 32px; }
+  .qm-landing .feature-visual { height: 360px; }
+  .qm-landing .feature { height: 220vh; }
+}
+
+/* ---------- PARALLAX SHOWCASE ---------- */
+.qm-landing .parallax {
+  position: relative; height: 140vh; overflow: hidden;
+  background: radial-gradient(ellipse at top, color-mix(in oklab, var(--mint) 8%, var(--bg)) 0%, var(--bg) 60%);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.5s;
+}
+.qm-landing .parallax-back {
+  position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center;
+  pointer-events: none; will-change: transform;
+  opacity: 0.06;
+}
+.qm-landing .parallax-back-q {
+  font-family: 'Fraunces', serif; font-style: italic;
+  font-size: clamp(280px, 40vw, 560px); color: var(--mint);
+  font-weight: 500; letter-spacing: -0.06em; line-height: 0.9;
+}
+.qm-landing .parallax-mid { position: relative; z-index: 2; text-align: center; padding: 0 32px; will-change: transform; }
+.qm-landing .parallax-front { position: absolute; inset: 0; pointer-events: none; will-change: transform; }
+.qm-landing .parallax-card {
+  position: absolute; width: 200px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 16px 32px -8px rgba(0,0,0,0.4);
+}
+html.light .qm-landing .parallax-card { box-shadow: 0 16px 32px -8px rgba(0,0,0,0.1); }
+.qm-landing .parallax-card .tag {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.2em;
+}
+.qm-landing .parallax-card .q {
+  font-family: 'Fraunces', serif; font-size: 14px;
+  margin-top: 6px; line-height: 1.3; color: var(--text);
+}
+
+/* ---------- TIMER STORY ---------- */
+.qm-landing .timer-section {
+  padding: 160px 32px;
+  max-width: 1280px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+}
+.qm-landing .timer-text { will-change: transform, opacity; }
+.qm-landing .timer-visual { will-change: transform, opacity; }
+.qm-landing .kbd-list { margin-top: 32px; display: flex; flex-direction: column; gap: 10px; }
+.qm-landing .kbd-row { display: flex; align-items: center; gap: 14px; }
+.qm-landing .kbd {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); min-width: 50px; text-align: center;
+}
+.qm-landing .timer-card {
+  padding: 40px 32px; border-radius: 24px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  box-shadow: 0 32px 80px -20px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column; align-items: center; gap: 24px;
+}
+html.light .qm-landing .timer-card { box-shadow: 0 32px 80px -20px rgba(26,23,19,0.18); background: #FFFDF8; }
+.qm-landing .timer-header { display: flex; align-items: center; gap: 12px; }
+.qm-landing .timer-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(16,185,129,0.10);
+  border: 1px solid rgba(16,185,129,0.4);
+  display: grid; place-items: center;
+  color: var(--mint); font-size: 14px;
+}
+.qm-landing .timer-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; color: var(--mint); text-transform: uppercase; }
+.qm-landing .timer-title { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; line-height: 1.1; margin-top: 2px; }
+.qm-landing .timer-row { display: flex; align-items: center; justify-content: center; min-height: 132px; }
+.qm-landing .timer-controls { display: flex; gap: 8px; }
+.qm-landing .timer-btn {
+  padding: 10px 24px; border-radius: 12px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.qm-landing .timer-btn.primary { background: var(--mint); color: #fff; border: none; }
+.qm-landing .timer-btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 10px 20px; font-weight: 500; }
+@media (max-width: 900px) {
+  .qm-landing .timer-section { grid-template-columns: 1fr; gap: 48px; padding: 100px 24px; }
+}
+
+/* ---------- MARQUEE ---------- */
+.qm-landing .marquee {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden; padding: 28px 0;
+}
+.qm-landing .marquee-track {
+  display: flex; gap: 56px; animation: qmMarquee 40s linear infinite;
+  white-space: nowrap; will-change: transform;
+}
+.qm-landing .marquee-item {
+  display: flex; align-items: center; gap: 18px;
+  font-family: 'Fraunces', serif; font-size: 30px; font-style: italic;
+  color: var(--text); flex-shrink: 0; font-weight: 500;
+}
+.qm-landing .marquee-item .star { color: var(--mint); }
+@keyframes qmMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
+/* ---------- FINAL CTA ---------- */
+.qm-landing .cta { padding: 120px 32px; max-width: 1280px; margin: 0 auto; }
+.qm-landing .cta-card {
+  position: relative; overflow: hidden;
+  border-radius: 32px;
+  padding: clamp(72px, 12vw, 140px) clamp(32px, 6vw, 80px);
+  background: linear-gradient(135deg, var(--mintDeep) 0%, var(--mint) 100%);
+  text-align: center;
+}
+.qm-landing .cta-leaf {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(420px, 60vw, 720px);
+  height: clamp(420px, 60vw, 720px);
+  opacity: 0.12;
+  pointer-events: none;
+}
+.qm-landing .cta-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.25), transparent 55%);
+  pointer-events: none;
+}
+.qm-landing .cta-content { position: relative; z-index: 2; }
+.qm-landing .cta-h2 {
+  font-family: 'Fraunces', serif; font-weight: 500;
+  font-size: clamp(48px, 8vw, 112px);
+  letter-spacing: -0.04em; margin: 0;
+  color: #052E24; line-height: 0.92;
+}
+.qm-landing .cta-h2 em { font-style: italic; }
+.qm-landing .cta-btn {
+  margin-top: 40px; padding: 20px 36px; border-radius: 99px;
+  background: #0A0A0C; color: #fff; border: none;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.4);
+  transition: transform 0.2s;
+}
+.qm-landing .cta-btn:hover { transform: translateY(-2px); }
+.qm-landing .cta-fine { margin-top: 16px; font-size: 13px; color: #052E24; opacity: 0.7; }
+
+/* ---------- FOOTER ---------- */
+.qm-landing .footer {
+  padding: 32px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
+  font-size: 13px; color: var(--subtle);
+}
+.qm-landing .footer-brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; }
+.qm-landing .footer-brand .made { color: var(--subtle); font-weight: 400; margin-left: 12px; }
+.qm-landing .footer-links { display: flex; gap: 24px; }
+.qm-landing .footer-links a { color: var(--muted); }
+
+/* ---------- entrance helpers ---------- */
+.qm-landing .reveal { opacity: 0; transform: translateY(36px); transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2,.7,.2,1); }
+.qm-landing .reveal.in { opacity: 1; transform: translateY(0); }
+.qm-landing .reveal.d1 { transition-delay: 0.1s; }
+.qm-landing .reveal.d2 { transition-delay: 0.2s; }
+.qm-landing .reveal.d3 { transition-delay: 0.3s; }
+.qm-landing .reveal.d4 { transition-delay: 0.4s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .qm-landing *, .qm-landing *::before, .qm-landing *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .qm-landing .reveal { opacity: 1 !important; transform: none !important; }
+}
+`;
+
+// ============================================================
+//                       BODY MARKUP
+// ============================================================
+const LANDING_BODY = `
+<div class="qm-landing">
+  <nav class="nav" id="nav">
+    <div class="nav-brand">
+      <svg width="20" height="20" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/>
+        <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#10B981" opacity="0.85"/>
+        <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="60" cy="92" r="3.4" fill="currentColor"/>
+      </svg>
+      <span>Quiz<span class="mint">Mint</span></span>
     </div>
-  );
-}
-
-function LandingNav({ theme, onToggleTheme, onStart }: LandingPageProps) {
-  return (
-    <header
-      className="landing-nav"
-      style={{
-        padding: '24px 40px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid var(--c-border)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          fontWeight: 700,
-          fontSize: 18,
-          letterSpacing: -0.2,
-        }}
-      >
-        <QuizMintLogo size={22} />
-        <span>
-          Quiz<span style={{ color: 'var(--c-brand)' }}>Mint</span>
-        </span>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="nav-links">
+        <a href="#story">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#timer">Timer</a>
       </div>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <button
-          onClick={onToggleTheme}
-          aria-label="Toggle theme"
-          style={{
-            background: 'transparent',
-            border: '1px solid var(--c-border)',
-            color: 'var(--c-text-subtle)',
-            padding: 8,
-            borderRadius: 10,
-            cursor: 'pointer',
-            display: 'grid',
-            placeItems: 'center',
-          }}
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-        <button
-          onClick={onStart}
-          style={{
-            background: 'var(--c-text)',
-            color: 'var(--c-app)',
-            border: 'none',
-            padding: '10px 18px',
-            borderRadius: 99,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          Make a quiz →
-        </button>
-      </div>
-    </header>
-  );
-}
-
-function LandingHero({ onStart }: { onStart: () => void }) {
-  return (
-    <section
-      className="landing-hero"
-      style={{
-        position: 'relative',
-        padding: '80px 40px 120px',
-        overflow: 'hidden',
-      }}
-    >
-      <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 2 }}>
-        <div
-          style={{
-            fontSize: 12,
-            letterSpacing: 2.4,
-            color: 'var(--c-brand)',
-            fontWeight: 700,
-            marginBottom: 24,
-          }}
-        >
-          ✦ &nbsp;THE STUDY TOOL YOUR NOTES DESERVE
-        </div>
-        <h1
-          className="landing-headline"
-          style={{
-            fontFamily: serif,
-            fontWeight: 600,
-            fontSize: 'clamp(48px, 9vw, 124px)',
-            lineHeight: 0.9,
-            letterSpacing: -4.5,
-            margin: 0,
-            maxWidth: 1100,
-          }}
-        >
-          Any document,
-          <br />
-          <em
-            style={{
-              color: 'var(--c-brand)',
-              fontStyle: 'italic',
-              fontWeight: 600,
-            }}
-          >
-            instantly
-          </em>{' '}
-          studyable.
-        </h1>
-        <p
-          style={{
-            fontSize: 20,
-            color: 'var(--c-text-subtle)',
-            lineHeight: 1.5,
-            maxWidth: 560,
-            marginTop: 32,
-          }}
-        >
-          QuizMint reads your PDFs, pastes, and lecture docs and turns them into real
-          quizzes — with difficulty labels and a one-line explanation for every answer.
-          In seconds.
-        </p>
-        <div style={{ display: 'flex', gap: 16, marginTop: 40, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={onStart}
-            style={{
-              background: 'var(--c-text)',
-              color: 'var(--c-app)',
-              border: 'none',
-              padding: '16px 26px',
-              borderRadius: 99,
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Try it free →
-          </button>
-          <div style={{ fontSize: 13, color: 'var(--c-text-faint)' }}>
-            No account. No sign-in. Just paste and go.
-          </div>
-        </div>
-      </div>
-
-      <FloatingCards />
-    </section>
-  );
-}
-
-function FloatingCards() {
-  const cards = [
-    { t: 'Biology · Ch 7', q: 'Which organ regulates blood sugar?', color: '#10B981', rotate: -6, top: 90, right: 520, z: 3 },
-    { t: 'US History', q: 'What year did the Treaty of Versailles conclude?', color: '#F59E0B', rotate: 4, top: 60, right: 240, z: 2 },
-    { t: 'Organic Chem', q: 'The SN1 reaction proceeds through a...', color: '#6366F1', rotate: -2, top: 320, right: 120, z: 4 },
-    { t: 'Intro to Econ', q: 'Price elasticity of demand measures...', color: '#EC4899', rotate: 8, top: 380, right: 420, z: 1 },
-  ];
-  return (
-    <div className="landing-floating" style={{ position: 'absolute', top: 40, right: 0, width: 720, height: 620, pointerEvents: 'none' }}>
-      {cards.map((c, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            top: c.top,
-            right: c.right,
-            width: 260,
-            background: 'var(--c-surface)',
-            border: '1px solid var(--c-border)',
-            borderRadius: 16,
-            padding: 20,
-            boxShadow: '0 20px 40px -12px rgba(10,10,12,0.18), 0 4px 8px -2px rgba(10,10,12,0.08)',
-            transform: `rotate(${c.rotate}deg)`,
-            zIndex: c.z,
-            animation: `qmFloat${i} 6s ease-in-out infinite`,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontSize: 10, letterSpacing: 1.4, color: c.color, fontWeight: 700 }}>
-              {c.t.toUpperCase()}
-            </span>
-            <span style={{ width: 8, height: 8, borderRadius: 99, background: c.color }} />
-          </div>
-          <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 600, lineHeight: 1.3, color: 'var(--c-text)' }}>
-            {c.q}
-          </div>
-          <div style={{ marginTop: 14, display: 'flex', gap: 4 }}>
-            {['A', 'B', 'C', 'D'].map((l) => (
-              <div
-                key={l}
-                style={{
-                  flex: 1,
-                  textAlign: 'center',
-                  padding: '6px 0',
-                  background: 'var(--c-app)',
-                  border: '1px solid var(--c-border)',
-                  borderRadius: 6,
-                  fontSize: 11,
-                  color: 'var(--c-text-subtle)',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                {l}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      <span id="qm-theme-mount" style="display:inline-flex; align-items:center; margin-right:8px;"></span>
+      <span class="nav-divider" aria-hidden="true"></span>
+      <button class="nav-cta">Get started</button>
     </div>
-  );
-}
+  </nav>
 
-function LandingMarquee() {
-  const items = [
-    'PDF textbooks',
-    'DOCX problem sets',
-    'Pasted MCQs',
-    'Lecture notes',
-    'Practice exams',
-    'TXT study guides',
-  ];
-  return (
-    <div
-      style={{
-        borderTop: '1px solid var(--c-border)',
-        borderBottom: '1px solid var(--c-border)',
-        background: 'var(--c-surface)',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          gap: 56,
-          padding: '20px 0',
-          animation: 'qmMarquee 40s linear infinite',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {[...items, ...items, ...items].map((it, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 18,
-              fontFamily: serif,
-              fontSize: 26,
-              fontStyle: 'italic',
-              color: 'var(--c-text)',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: 'var(--c-brand)' }}>✦</span> {it}
-          </div>
-        ))}
-      </div>
+  <section class="hero" id="hero">
+    <div class="hero-aurora">
+      <div class="hero-blob a" data-blob="a"></div>
+      <div class="hero-blob b" data-blob="b"></div>
+      <div class="hero-blob c" data-blob="c"></div>
     </div>
-  );
-}
+    <div class="eyebrow hero-eyebrow reveal">✦ &nbsp; INTRODUCING QUIZMINT 2.0</div>
+    <h1 class="hero-h1 serif">
+      <span class="line reveal d1">Any document.</span>
+      <span class="line italic gradient reveal d2">Instantly studyable.</span>
+    </h1>
+    <p class="hero-sub reveal d3">
+      Drop a PDF, paste a chapter, or upload your lecture notes.
+      QuizMint reads the mess and hands back a real quiz — graded, explained, ready to drill.
+    </p>
+    <div class="hero-cta reveal d4">
+      <button class="btn-primary">Try it free →</button>
+    </div>
+  </section>
 
-function LandingDemo() {
-  return (
-    <section
-      className="landing-demo"
-      style={{
-        padding: '96px 40px',
-        maxWidth: 1040,
-        margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: 48,
-      }}
-    >
-      <div style={{ textAlign: 'center' }}>
-        <div
-          style={{
-            fontSize: 12,
-            letterSpacing: 2.4,
-            color: 'var(--c-brand)',
-            fontWeight: 700,
-            marginBottom: 16,
-          }}
-        >
-          ✦ &nbsp;LIVE DEMO
-        </div>
-        <h2
-          className="landing-demo-h2"
-          style={{
-            fontFamily: serif,
-            fontWeight: 600,
-            fontSize: 'clamp(32px, 4.5vw, 52px)',
-            letterSpacing: -1.5,
-            margin: 0,
-            lineHeight: 1.05,
-          }}
-        >
-          Paste in. <em style={{ color: 'var(--c-brand)' }}>Quiz out.</em>
-        </h2>
-        <p
-          style={{
-            marginTop: 16,
-            fontSize: 16,
-            color: 'var(--c-text-subtle)',
-            lineHeight: 1.55,
-            maxWidth: 560,
-            margin: '16px auto 0',
-          }}
-        >
-          A 30-second loop of what actually happens when you drop in a messy document.
-        </p>
-      </div>
-      <DemoCard />
-    </section>
-  );
-}
-
-function LandingFeatures() {
-  const items = [
-    { n: '01', t: 'It parses the mess', d: 'Numbered? Lettered? Footnoted answer key? Scan of a page? Yes, yes, yes, yes.' },
-    { n: '02', t: 'It grades itself', d: "Difficulty labels aren't guesses. They're based on what the question actually demands." },
-    { n: '03', t: 'It explains', d: '"The answer is C" is useless at 2am. Every answer ships with a one-line why.' },
-    { n: '04', t: 'It stays out of the way', d: 'No account. No email. No pricing page. You paste, it quizzes. That is the whole contract.' },
-  ];
-  return (
-    <section className="landing-features" style={{ padding: '120px 40px', maxWidth: 1280, margin: '0 auto' }}>
-      <h2
-        className="landing-features-h2"
-        style={{
-          fontFamily: serif,
-          fontWeight: 600,
-          fontSize: 'clamp(40px, 6vw, 72px)',
-          letterSpacing: -2,
-          margin: '0 0 64px',
-          maxWidth: 820,
-          lineHeight: 1,
-        }}
-      >
-        Four small things.
-        <br />
-        <em style={{ color: 'var(--c-brand)' }}>One big difference.</em>
+  <section class="story" id="story">
+    <div class="story-sticky">
+      <div class="story-bg"></div>
+      <div class="eyebrow story-eyebrow">✦ &nbsp; HOW IT WORKS</div>
+      <h2 class="story-h2 serif" id="storyH2">
+        <span id="storyTextA">Drop in <em class="italic mint">messy notes.</em></span>
       </h2>
-      <div
-        className="landing-feature-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 1,
-          background: 'var(--c-border)',
-          border: '1px solid var(--c-border)',
-          borderRadius: 12,
-          overflow: 'hidden',
-        }}
-      >
-        {items.map((it) => (
-          <div
-            key={it.n}
-            className="landing-feature-card"
-            style={{
-              background: 'var(--c-app)',
-              padding: 48,
-              minHeight: 260,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: serif,
-                fontStyle: 'italic',
-                fontSize: 48,
-                color: 'var(--c-brand)',
-                lineHeight: 1,
-                fontWeight: 600,
-              }}
-            >
-              {it.n}.
-            </div>
-            <h3
-              style={{
-                fontFamily: serif,
-                fontSize: 32,
-                fontWeight: 600,
-                letterSpacing: -0.6,
-                margin: 0,
-                color: 'var(--c-text)',
-              }}
-            >
-              {it.t}
-            </h3>
-            <p style={{ fontSize: 17, color: 'var(--c-text-subtle)', lineHeight: 1.55, margin: 0, maxWidth: 420 }}>
-              {it.d}
-            </p>
+      <canvas id="storyCanvas"></canvas>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="feature" data-feature="0">
+      <div class="feature-sticky">
+        <div class="feature-text">
+          <div class="feature-num serif italic">01.</div>
+          <h3 class="feature-title serif">It parses the mess.</h3>
+          <p class="feature-body">Numbered, lettered, footnoted answer keys, scanned pages — bring the worst documents you have. PDF, DOCX, or just paste the text.</p>
+        </div>
+        <div class="feature-visual" id="visual0"></div>
+      </div>
+    </div>
+
+    <div class="feature" data-feature="1">
+      <div class="feature-sticky">
+        <div class="feature-text">
+          <div class="feature-num serif italic">02.</div>
+          <h3 class="feature-title serif">It grades itself.</h3>
+          <p class="feature-body">Difficulty isn't a vibe. Every question gets an Easy / Medium / Hard label so you study what's hard, not just what's first.</p>
+        </div>
+        <div class="feature-visual" id="visual1"></div>
+      </div>
+    </div>
+
+    <div class="feature" data-feature="2">
+      <div class="feature-sticky">
+        <div class="feature-text">
+          <div class="feature-num serif italic">03.</div>
+          <h3 class="feature-title serif">It explains.</h3>
+          <p class="feature-body">"The answer is C" is useless at 2am. Every answer ships with a one-line why so you actually learn the thing.</p>
+        </div>
+        <div class="feature-visual" id="visual2"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="parallax" id="parallax">
+    <div class="parallax-back" id="parallaxBack"><div class="parallax-back-q">Q.</div></div>
+    <div class="parallax-mid" id="parallaxMid">
+      <div class="eyebrow" style="margin-bottom:24px;">✦ &nbsp; BUILT FOR FOCUS</div>
+      <h2 class="serif" style="font-size:clamp(48px,8vw,120px); line-height:0.92; margin:0; max-width:1100px;">
+        Designed for the<br>
+        <em class="italic mint">2 am session.</em>
+      </h2>
+      <p style="margin-top:28px; font-size:19px; color:var(--muted); max-width:560px; margin-left:auto; margin-right:auto; line-height:1.55;">
+        Quiet typography. A timer that doesn't shout at you. A flow that respects your attention.
+      </p>
+    </div>
+    <div class="parallax-front" id="parallaxFront">
+      <div class="parallax-card" style="left:8%; top:18%; transform:rotate(-6deg);">
+        <div class="tag" style="color:#F59E0B;">● Q1</div>
+        <div class="q">Define photosynthesis.</div>
+      </div>
+      <div class="parallax-card" style="right:8%; top:14%; transform:rotate(8deg);">
+        <div class="tag" style="color:#6366F1;">● Q2</div>
+        <div class="q">Year of Magna Carta?</div>
+      </div>
+      <div class="parallax-card" style="left:10%; bottom:14%; transform:rotate(4deg);">
+        <div class="tag" style="color:#EC4899;">● Q3</div>
+        <div class="q">pKa of acetic acid?</div>
+      </div>
+      <div class="parallax-card" style="right:10%; bottom:18%; transform:rotate(-4deg);">
+        <div class="tag" style="color:var(--mint);">● Q4</div>
+        <div class="q">GDP vs GNP — diff?</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="timer-section" id="timer">
+    <div class="timer-text reveal">
+      <div class="eyebrow" style="margin-bottom:20px;">✦ &nbsp; FLIP TIMER</div>
+      <h2 class="serif" style="font-size:clamp(40px,5.5vw,80px); line-height:0.95; margin:0;">
+        A timer that<br><em class="italic mint">doesn't shout.</em>
+      </h2>
+      <p style="margin-top:24px; font-size:18px; color:var(--muted); line-height:1.6; max-width:480px;">
+        Soft card faces, a brand-mint hairline, an editorial colon that breathes with the second. Four modes — Clock, Countdown, Count up, Hybrid — one feel.
+      </p>
+      <div class="kbd-list">
+        <div class="kbd-row"><span class="kbd">SPACE</span><span style="font-size:14px; color:var(--muted);">Start / pause</span></div>
+        <div class="kbd-row"><span class="kbd">F</span><span style="font-size:14px; color:var(--muted);">Fullscreen focus</span></div>
+        <div class="kbd-row"><span class="kbd">ESC</span><span style="font-size:14px; color:var(--muted);">Exit fullscreen</span></div>
+      </div>
+    </div>
+    <div class="timer-visual reveal d1">
+      <div class="timer-card">
+        <div class="timer-header">
+          <div class="timer-icon">⧗</div>
+          <div>
+            <div class="timer-eyebrow">Running</div>
+            <div class="timer-title">Countdown</div>
           </div>
-        ))}
+        </div>
+        <div class="timer-row"></div>
+        <div class="timer-controls">
+          <button class="timer-btn primary" type="button">⏸ Pause</button>
+          <button class="timer-btn ghost" type="button">↺ Reset</button>
+        </div>
       </div>
-    </section>
-  );
-}
+    </div>
+  </section>
 
-function LandingCTA({ onStart }: { onStart: () => void }) {
-  return (
-    <section className="landing-cta" style={{ padding: '0 40px 120px', maxWidth: 1280, margin: '0 auto' }}>
-      <div
-        style={{
-          background: 'var(--c-brand)',
-          borderRadius: 32,
-          padding: 'clamp(56px, 10vw, 96px) clamp(32px, 6vw, 72px)',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.22), transparent 50%)',
-          }}
-        />
-        <h2
-          style={{
-            fontFamily: serif,
-            fontSize: 'clamp(48px, 8vw, 88px)',
-            fontWeight: 600,
-            letterSpacing: -3,
-            margin: 0,
-            color: '#052E24',
-            lineHeight: 0.95,
-            position: 'relative',
-          }}
-        >
-          Stop formatting.
-          <br />
-          <em>Start studying.</em>
-        </h2>
-        <button
-          onClick={onStart}
-          style={{
-            marginTop: 40,
-            background: '#0A0A0C',
-            color: '#fff',
-            border: 'none',
-            padding: '20px 36px',
-            borderRadius: 99,
-            fontSize: 16,
-            fontWeight: 600,
-            cursor: 'pointer',
-            position: 'relative',
-          }}
-        >
-          Make your first quiz →
-        </button>
+  <div class="marquee">
+    <div class="marquee-track">
+      <span class="marquee-item"><span class="star">✦</span> PDF textbooks</span>
+      <span class="marquee-item"><span class="star">✦</span> Lecture notes</span>
+      <span class="marquee-item"><span class="star">✦</span> Practice exams</span>
+      <span class="marquee-item"><span class="star">✦</span> Pasted MCQs</span>
+      <span class="marquee-item"><span class="star">✦</span> DOCX problem sets</span>
+      <span class="marquee-item"><span class="star">✦</span> Study guides</span>
+      <span class="marquee-item"><span class="star">✦</span> PDF textbooks</span>
+      <span class="marquee-item"><span class="star">✦</span> Lecture notes</span>
+      <span class="marquee-item"><span class="star">✦</span> Practice exams</span>
+      <span class="marquee-item"><span class="star">✦</span> Pasted MCQs</span>
+      <span class="marquee-item"><span class="star">✦</span> DOCX problem sets</span>
+      <span class="marquee-item"><span class="star">✦</span> Study guides</span>
+      <span class="marquee-item"><span class="star">✦</span> PDF textbooks</span>
+      <span class="marquee-item"><span class="star">✦</span> Lecture notes</span>
+      <span class="marquee-item"><span class="star">✦</span> Practice exams</span>
+      <span class="marquee-item"><span class="star">✦</span> Pasted MCQs</span>
+      <span class="marquee-item"><span class="star">✦</span> DOCX problem sets</span>
+      <span class="marquee-item"><span class="star">✦</span> Study guides</span>
+    </div>
+  </div>
+
+  <section class="cta">
+    <div class="cta-card">
+      <svg class="cta-leaf" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#FFFFFF"/>
+        <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#FFFFFF" opacity="0.85"/>
+        <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="#052E24" stroke-width="5.5" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="60" cy="92" r="3.4" fill="#052E24"/>
+      </svg>
+      <div class="cta-glow"></div>
+      <div class="cta-content reveal">
+        <h2 class="cta-h2">Stop formatting.<br><em>Start studying.</em></h2>
+        <button class="cta-btn">Make your first quiz →</button>
+        <div class="cta-fine">Free. Login with Gmail.</div>
       </div>
-    </section>
-  );
-}
+    </div>
+  </section>
 
-function LandingFooter() {
-  return (
-    <footer
-      className="landing-footer"
-      style={{
-        padding: '32px 40px 48px',
-        borderTop: '1px solid var(--c-border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 16,
-        fontSize: 13,
-        color: 'var(--c-text-faint)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <QuizMintLogo size={18} />
-        <span>
-          Quiz<span style={{ color: 'var(--c-brand)' }}>Mint</span>
-        </span>
-        <span style={{ marginLeft: 12 }}>Made with mint.</span>
-      </div>
-      <a
-        href="https://github.com/Yashrajkv28/quizmint"
-        target="_blank"
-        rel="noreferrer"
-        style={{ color: 'var(--c-text-subtle)', textDecoration: 'none' }}
-      >
-        GitHub ↗
-      </a>
-    </footer>
-  );
-}
+  <footer class="footer">
+    <div class="footer-brand">
+      <svg width="18" height="18" viewBox="0 0 100 100"><path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/><path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#10B981" opacity="0.85"/></svg>
+      <span>Quiz<span class="mint">Mint</span></span>
+      <span class="made">Made with mint.</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/Yashrajkv28/quizmint" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </div>
+  </footer>
+</div>
+`;
 
-function LandingStyles() {
-  return (
-    <style>{`
-      @keyframes qmFloat0 { 0%,100% { transform: rotate(-6deg) translateY(0) } 50% { transform: rotate(-6deg) translateY(-8px) } }
-      @keyframes qmFloat1 { 0%,100% { transform: rotate(4deg)  translateY(0) } 50% { transform: rotate(4deg)  translateY(-12px) } }
-      @keyframes qmFloat2 { 0%,100% { transform: rotate(-2deg) translateY(0) } 50% { transform: rotate(-2deg) translateY(-6px) } }
-      @keyframes qmFloat3 { 0%,100% { transform: rotate(8deg)  translateY(0) } 50% { transform: rotate(8deg)  translateY(-10px) } }
-      @keyframes qmMarquee { 0% { transform: translateX(0) } 100% { transform: translateX(-33.33%) } }
-      @media (max-width: 1100px) {
-        .landing-floating { display: none; }
-      }
-      @media (max-width: 720px) {
-        .landing-feature-grid { grid-template-columns: 1fr !important; }
-      }
-      @media (max-width: 560px) {
-        .landing-nav { padding: 18px 20px !important; }
-        .landing-nav button:last-child { padding: 9px 14px !important; font-size: 13px !important; }
-        .landing-hero { padding: 56px 20px 80px !important; }
-        .landing-headline { letter-spacing: -2px !important; line-height: 0.95 !important; }
-        .landing-features { padding: 72px 20px !important; }
-        .landing-features-h2 { letter-spacing: -1px !important; margin-bottom: 40px !important; }
-        .landing-feature-card { padding: 28px !important; min-height: 0 !important; }
-        .landing-feature-card h3 { font-size: 24px !important; }
-        .landing-feature-card p { font-size: 15px !important; }
-        .landing-cta { padding: 0 20px 80px !important; }
-        .landing-footer { padding: 24px 20px 36px !important; }
-        .landing-demo { padding: 64px 20px !important; gap: 32px !important; }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .landing-floating > div { animation: none !important; }
-      }
-    `}</style>
-  );
-}

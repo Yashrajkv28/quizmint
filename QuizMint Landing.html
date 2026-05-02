@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuizMint — Any document. Instantly studyable.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0A0A0C;
+      --bg2: #15161A;
+      --surface: #1B1C20;
+      --text: #FFFFFF;
+      --muted: #94A3B8;
+      --subtle: #64748B;
+      --border: #2D2E35;
+      --mint: #10B981;
+      --mintDeep: #059669;
+      --mintSoft: #A7F3D0;
+    }
+    html.light {
+      --bg: #FAF7F0;
+      --bg2: #FFFDF8;
+      --surface: #FFFDF8;
+      --text: #0A0A0C;
+      --muted: #5C5346;
+      --subtle: #837866;
+      --border: #ECE6D8;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      transition: background-color 0.5s ease, color 0.5s ease;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    html { scroll-behavior: auto; }
+    body { overflow-x: hidden; }
+    .serif { font-family: 'Fraunces', ui-serif, Georgia, serif; font-weight: 500; letter-spacing: -0.04em; }
+    .mono  { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+    .mint  { color: var(--mint); }
+    .italic { font-style: italic; }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--mint);
+    }
+    button { font-family: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ---------- NAV ---------- */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 14px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: backdrop-filter 0.3s, background 0.3s, border-color 0.3s;
+      border-bottom: 1px solid transparent;
+    }
+    .nav.scrolled {
+      background: color-mix(in oklab, var(--bg) 72%, transparent);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-links a {
+      color: var(--muted); font-size: 13px; font-weight: 500;
+      padding: 8px 14px; border-radius: 99px; transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: color-mix(in oklab, var(--text) 6%, transparent); }
+    .nav-cta {
+      padding: 9px 18px; border-radius: 99px;
+      background: var(--text); color: var(--bg); border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .icon-btn {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); cursor: pointer;
+      display: grid; place-items: center; font-size: 14px;
+      margin-right: 8px;
+    }
+    .nav-divider {
+      width: 1px; height: 22px; background: var(--border);
+      margin: 0 12px 0 4px; display: inline-block;
+    }
+    @media (max-width: 720px) {
+      .nav { padding: 12px 18px; }
+      .nav-links a { display: none; }
+    }
+
+    /* ---------- HERO ---------- */
+    .hero {
+      position: relative; min-height: 100vh;
+      padding: 140px 32px 80px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; overflow: hidden;
+    }
+    .hero-aurora {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+      z-index: 0;
+    }
+    .hero-blob {
+      position: absolute; border-radius: 50%; filter: blur(80px);
+      will-change: transform;
+    }
+    .hero-blob.a {
+      top: 15%; left: 10%; width: 480px; height: 480px;
+      background: radial-gradient(circle, color-mix(in oklab, var(--mint) 25%, transparent), transparent 70%);
+    }
+    .hero-blob.b {
+      bottom: 10%; right: 5%; width: 540px; height: 540px;
+      background: radial-gradient(circle, color-mix(in oklab, var(--mint) 18%, transparent), transparent 70%);
+    }
+    .hero-blob.c {
+      top: 50%; left: 50%; width: 320px; height: 320px;
+      background: radial-gradient(circle, color-mix(in oklab, var(--mintSoft) 15%, transparent), transparent 70%);
+      transform: translate(-50%, -50%);
+    }
+    .hero-eyebrow { margin-bottom: 32px; z-index: 2; position: relative; }
+    .hero-h1 {
+      font-size: clamp(56px, 11vw, 168px);
+      line-height: 0.88; margin: 0;
+      max-width: 1500px;
+      z-index: 2; position: relative;
+    }
+    .hero-h1 .line { display: block; }
+    .hero-h1 .gradient {
+      background: linear-gradient(135deg, var(--mint), var(--mintDeep));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(16px, 1.6vw, 22px);
+      color: var(--muted); max-width: 640px;
+      line-height: 1.55; margin: 40px auto 0;
+      z-index: 2; position: relative;
+    }
+    .hero-cta {
+      display: flex; gap: 14px; margin-top: 48px;
+      align-items: center; justify-content: center; flex-wrap: wrap;
+      z-index: 2; position: relative;
+    }
+    .btn-primary {
+      padding: 16px 28px; border-radius: 99px;
+      background: var(--mint); color: #fff; border: none;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 14px 40px -8px color-mix(in oklab, var(--mint) 60%, transparent);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 44px -6px color-mix(in oklab, var(--mint) 70%, transparent); }
+    .btn-ghost {
+      padding: 15px 24px; border-radius: 99px;
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 15px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .play-dot {
+      width: 24px; height: 24px; border-radius: 99px;
+      background: var(--mint); display: grid; place-items: center;
+      font-size: 9px; color: #fff; padding-left: 2px;
+    }
+    .scroll-cue {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      z-index: 2;
+    }
+    .scroll-cue-line {
+      width: 1px; height: 32px;
+      background: linear-gradient(180deg, transparent, var(--mint), transparent);
+      animation: scrollCue 2s ease-in-out infinite;
+    }
+    @keyframes scrollCue {
+      0% { transform: translateY(-12px); opacity: 0; }
+      40% { opacity: 1; }
+      100% { transform: translateY(12px); opacity: 0; }
+    }
+
+    /* ---------- CANVAS REVEAL (story 1) ---------- */
+    .story {
+      position: relative;
+      /* tall enough to give the animation real room — slower scroll-mapped pacing */
+      height: 700vh;
+    }
+    .story-sticky {
+      position: sticky; top: 0; height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      overflow: hidden;
+      padding-top: 8vh;
+    }
+    .story-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, color-mix(in oklab, var(--mint) 6%, var(--bg)) 0%, var(--bg) 70%);
+      transition: background 0.5s ease;
+    }
+    .story-eyebrow {
+      position: relative; z-index: 5; text-align: center;
+      margin-bottom: 18px;
+    }
+    .story-h2 {
+      position: relative; z-index: 5; text-align: center;
+      font-size: clamp(32px, 5vw, 64px); line-height: 1; margin: 0 0 36px;
+      padding: 0 32px; max-width: 1100px;
+      transition: opacity 0.4s ease;
+    }
+    #storyCanvas {
+      width: min(1100px, 92vw); height: min(520px, 56vh);
+      position: relative; z-index: 4;
+    }
+    .story-steps {
+      position: relative; z-index: 5;
+      display: flex; gap: 32px;
+      margin-top: 32px;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      flex-wrap: wrap; justify-content: center; padding: 0 16px;
+    }
+    .story-step {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--subtle); font-weight: 500; letter-spacing: 0.2em;
+      transition: color 0.3s;
+    }
+    .story-step .dot {
+      width: 6px; height: 6px; border-radius: 99px;
+      background: var(--border); transition: all 0.3s;
+    }
+    .story-step.active { color: var(--mint); font-weight: 700; }
+    .story-step.active .dot {
+      background: var(--mint);
+      box-shadow: 0 0 8px var(--mint);
+    }
+
+    /* ---------- PINNED FEATURE ---------- */
+    .feature {
+      position: relative;
+      height: 280vh; /* lots of scroll room */
+    }
+    .feature-sticky {
+      position: sticky; top: 0; height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; padding: 0 64px; align-items: center;
+      overflow: hidden;
+    }
+    .feature-text { will-change: transform, opacity; }
+    .feature-num {
+      font-family: 'Fraunces', serif; font-style: italic;
+      font-size: 88px; color: var(--mint);
+      line-height: 1; font-weight: 500; margin-bottom: 24px;
+    }
+    .feature-title {
+      font-size: clamp(40px, 5vw, 72px);
+      line-height: 1; margin: 0;
+    }
+    .feature-body {
+      margin-top: 24px; font-size: 19px; line-height: 1.55;
+      color: var(--muted); max-width: 520px;
+    }
+    .feature-visual {
+      position: relative; height: 480px;
+      will-change: transform, opacity;
+    }
+    @media (max-width: 900px) {
+      .feature-sticky { grid-template-columns: 1fr; gap: 40px; padding: 80px 32px; }
+      .feature-visual { height: 360px; }
+      .feature { height: 220vh; }
+    }
+
+    /* ---------- PARALLAX SHOWCASE ---------- */
+    .parallax {
+      position: relative; height: 140vh; overflow: hidden;
+      background: radial-gradient(ellipse at top, color-mix(in oklab, var(--mint) 8%, var(--bg)) 0%, var(--bg) 60%);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.5s;
+    }
+    .parallax-back {
+      position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      pointer-events: none; will-change: transform;
+      opacity: 0.06;
+    }
+    .parallax-back-q {
+      font-family: 'Fraunces', serif; font-style: italic;
+      font-size: clamp(280px, 40vw, 560px); color: var(--mint);
+      font-weight: 500; letter-spacing: -0.06em; line-height: 0.9;
+    }
+    .parallax-mid {
+      position: relative; z-index: 2; text-align: center;
+      padding: 0 32px; will-change: transform;
+    }
+    .parallax-front {
+      position: absolute; inset: 0; pointer-events: none;
+      will-change: transform;
+    }
+    .parallax-card {
+      position: absolute; width: 200px; padding: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 16px 32px -8px rgba(0,0,0,0.4);
+    }
+    html.light .parallax-card { box-shadow: 0 16px 32px -8px rgba(0,0,0,0.1); }
+    .parallax-card .tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+      letter-spacing: 0.2em;
+    }
+    .parallax-card .q {
+      font-family: 'Fraunces', serif; font-size: 14px;
+      margin-top: 6px; line-height: 1.3; color: var(--text);
+    }
+
+    /* ---------- TIMER STORY ---------- */
+    .timer-section {
+      padding: 160px 32px;
+      max-width: 1280px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+    }
+    .timer-text { will-change: transform, opacity; }
+    .timer-visual { will-change: transform, opacity; }
+    .kbd-list { margin-top: 32px; display: flex; flex-direction: column; gap: 10px; }
+    .kbd-row { display: flex; align-items: center; gap: 14px; }
+    .kbd {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      padding: 4px 10px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); min-width: 50px; text-align: center;
+    }
+    /* TIMER — matches the existing in-product flip clock exactly */
+    .timer-card {
+      padding: 40px 32px; border-radius: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      box-shadow: 0 32px 80px -20px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; align-items: center; gap: 24px;
+    }
+    html.light .timer-card { box-shadow: 0 32px 80px -20px rgba(26,23,19,0.18); background: #FFFDF8; }
+    .timer-header { display: flex; align-items: center; gap: 12px; }
+    .timer-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(16,185,129,0.10);
+      border: 1px solid rgba(16,185,129,0.4);
+      display: grid; place-items: center;
+      color: var(--mint); font-size: 14px;
+    }
+    .timer-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; color: var(--mint); text-transform: uppercase; }
+    .timer-title { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; line-height: 1.1; margin-top: 2px; }
+    .timer-row { display: flex; align-items: center; }
+    .timer-group { display: flex; flex-direction: column; align-items: center; margin: 0 6px; }
+    /* Two-half flip card (matches the real product) */
+    .flip {
+      position: relative; width: 96px; height: 132px;
+      perspective: 600px;
+    }
+    .flip-half {
+      position: absolute; left: 0; right: 0; height: 50%; overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .flip-half.top {
+      top: 0; border-radius: 12px 12px 0 0; border-bottom: none;
+    }
+    .flip-half.bot {
+      bottom: 0; border-radius: 0 0 12px 12px; border-top: none;
+    }
+    .flip::after {
+      content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--mint) 50%, transparent), transparent);
+      transform: translateY(-0.5px); pointer-events: none; z-index: 3;
+    }
+    .flip-digit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 88px; font-weight: 600; color: var(--text);
+      font-variant-numeric: tabular-nums; letter-spacing: -0.04em; line-height: 1;
+      display: block;
+    }
+    .flip-half.top .flip-digit { transform: translateY(50%); }
+    .flip-half.bot .flip-digit { transform: translateY(-50%); }
+    /* Animating overlays */
+    .flip-anim-top, .flip-anim-bot {
+      position: absolute; left: 0; right: 0; height: 50%; overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      backface-visibility: hidden; z-index: 2;
+    }
+    .flip-anim-top {
+      top: 0; border-radius: 12px 12px 0 0; border-bottom: none;
+      transform-origin: bottom;
+      animation: flipTopDown 0.3s ease-in forwards;
+    }
+    .flip-anim-bot {
+      bottom: 0; border-radius: 0 0 12px 12px; border-top: none;
+      transform-origin: top;
+      transform: rotateX(90deg);
+      animation: flipBottomUp 0.3s 0.3s ease-out forwards;
+    }
+    .flip-anim-top .flip-digit { transform: translateY(50%); }
+    .flip-anim-bot .flip-digit { transform: translateY(-50%); }
+    @keyframes flipTopDown {
+      0%   { transform: rotateX(0deg); }
+      100% { transform: rotateX(-90deg); }
+    }
+    @keyframes flipBottomUp {
+      0%   { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+    .timer-cell-label {
+      margin-top: 12px; font-size: 9px; font-weight: 600;
+      letter-spacing: 0.18em; color: var(--subtle); text-transform: uppercase;
+    }
+    .timer-dots { display: flex; flex-direction: column; gap: 14px; padding: 0 8px; justify-content: center; height: 132px; }
+    .timer-dots span { width: 10px; height: 10px; border-radius: 99px; background: rgba(16,185,129,0.7); box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+    .timer-controls { display: flex; gap: 8px; }
+    .timer-btn {
+      padding: 10px 24px; border-radius: 12px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .timer-btn.primary { background: var(--mint); color: #fff; border: none; }
+    .timer-btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 10px 20px; font-weight: 500; }
+    @media (max-width: 900px) {
+      .timer-section { grid-template-columns: 1fr; gap: 48px; padding: 100px 24px; }
+      .timer-display { min-width: 0; width: 100%; }
+    }
+
+    /* ---------- MARQUEE ---------- */
+    .marquee {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      overflow: hidden; padding: 28px 0;
+    }
+    .marquee-track {
+      display: flex; gap: 56px; animation: marquee 40s linear infinite;
+      white-space: nowrap; will-change: transform;
+    }
+    .marquee-item {
+      display: flex; align-items: center; gap: 18px;
+      font-family: 'Fraunces', serif; font-size: 30px; font-style: italic;
+      color: var(--text); flex-shrink: 0; font-weight: 500;
+    }
+    .marquee-item .star { color: var(--mint); }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-33.333%); }
+    }
+
+    /* ---------- FINAL CTA — leaf CENTERED behind ---------- */
+    .cta {
+      padding: 120px 32px;
+      max-width: 1280px; margin: 0 auto;
+    }
+    .cta-card {
+      position: relative; overflow: hidden;
+      border-radius: 32px;
+      padding: clamp(72px, 12vw, 140px) clamp(32px, 6vw, 80px);
+      background: linear-gradient(135deg, var(--mintDeep) 0%, var(--mint) 100%);
+      text-align: center;
+    }
+    .cta-leaf {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: clamp(420px, 60vw, 720px);
+      height: clamp(420px, 60vw, 720px);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .cta-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.25), transparent 55%);
+      pointer-events: none;
+    }
+    .cta-content { position: relative; z-index: 2; }
+    .cta-h2 {
+      font-family: 'Fraunces', serif; font-weight: 500;
+      font-size: clamp(48px, 8vw, 112px);
+      letter-spacing: -0.04em; margin: 0;
+      color: #052E24; line-height: 0.92;
+    }
+    .cta-h2 em { font-style: italic; }
+    .cta-btn {
+      margin-top: 40px; padding: 20px 36px; border-radius: 99px;
+      background: #0A0A0C; color: #fff; border: none;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 12px 32px -8px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
+    }
+    .cta-btn:hover { transform: translateY(-2px); }
+    .cta-fine { margin-top: 16px; font-size: 13px; color: #052E24; opacity: 0.7; }
+
+    /* ---------- FOOTER ---------- */
+    .footer {
+      padding: 32px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+      font-size: 13px; color: var(--subtle);
+    }
+    .footer-brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; }
+    .footer-brand .made { color: var(--subtle); font-weight: 400; margin-left: 12px; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { color: var(--muted); }
+
+    /* ---------- entrance helpers ---------- */
+    .reveal { opacity: 0; transform: translateY(36px); transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2,.7,.2,1); }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    .reveal.d1 { transition-delay: 0.1s; }
+    .reveal.d2 { transition-delay: 0.2s; }
+    .reveal.d3 { transition-delay: 0.3s; }
+    .reveal.d4 { transition-delay: 0.4s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal { opacity: 1 !important; transform: none !important; }
+    }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--text) 18%, transparent); border-radius: 99px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body>
+
+  <!-- ============== NAV ============== -->
+  <nav class="nav" id="nav">
+    <div class="nav-brand">
+      <svg width="20" height="20" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/>
+        <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#10B981" opacity="0.85"/>
+        <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="60" cy="92" r="3.4" fill="currentColor"/>
+      </svg>
+      <span>Quiz<span class="mint">Mint</span></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="nav-links">
+        <a href="#story">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#timer">Timer</a>
+      </div>
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">☀</button>
+      <span class="nav-divider" aria-hidden="true"></span>
+      <button class="nav-cta">Get started</button>
+    </div>
+  </nav>
+
+  <!-- ============== HERO ============== -->
+  <section class="hero" id="hero">
+    <div class="hero-aurora">
+      <div class="hero-blob a" data-blob="a"></div>
+      <div class="hero-blob b" data-blob="b"></div>
+      <div class="hero-blob c" data-blob="c"></div>
+    </div>
+    <div class="eyebrow hero-eyebrow reveal">✦ &nbsp; INTRODUCING QUIZMINT 2.0</div>
+    <h1 class="hero-h1 serif">
+      <span class="line reveal d1">Any document.</span>
+      <span class="line italic gradient reveal d2">Instantly studyable.</span>
+    </h1>
+    <p class="hero-sub reveal d3">
+      Drop a PDF, paste a chapter, or upload your lecture notes.
+      QuizMint reads the mess and hands back a real quiz — graded, explained, ready to drill.
+    </p>
+    <div class="hero-cta reveal d4">
+      <button class="btn-primary">Try it free →</button>
+      <button class="btn-ghost"><span class="play-dot">▶</span> Watch demo</button>
+    </div>
+    <div class="scroll-cue">
+      <span class="mono" style="font-size:10px; color:var(--subtle); letter-spacing:0.3em;">SCROLL</span>
+      <div class="scroll-cue-line"></div>
+    </div>
+  </section>
+
+  <!-- ============== CANVAS REVEAL STORY ============== -->
+  <section class="story" id="story">
+    <div class="story-sticky">
+      <div class="story-bg"></div>
+      <div class="eyebrow story-eyebrow">✦ &nbsp; HOW IT WORKS</div>
+      <h2 class="story-h2 serif" id="storyH2">
+        <span id="storyTextA">Drop in <em class="italic mint">messy notes.</em></span>
+      </h2>
+      <canvas id="storyCanvas"></canvas>
+      <div class="story-steps">
+        <div class="story-step" data-step="0"><div class="dot"></div>01 INGEST</div>
+        <div class="story-step" data-step="1"><div class="dot"></div>02 PARSE</div>
+        <div class="story-step" data-step="2"><div class="dot"></div>03 GRADE</div>
+        <div class="story-step" data-step="3"><div class="dot"></div>04 QUIZ</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== PINNED FEATURES ============== -->
+  <section id="features">
+    <div class="feature" data-feature="0">
+      <div class="feature-sticky">
+        <div class="feature-text">
+          <div class="feature-num serif italic">01.</div>
+          <h3 class="feature-title serif">It parses the mess.</h3>
+          <p class="feature-body">Numbered, lettered, footnoted answer keys, scanned pages — bring the worst documents you have. The parser was trained on what your teacher actually hands out, not on perfectly-formatted PDFs.</p>
+        </div>
+        <div class="feature-visual" id="visual0"></div>
+      </div>
+    </div>
+
+    <div class="feature" data-feature="1">
+      <div class="feature-sticky">
+        <div class="feature-text">
+          <div class="feature-num serif italic">02.</div>
+          <h3 class="feature-title serif">It grades itself.</h3>
+          <p class="feature-body">Difficulty isn't a vibe. Every question is scored against Bloom's taxonomy — recall, application, analysis — so you study what's hard, not just what's first.</p>
+        </div>
+        <div class="feature-visual" id="visual1"></div>
+      </div>
+    </div>
+
+    <div class="feature" data-feature="2">
+      <div class="feature-sticky">
+        <div class="feature-text">
+          <div class="feature-num serif italic">03.</div>
+          <h3 class="feature-title serif">It explains.</h3>
+          <p class="feature-body">"The answer is C" is useless at 2am. Every answer ships with a one-line why, traced back to the exact sentence in your source.</p>
+        </div>
+        <div class="feature-visual" id="visual2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== PARALLAX SHOWCASE ============== -->
+  <section class="parallax" id="parallax">
+    <div class="parallax-back" id="parallaxBack"><div class="parallax-back-q">Q.</div></div>
+    <div class="parallax-mid" id="parallaxMid">
+      <div class="eyebrow" style="margin-bottom:24px;">✦ &nbsp; BUILT FOR FOCUS</div>
+      <h2 class="serif" style="font-size:clamp(48px,8vw,120px); line-height:0.92; margin:0; max-width:1100px;">
+        Designed for the<br>
+        <em class="italic mint">2 am session.</em>
+      </h2>
+      <p style="margin-top:28px; font-size:19px; color:var(--muted); max-width:560px; margin-left:auto; margin-right:auto; line-height:1.55;">
+        Quiet typography. A timer that doesn't shout at you. A flow that respects your attention.
+      </p>
+    </div>
+    <div class="parallax-front" id="parallaxFront">
+      <div class="parallax-card" style="left:8%; top:18%; transform:rotate(-6deg);">
+        <div class="tag" style="color:#F59E0B;">● Q1</div>
+        <div class="q">Define photosynthesis.</div>
+      </div>
+      <div class="parallax-card" style="right:8%; top:14%; transform:rotate(8deg);">
+        <div class="tag" style="color:#6366F1;">● Q2</div>
+        <div class="q">Year of Magna Carta?</div>
+      </div>
+      <div class="parallax-card" style="left:10%; bottom:14%; transform:rotate(4deg);">
+        <div class="tag" style="color:#EC4899;">● Q3</div>
+        <div class="q">pKa of acetic acid?</div>
+      </div>
+      <div class="parallax-card" style="right:10%; bottom:18%; transform:rotate(-4deg);">
+        <div class="tag" style="color:var(--mint);">● Q4</div>
+        <div class="q">GDP vs GNP — diff?</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== TIMER STORY ============== -->
+  <section class="timer-section" id="timer">
+    <div class="timer-text reveal">
+      <div class="eyebrow" style="margin-bottom:20px;">✦ &nbsp; FLIP TIMER 2.0</div>
+      <h2 class="serif" style="font-size:clamp(40px,5.5vw,80px); line-height:0.95; margin:0;">
+        A timer that<br><em class="italic mint">doesn't shout.</em>
+      </h2>
+      <p style="margin-top:24px; font-size:18px; color:var(--muted); line-height:1.6; max-width:480px;">
+        We rebuilt the flip timer from scratch — softer card faces, a brand-mint hairline, an editorial colon that breathes with the second. Four modes, one feel.
+      </p>
+      <div class="kbd-list">
+        <div class="kbd-row"><span class="kbd">SPACE</span><span style="font-size:14px; color:var(--muted);">Start / pause</span></div>
+        <div class="kbd-row"><span class="kbd">F</span><span style="font-size:14px; color:var(--muted);">Fullscreen focus</span></div>
+        <div class="kbd-row"><span class="kbd">ESC</span><span style="font-size:14px; color:var(--muted);">Exit fullscreen</span></div>
+      </div>
+    </div>
+    <div class="timer-visual reveal d1">
+      <div class="timer-card">
+        <div class="timer-header">
+          <div class="timer-icon">⧗</div>
+          <div>
+            <div class="timer-eyebrow">Running</div>
+            <div class="timer-title">Countdown</div>
+          </div>
+        </div>
+        <div class="timer-row">
+          <div class="timer-group"><div class="flip" id="tm1"></div></div>
+          <div class="timer-group"><div class="flip" id="tm2"></div><div class="timer-cell-label">Minutes</div></div>
+          <div class="timer-dots"><span></span><span></span></div>
+          <div class="timer-group"><div class="flip" id="ts1"></div></div>
+          <div class="timer-group"><div class="flip" id="ts2"></div><div class="timer-cell-label">Seconds</div></div>
+        </div>
+        <div class="timer-controls">
+          <button class="timer-btn primary">⏸ Pause</button>
+          <button class="timer-btn ghost">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== MARQUEE ============== -->
+  <div class="marquee">
+    <div class="marquee-track">
+      <span class="marquee-item"><span class="star">✦</span> PDF textbooks</span>
+      <span class="marquee-item"><span class="star">✦</span> Lecture notes</span>
+      <span class="marquee-item"><span class="star">✦</span> Practice exams</span>
+      <span class="marquee-item"><span class="star">✦</span> Pasted MCQs</span>
+      <span class="marquee-item"><span class="star">✦</span> DOCX problem sets</span>
+      <span class="marquee-item"><span class="star">✦</span> Study guides</span>
+      <span class="marquee-item"><span class="star">✦</span> PDF textbooks</span>
+      <span class="marquee-item"><span class="star">✦</span> Lecture notes</span>
+      <span class="marquee-item"><span class="star">✦</span> Practice exams</span>
+      <span class="marquee-item"><span class="star">✦</span> Pasted MCQs</span>
+      <span class="marquee-item"><span class="star">✦</span> DOCX problem sets</span>
+      <span class="marquee-item"><span class="star">✦</span> Study guides</span>
+      <span class="marquee-item"><span class="star">✦</span> PDF textbooks</span>
+      <span class="marquee-item"><span class="star">✦</span> Lecture notes</span>
+      <span class="marquee-item"><span class="star">✦</span> Practice exams</span>
+      <span class="marquee-item"><span class="star">✦</span> Pasted MCQs</span>
+      <span class="marquee-item"><span class="star">✦</span> DOCX problem sets</span>
+      <span class="marquee-item"><span class="star">✦</span> Study guides</span>
+    </div>
+  </div>
+
+  <!-- ============== CTA — leaf CENTERED ============== -->
+  <section class="cta">
+    <div class="cta-card">
+      <svg class="cta-leaf" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#FFFFFF"/>
+        <path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#FFFFFF" opacity="0.85"/>
+        <path d="M50 14 L 50 64 C 50 74, 60 76, 60 84" fill="none" stroke="#052E24" stroke-width="5.5" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="60" cy="92" r="3.4" fill="#052E24"/>
+      </svg>
+      <div class="cta-glow"></div>
+      <div class="cta-content reveal">
+        <h2 class="cta-h2">Stop formatting.<br><em>Start studying.</em></h2>
+        <button class="cta-btn">Make your first quiz →</button>
+        <div class="cta-fine">Free forever. No account needed.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FOOTER ============== -->
+  <footer class="footer">
+    <div class="footer-brand">
+      <svg width="18" height="18" viewBox="0 0 100 100"><path d="M50 10 C 74 10, 88 28, 88 48 C 88 63, 76 74, 60 74 L 50 74 Z" fill="#10B981"/><path d="M50 10 C 26 10, 12 28, 12 48 C 12 63, 24 74, 40 74 L 50 74 Z" fill="#10B981" opacity="0.85"/></svg>
+      <span>Quiz<span class="mint">Mint</span></span>
+      <span class="made">Made with mint.</span>
+    </div>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">GitHub ↗</a>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ============ utilities ============
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+    const ease = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3) / 2;
+
+    // ============ THEME ============
+    const themeBtn = document.getElementById('themeToggle');
+    const setTheme = (mode) => {
+      document.documentElement.classList.toggle('light', mode === 'light');
+      themeBtn.textContent = mode === 'light' ? '☾' : '☀';
+    };
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.classList.contains('light') ? 'dark' : 'light';
+      setTheme(next);
+    });
+
+    // ============ NAV scrolled state ============
+    const nav = document.getElementById('nav');
+    let lastScrolled = false;
+    const onNavScroll = () => {
+      const s = window.scrollY > 40;
+      if (s !== lastScrolled) { nav.classList.toggle('scrolled', s); lastScrolled = s; }
+    };
+    window.addEventListener('scroll', onNavScroll, { passive: true });
+    onNavScroll();
+
+    // ============ Reveal-on-view (IntersectionObserver) ============
+    const reveals = document.querySelectorAll('.reveal');
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          revealObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -80px 0px' });
+    reveals.forEach(el => revealObs.observe(el));
+    // Force the very first reveals to come in immediately so hero never hangs
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('in'));
+    });
+
+    // ============ Hero parallax (rAF batched) ============
+    const blobA = document.querySelector('[data-blob="a"]');
+    const blobB = document.querySelector('[data-blob="b"]');
+    const blobC = document.querySelector('[data-blob="c"]');
+    const hero = document.getElementById('hero');
+
+    // ============ Story canvas ============
+    const canvas = document.getElementById('storyCanvas');
+    const ctx = canvas.getContext('2d');
+    const story = document.getElementById('story');
+    const storySteps = document.querySelectorAll('.story-step');
+    const storyH2 = document.getElementById('storyH2');
+
+    const resizeCanvas = () => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function roundRect(c, x, y, w, h, r) {
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r);
+      c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r);
+      c.arcTo(x, y, x + w, y, r);
+      c.closePath();
+    }
+
+    // Compute story progress (0 when sticky just enters, 1 when it leaves)
+    function getStoryProgress() {
+      const r = story.getBoundingClientRect();
+      const total = r.height - window.innerHeight; // distance scrollable while sticky
+      const scrolled = -r.top;
+      return clamp(scrolled / total, 0, 1);
+    }
+
+    // Theme accessor
+    const isLight = () => document.documentElement.classList.contains('light');
+
+    function drawStory(p) {
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      ctx.clearRect(0, 0, W, H);
+      const cx = W / 2, cy = H / 2;
+      const light = isLight();
+      const text = light ? '#0A0A0C' : '#FFFFFF';
+      const muted = light ? '#5C5346' : '#94A3B8';
+      const border = light ? '#ECE6D8' : '#2D2E35';
+      const surface = light ? '#FFFDF8' : '#1B1C20';
+      const surface2 = light ? '#FAF7F0' : '#15161A';
+      const mint = '#10B981';
+
+      // Stages — strictly non-overlapping with explicit cross-fade gutters.
+      // Each layer fades IN, holds, fades OUT, then the next layer enters.
+      //
+      //  Window           Layer        Behavior
+      //  0.00 .. 0.05     —            (lead-in space at top of section)
+      //  0.05 .. 0.12     A in         doc fades in
+      //  0.12 .. 0.30     A hold       doc visible, parse scan runs over it
+      //  0.30 .. 0.36     A out        doc fades to 0
+      //  0.36 .. 0.42     B in         grade panel fades in
+      //  0.42 .. 0.62     B hold       grade visible, bars fill
+      //  0.62 .. 0.68     B out        grade fades to 0
+      //  0.68 .. 0.74     C in         quiz fades in
+      //  0.74 .. 1.00     C hold       quiz visible, options reveal, ✓ appears
+      const docVis    = clamp((p - 0.05) / 0.07, 0, 1) * (1 - clamp((p - 0.30) / 0.06, 0, 1));
+      const parseScan = clamp((p - 0.12) / 0.18, 0, 1);
+      const gradeVis  = clamp((p - 0.36) / 0.06, 0, 1) * (1 - clamp((p - 0.62) / 0.06, 0, 1));
+      const gradeFill = clamp((p - 0.42) / 0.20, 0, 1);
+      const quizVis   = clamp((p - 0.68) / 0.06, 0, 1);
+      const quizReveal= clamp((p - 0.74) / 0.20, 0, 1);
+
+      // Legacy aliases used below
+      const stageA = docVis;
+      const stageB = parseScan;
+      const stageC = gradeVis;
+      const stageD = quizVis;
+
+      // ------- Stage A/B: Document -------
+      // Skip drawing entirely once doc is fully gone — prevents any leak into next stage.
+      if (docVis > 0.001) {
+      const docX = cx - 180;
+      const docY = cy - 230;
+      const docW = 360, docH = 460;
+
+      ctx.save();
+      ctx.globalAlpha = docVis;
+      // Outer page
+      roundRect(ctx, docX, docY, docW, docH, 16);
+      ctx.fillStyle = surface;
+      ctx.fill();
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Document corner fold
+      ctx.fillStyle = surface2;
+      ctx.beginPath();
+      ctx.moveTo(docX + docW - 28, docY);
+      ctx.lineTo(docX + docW, docY + 28);
+      ctx.lineTo(docX + docW - 28, docY + 28);
+      ctx.closePath();
+      ctx.fill();
+
+      // Title line
+      ctx.fillStyle = text;
+      ctx.globalAlpha *= 0.95;
+      roundRect(ctx, docX + 28, docY + 36, 200, 14, 4);
+      ctx.fill();
+
+      // Body lines + headers
+      const lineCount = 14;
+      for (let i = 0; i < lineCount; i++) {
+        const yy = docY + 76 + i * 24;
+        const isHead = i % 5 === 0;
+        const lp = clamp(docVis * 1.5 - i * 0.04, 0, 1);
+        const wide = (docW - 56) * (0.55 + 0.4 * Math.sin(i * 1.7 + 1));
+        ctx.globalAlpha = docVis * lp;
+        if (isHead) {
+          ctx.fillStyle = text;
+          roundRect(ctx, docX + 28, yy - 6, wide * 0.5, 9, 3);
+        } else {
+          ctx.fillStyle = muted;
+          roundRect(ctx, docX + 28, yy - 4, wide, 5, 3);
+        }
+        ctx.fill();
+      }
+
+      // Highlight pass (parsing): scan-line moves down the doc
+      if (parseScan > 0 && parseScan < 1) {
+        const scanY = docY + 30 + ease(parseScan) * (docH - 60);
+        ctx.globalAlpha = docVis * (1 - Math.abs(parseScan - 0.5) * 1.4) * 0.7;
+        const grad = ctx.createLinearGradient(docX, scanY - 30, docX, scanY + 30);
+        grad.addColorStop(0, 'rgba(16,185,129,0)');
+        grad.addColorStop(0.5, 'rgba(16,185,129,0.35)');
+        grad.addColorStop(1, 'rgba(16,185,129,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(docX, scanY - 30, docW, 60);
+      }
+      ctx.restore();
+      } // end docVis gate
+
+      // ------- Particles flying from doc to right (only while doc is visible AND parsing) -------
+      if (docVis > 0.5 && parseScan > 0.05 && parseScan < 0.95) {
+        const pCount = 50;
+        for (let i = 0; i < pCount; i++) {
+          const seed = i * 0.137;
+          const lp = ((stageB * 1.2 + seed) % 1);
+          const sx = docX + docW - 30;
+          const sy = docY + 60 + ((i * 41) % (docH - 100));
+          const ex = cx + 140;
+          const ey = cy + Math.sin(i) * 60;
+          const x = lerp(sx, ex, ease(lp));
+          const y = lerp(sy, ey, ease(lp)) + Math.sin(lp * Math.PI * 2 + i) * 14;
+          const a = Math.sin(lp * Math.PI) * 0.85;
+          ctx.globalAlpha = a * docVis;
+          ctx.fillStyle = mint;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.5 + Math.sin(lp * Math.PI) * 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // ------- Stage C: Grade panel -------
+      if (gradeVis > 0.001) {
+        const gW = 360, gH = 240;
+        const gX = cx - gW / 2;
+        const gY = cy - gH / 2;
+        const sc = lerp(0.92, 1, ease(gradeVis));
+        ctx.save();
+        ctx.globalAlpha = gradeVis;
+        ctx.translate(cx, cy);
+        ctx.scale(sc, sc);
+        ctx.translate(-cx, -cy);
+
+        roundRect(ctx, gX, gY, gW, gH, 16);
+        ctx.fillStyle = surface;
+        ctx.fill();
+        ctx.strokeStyle = border;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = mint;
+        ctx.font = 'bold 11px "JetBrains Mono", monospace';
+        ctx.textBaseline = 'top';
+        ctx.fillText('● BLOOM TAXONOMY', gX + 24, gY + 22);
+
+        ctx.fillStyle = text;
+        ctx.font = '500 22px "Fraunces", serif';
+        ctx.fillText('Difficulty distribution', gX + 24, gY + 46);
+
+        const items = [
+          { label: 'Recall', v: 0.45, c: 'rgba(167,243,208,1)' },
+          { label: 'Application', v: 0.72, c: '#10B981' },
+          { label: 'Analysis', v: 0.88, c: '#059669' },
+        ];
+        items.forEach((it, i) => {
+          const yy = gY + 96 + i * 38;
+          ctx.fillStyle = text;
+          ctx.font = '500 13px "Inter", sans-serif';
+          ctx.fillText(it.label, gX + 24, yy);
+          ctx.fillStyle = muted;
+          ctx.textAlign = 'right';
+          ctx.fillText(Math.round(it.v * 100) + '%', gX + gW - 24, yy);
+          ctx.textAlign = 'left';
+          // bar bg
+          ctx.fillStyle = border;
+          roundRect(ctx, gX + 24, yy + 18, gW - 48, 6, 3);
+          ctx.fill();
+          // bar fill
+          const fillW = (gW - 48) * it.v * clamp(gradeFill * 1.4 - i * 0.15, 0, 1);
+          ctx.fillStyle = it.c;
+          roundRect(ctx, gX + 24, yy + 18, fillW, 6, 3);
+          ctx.fill();
+        });
+
+        ctx.restore();
+      }
+
+      // ------- Stage D: Quiz card -------
+      if (quizVis > 0.001) {
+        const qW = 480, qH = 340;
+        const qX = cx - qW / 2;
+        const qY = cy - qH / 2;
+        const sc = lerp(0.92, 1, ease(quizVis));
+        ctx.save();
+        ctx.globalAlpha = quizVis;
+        ctx.translate(cx, cy);
+        ctx.scale(sc, sc);
+        ctx.translate(-cx, -cy);
+
+        // Soft mint glow behind card
+        ctx.shadowColor = 'rgba(16,185,129,0.3)';
+        ctx.shadowBlur = 32;
+        roundRect(ctx, qX, qY, qW, qH, 20);
+        ctx.fillStyle = surface;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(16,185,129,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Tag chip
+        ctx.fillStyle = 'rgba(16,185,129,0.18)';
+        roundRect(ctx, qX + 28, qY + 28, 116, 26, 13);
+        ctx.fill();
+        ctx.fillStyle = mint;
+        ctx.font = 'bold 10px "JetBrains Mono", monospace';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('● BIOLOGY · Q7', qX + 40, qY + 41);
+
+        // Question — wrap to stay inside card
+        ctx.fillStyle = text;
+        ctx.font = 'italic 600 22px "Fraunces", serif';
+        ctx.textBaseline = 'top';
+        const qText = 'Which organ regulates blood sugar?';
+        const maxQW = qW - 56;
+        const words = qText.split(' ');
+        let line = '', lines = [];
+        for (const w of words) {
+          const test = line ? line + ' ' + w : w;
+          if (ctx.measureText(test).width > maxQW && line) {
+            lines.push(line);
+            line = w;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        lines.forEach((ln, li) => ctx.fillText(ln, qX + 28, qY + 76 + li * 28));
+
+        // Options
+        const opts = ['A.   Pancreas', 'B.   Liver', 'C.   Kidney', 'D.   Heart'];
+        ctx.font = '500 14px "Inter", sans-serif';
+        opts.forEach((opt, i) => {
+          const yy = qY + 140 + i * 36;
+          const oa = clamp(quizReveal * 2 - i * 0.2, 0, 1);
+          ctx.globalAlpha = quizVis * oa;
+          const correct = i === 0;
+          if (correct && quizReveal > 0.5) {
+            ctx.fillStyle = 'rgba(16,185,129,0.18)';
+            roundRect(ctx, qX + 28, yy - 8, qW - 56, 28, 8);
+            ctx.fill();
+            ctx.fillStyle = mint;
+          } else {
+            ctx.fillStyle = muted;
+          }
+          ctx.fillText(opt, qX + 40, yy);
+          if (correct && quizReveal > 0.75) {
+            ctx.fillStyle = mint;
+            ctx.font = 'bold 14px "Inter", sans-serif';
+            ctx.fillText('✓', qX + qW - 42, yy);
+            ctx.font = '500 14px "Inter", sans-serif';
+          }
+        });
+        ctx.globalAlpha = quizVis;
+        ctx.restore();
+      }
+    }
+
+    // Update step indicators + headline as story progresses.
+    // Map to the "hold" centers of each stage so labels switch when the user
+    // is actually looking at that artwork — not during cross-fades.
+    function updateStorySteps(p) {
+      const stages = [0.0, 0.20, 0.50, 0.80];
+      let active = 0;
+      stages.forEach((s, i) => { if (p >= s) active = i; });
+      storySteps.forEach((el, i) => el.classList.toggle('active', i === active));
+
+      // Headline morph
+      const titles = [
+        'Drop in <em class="italic mint">messy notes.</em>',
+        'Watch us <em class="italic mint">read between</em> the lines.',
+        'Score every question against <em class="italic mint">how hard it really is.</em>',
+        'Pull out a <em class="italic mint">real quiz.</em>',
+      ];
+      if (storyH2.dataset.idx !== String(active)) {
+        storyH2.dataset.idx = String(active);
+        storyH2.style.opacity = 0;
+        setTimeout(() => {
+          storyH2.innerHTML = '<span>' + titles[active] + '</span>';
+          storyH2.style.opacity = 1;
+        }, 200);
+      }
+    }
+    storyH2.style.transition = 'opacity 0.4s ease';
+
+    // ============ Pinned features visual builders ============
+    function buildVisual0() {
+      const el = document.getElementById('visual0');
+      el.innerHTML = `
+        <div id="v0wrap" style="position:relative; width:100%; height:100%;">
+          <div class="src-stack" style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:220px; height:280px;">
+            ${[0,1,2].map(i => `
+              <div class="src-card" data-src="${i}" style="
+                position:absolute; top:${i*10}px; left:${i*8}px;
+                width:200px; height:260px;
+                background: var(--surface); border:1px solid var(--border);
+                border-radius:14px; padding:18px;
+                transform: rotate(${(i-1)*-3}deg);
+                box-shadow: 0 16px 32px -12px rgba(0,0,0,0.4);
+                z-index:${3-i};
+              ">
+                ${Array.from({length:7}).map((_,j) => `
+                  <div style="
+                    height:${j===0?9:5}px; border-radius:2px;
+                    background:${j===0?'var(--text)':'var(--muted)'};
+                    opacity:${j===0?0.9:0.4};
+                    width:${50 + (j*17)%50}%;
+                    margin-bottom:10px;"></div>`).join('')}
+              </div>`).join('')}
+          </div>
+          ${[0,1,2].map(i => `
+            <div class="out-card" data-out="${i}" style="
+              position:absolute; top:${20 + i*130}px; right:0;
+              width:240px; padding:14px;
+              background: var(--bg2); border:1px solid color-mix(in oklab, var(--mint) 50%, transparent);
+              border-radius:12px;
+              box-shadow: 0 8px 24px -8px color-mix(in oklab, var(--mint) 40%, transparent);
+              opacity:0; transform: translateX(40px);
+              transition: opacity 0.6s ease, transform 0.6s ease;
+            ">
+              <div class="mono mint" style="font-size:9px; font-weight:700; letter-spacing:0.2em; margin-bottom:6px;">
+                Q${i+1} · ${['EASY','MEDIUM','HARD'][i]}
+              </div>
+              <div style="font-size:13px; font-weight:500; color: var(--text); line-height:1.4;">
+                ${['What is the function of mitochondria?','How does ATP synthase work?','Predict the reaction product...'][i]}
+              </div>
+            </div>`).join('')}
+          <svg id="v0svg" style="position:absolute; inset:0; pointer-events:none; width:100%; height:100%; overflow:visible;">
+            ${[0,1,2].map(i => `<path data-line="${i}" stroke="var(--mint)" stroke-width="1.5" fill="none" stroke-dasharray="4 4" opacity="0" />`).join('')}
+          </svg>
+        </div>`;
+      // Position connectors using actual DOM rects so lines anchor to box edges
+      requestAnimationFrame(layoutVisual0Lines);
+    }
+    function layoutVisual0Lines() {
+      const wrap = document.getElementById('v0wrap'); if (!wrap) return;
+      const svg = document.getElementById('v0svg'); if (!svg) return;
+      const wRect = wrap.getBoundingClientRect();
+      // Top src card is data-src="2" (last drawn, on top). Anchor all lines from its right edge.
+      const topSrc = wrap.querySelector('[data-src="2"]');
+      if (!topSrc) return;
+      const sRect = topSrc.getBoundingClientRect();
+      const sx = sRect.right - wRect.left;
+      const sy = sRect.top + sRect.height / 2 - wRect.top;
+      [0,1,2].forEach(i => {
+        const out = wrap.querySelector(`[data-out="${i}"]`);
+        const line = svg.querySelector(`[data-line="${i}"]`);
+        if (!out || !line) return;
+        const oRect = out.getBoundingClientRect();
+        const ex = oRect.left - wRect.left;
+        const ey = oRect.top + oRect.height / 2 - wRect.top;
+        const cx1 = sx + (ex - sx) * 0.5;
+        const d = `M ${sx} ${sy} C ${cx1} ${sy}, ${cx1} ${ey}, ${ex} ${ey}`;
+        line.setAttribute('d', d);
+      });
+    }
+    window.addEventListener('resize', () => requestAnimationFrame(layoutVisual0Lines));
+    function animateVisual0(progress) {
+      const outs = document.querySelectorAll('#visual0 [data-out]');
+      const lines = document.querySelectorAll('#visual0 [data-line]');
+      outs.forEach((el, i) => {
+        const lp = clamp(progress * 1.6 - i * 0.18, 0, 1);
+        el.style.opacity = lp;
+        el.style.transform = `translateX(${(1 - lp) * 40}px)`;
+      });
+      lines.forEach((el, i) => {
+        const lp = clamp(progress * 1.6 - i * 0.18, 0, 1);
+        el.setAttribute('opacity', String(lp * 0.6));
+      });
+      // Recompute geometry every frame the section is active so lines track if cards reflow
+      layoutVisual0Lines();
+    }
+
+    function buildVisual1() {
+      const el = document.getElementById('visual1');
+      el.innerHTML = `
+        <div style="
+          width:100%; height:100%;
+          background: var(--surface); border:1px solid var(--border);
+          border-radius:20px; padding:32px;
+          display:flex; flex-direction:column; gap:18px;
+          box-shadow: 0 24px 48px -12px rgba(0,0,0,0.4);
+        ">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="mono mint" style="font-size:11px; letter-spacing:0.2em; font-weight:700;">● BLOOM'S TAXONOMY</span>
+            <span class="mono" style="font-size:11px; color:var(--subtle);">24 questions</span>
+          </div>
+          <h4 class="serif" style="font-size:28px; margin:0; letter-spacing:-0.02em;">Difficulty distribution</h4>
+          ${[
+            {l:'Recall', v:0.45, c:'#A7F3D0'},
+            {l:'Application', v:0.72, c:'#10B981'},
+            {l:'Analysis', v:0.88, c:'#059669'},
+          ].map((it, i) => `
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:14px; font-weight:500;">${it.l}</span>
+                <span class="mono" style="font-size:13px; color:var(--muted);">${Math.round(it.v*100)}%</span>
+              </div>
+              <div style="height:8px; border-radius:99px; background:var(--border); overflow:hidden;">
+                <div data-bar="${i}" data-v="${it.v}"
+                  style="height:100%; width:0%;
+                  background:${it.c}; border-radius:99px;
+                  box-shadow: 0 0 12px ${it.c}88;
+                  transition: width 0.7s cubic-bezier(.2,.7,.2,1);"></div>
+              </div>
+            </div>`).join('')}
+          <div style="
+            margin-top:auto; padding:16px; border-radius:12px;
+            background: color-mix(in oklab, var(--mint) 10%, transparent);
+            border: 1px solid color-mix(in oklab, var(--mint) 30%, transparent);
+            font-size:13px; color:var(--text); line-height:1.5;">
+            <span class="mint" style="font-weight:600;">Tip · </span>
+            Most quiz tools cap at recall. We push past it so you actually learn.
+          </div>
+        </div>`;
+    }
+    function animateVisual1(progress) {
+      const bars = document.querySelectorAll('#visual1 [data-bar]');
+      bars.forEach((el, i) => {
+        const v = parseFloat(el.dataset.v);
+        const lp = clamp(progress * 1.6 - i * 0.15, 0, 1);
+        el.style.width = (lp * v * 100) + '%';
+      });
+    }
+
+    function buildVisual2() {
+      const el = document.getElementById('visual2');
+      el.innerHTML = `
+        <div style="
+          width:100%; height:100%;
+          background: var(--surface); border:1px solid var(--border);
+          border-radius:20px; padding:32px;
+          display:flex; flex-direction:column; gap:14px;
+          box-shadow: 0 24px 48px -12px rgba(0,0,0,0.4);
+        ">
+          <span class="mono mint" style="font-size:11px; letter-spacing:0.2em; font-weight:700;">● QUESTION 7 · ORGANIC CHEM</span>
+          <h4 class="serif" style="font-size:24px; margin:0; line-height:1.2; letter-spacing:-0.02em;">
+            The SN1 reaction proceeds through which intermediate?
+          </h4>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+            ${['Carbocation','Free radical','Carbanion','Concerted transition state'].map((opt, i) => {
+              const correct = i === 0;
+              return `<div style="
+                padding:10px 14px; border-radius:10px;
+                background: ${correct ? 'color-mix(in oklab, var(--mint) 14%, transparent)' : 'transparent'};
+                border: 1px solid ${correct ? 'color-mix(in oklab, var(--mint) 60%, transparent)' : 'var(--border)'};
+                font-size:13px;
+                color: ${correct ? 'var(--mint)' : 'var(--muted)'};
+                font-weight: ${correct ? 600 : 500};
+                display:flex; justify-content:space-between; align-items:center;">
+                <span>${String.fromCharCode(65+i)}. ${opt}</span>
+                ${correct ? '<span style="font-size:12px;">✓</span>' : ''}
+              </div>`;
+            }).join('')}
+          </div>
+          <div data-explain style="
+            margin-top:4px; padding:16px; border-radius:12px;
+            background: color-mix(in oklab, var(--bg) 80%, var(--bg2));
+            border: 1px dashed color-mix(in oklab, var(--mint) 60%, transparent);
+            opacity: 0; transform: translateY(16px);
+            transition: opacity 0.6s ease, transform 0.6s ease;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="mono mint" style="font-size:10px; letter-spacing:0.2em; font-weight:700;">WHY ↓</span>
+            </div>
+            <p style="margin:0; font-size:13px; line-height:1.55; color:var(--text);">
+              SN1 is unimolecular: the leaving group departs first, forming a planar
+              <em class="italic mint">carbocation</em> intermediate before the nucleophile attacks.
+            </p>
+            <div class="mono" style="margin-top:10px; font-size:11px; color:var(--subtle);">
+              ↗ Source: Ch. 7, p. 184 · "Substitution reactions"
+            </div>
+          </div>
+        </div>`;
+    }
+    function animateVisual2(progress) {
+      const ex = document.querySelector('#visual2 [data-explain]');
+      if (!ex) return;
+      const lp = clamp(progress * 1.6 - 0.4, 0, 1);
+      ex.style.opacity = lp;
+      ex.style.transform = `translateY(${(1 - lp) * 16}px)`;
+    }
+
+    buildVisual0(); buildVisual1(); buildVisual2();
+
+    function getFeatureProgress(idx) {
+      const sec = document.querySelector(`[data-feature="${idx}"]`);
+      const r = sec.getBoundingClientRect();
+      const total = r.height - window.innerHeight;
+      const scrolled = -r.top;
+      return clamp(scrolled / total, 0, 1);
+    }
+
+    // Feature text in/out
+    function applyFeatureMotion(idx) {
+      const sec = document.querySelector(`[data-feature="${idx}"]`);
+      const text = sec.querySelector('.feature-text');
+      const visual = sec.querySelector('.feature-visual');
+      const p = getFeatureProgress(idx);
+      // entrance ease 0..0.45, exit ease 0.65..1
+      const enter = clamp(p / 0.4, 0, 1);
+      const exit = clamp((p - 0.7) / 0.3, 0, 1);
+      const v = enter * (1 - exit);
+      text.style.opacity = v;
+      text.style.transform = `translateX(${(1 - enter) * -40}px)`;
+      visual.style.opacity = v;
+      visual.style.transform = `translateX(${(1 - enter) * 40}px) scale(${lerp(0.92, 1, enter)})`;
+    }
+
+    // ============ Parallax showcase ============
+    const parallaxSec = document.getElementById('parallax');
+    const parallaxBack = document.getElementById('parallaxBack');
+    const parallaxMid = document.getElementById('parallaxMid');
+    const parallaxFront = document.getElementById('parallaxFront');
+
+    // ============ Master scroll loop ============
+    let ticking = false;
+    function tick() {
+      ticking = false;
+      const sy = window.scrollY;
+      const vh = window.innerHeight;
+
+      // Hero parallax
+      if (blobA && hero) {
+        const heroRect = hero.getBoundingClientRect();
+        const heroP = clamp(-heroRect.top / vh, 0, 1);
+        blobA.style.transform = `translate3d(${heroP * -80}px, ${heroP * 60}px, 0)`;
+        blobB.style.transform = `translate3d(${heroP * 60}px, ${heroP * -50}px, 0)`;
+        blobC.style.transform = `translate(-50%, -50%) translate3d(0, ${heroP * 40}px, 0)`;
+      }
+
+      // Story canvas
+      const storyRect = story.getBoundingClientRect();
+      if (storyRect.bottom > 0 && storyRect.top < vh) {
+        const p = getStoryProgress();
+        drawStory(p);
+        updateStorySteps(p);
+      }
+
+      // Features
+      [0,1,2].forEach(i => {
+        const sec = document.querySelector(`[data-feature="${i}"]`);
+        const r = sec.getBoundingClientRect();
+        if (r.bottom > -200 && r.top < vh + 200) {
+          applyFeatureMotion(i);
+          const p = getFeatureProgress(i);
+          const enter = clamp(p / 0.5, 0, 1);
+          if (i === 0) animateVisual0(enter);
+          if (i === 1) animateVisual1(enter);
+          if (i === 2) animateVisual2(enter);
+        }
+      });
+
+      // Parallax
+      const pr = parallaxSec.getBoundingClientRect();
+      if (pr.bottom > 0 && pr.top < vh) {
+        const total = pr.height + vh;
+        const scrolled = vh - pr.top;
+        const p = clamp(scrolled / total, 0, 1);
+        const offset = (p - 0.5) * 220;
+        parallaxBack.style.transform = `translate3d(0, ${offset * 0.3}px, 0)`;
+        parallaxMid.style.transform = `translate3d(0, ${offset * -0.4}px, 0)`;
+        parallaxFront.style.transform = `translate3d(0, ${offset * -0.7}px, 0)`;
+      }
+    }
+    function requestTick() {
+      if (!ticking) { ticking = true; requestAnimationFrame(tick); }
+    }
+    window.addEventListener('scroll', requestTick, { passive: true });
+    window.addEventListener('resize', () => { resizeCanvas(); requestTick(); });
+    requestTick();
+    // Animate canvas continuously inside story even without scroll (for the breathing colon etc.)
+    // but stop redrawing when offscreen — handled by tick() guard.
+
+    // ============ Timer demo — true two-half flip clock ============
+    function initFlip(el, initial) {
+      el.innerHTML =
+        '<div class="flip-half top"><span class="flip-digit">' + initial + '</span></div>' +
+        '<div class="flip-half bot"><span class="flip-digit">' + initial + '</span></div>';
+      el._current = initial;
+    }
+    function setFlip(el, next) {
+      const cur = el._current;
+      if (cur === next) return;
+      const topStatic = el.querySelector('.flip-half.top .flip-digit');
+      const botStatic = el.querySelector('.flip-half.bot .flip-digit');
+      topStatic.textContent = next;
+      botStatic.textContent = cur;
+      el.querySelectorAll('.flip-anim-top, .flip-anim-bot').forEach(n => n.remove());
+      const animTop = document.createElement('div');
+      animTop.className = 'flip-anim-top';
+      animTop.innerHTML = '<span class="flip-digit">' + cur + '</span>';
+      const animBot = document.createElement('div');
+      animBot.className = 'flip-anim-bot';
+      animBot.innerHTML = '<span class="flip-digit">' + next + '</span>';
+      el.appendChild(animTop);
+      el.appendChild(animBot);
+      el._current = next;
+      setTimeout(() => {
+        botStatic.textContent = next;
+        animTop.remove();
+        animBot.remove();
+      }, 650);
+    }
+    const tm1 = document.getElementById('tm1'), tm2 = document.getElementById('tm2');
+    const ts1 = document.getElementById('ts1'), ts2 = document.getElementById('ts2');
+    let secs = 4*60 + 37; const total = 5*60;
+    const initMM = String(Math.floor(secs/60)).padStart(2,'0');
+    const initSS = String(secs%60).padStart(2,'0');
+    initFlip(tm1, initMM[0]); initFlip(tm2, initMM[1]);
+    initFlip(ts1, initSS[0]); initFlip(ts2, initSS[1]);
+    setInterval(() => {
+      secs = secs <= 0 ? total : secs - 1;
+      const mm = String(Math.floor(secs/60)).padStart(2,'0');
+      const ss = String(secs%60).padStart(2,'0');
+      setFlip(tm1, mm[0]); setFlip(tm2, mm[1]);
+      setFlip(ts1, ss[0]); setFlip(ts2, ss[1]);
+    }, 1000);
+
+  })();
+  </script>
+</body>
+</html>

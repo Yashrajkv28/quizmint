@@ -1,5 +1,54 @@
 # QuizMint Development Chat Log
 
+## Session: 2026-05-02
+
+### Summary
+Replaced the v1 LandingPage with a new scroll-driven design (`QuizMint Landing.html` handoff): fixed nav, full-bleed hero with aurora blobs + parallax, sticky 700vh canvas story with four cross-faded stages (doc → parse-scan → grade panel → quiz card), three pinned feature sections with bespoke per-section visuals (stacked source cards → output Q chips with SVG bezier connectors; animated difficulty bars; SN1 question with reveal-on-scroll explanation), 140vh parallax showcase, marquee, and leaf-centered mint CTA card. Real `FlipClockDisplay` swapped into the timer demo (countdown 5:00 → 0, looping, `isRunning` so the colon breathes) — the handoff's bespoke two-half flip mimic was thrown away. All fake-promise copy from the handoff was softened per the v1 precedent (no Bloom's taxonomy, no "trained on what your teacher hands out", no "traced back to the exact sentence in your source"). Two production-only bugs surfaced and were fixed in-band. Live at https://quizmint.me.
+
+#### Task 65: New landing page (`src/components/LandingPage.tsx` rewrite)
+Approach: render the handoff markup via `dangerouslySetInnerHTML` (preserves every animation pixel-for-pixel without converting 1500 lines to JSX), then mount the real `FlipClockDisplay` into `.timer-row` via `createRoot`, and wire theme toggle + all CTAs (`.nav-cta`, `.btn-primary`, `.cta-btn`) via `addEventListener` in `useEffect`. No competing theme state — the landing's `#themeToggle` button just calls App's `onToggleTheme`, and a second effect syncs the glyph (`☾` / `☀`) to the current `theme` prop. Scroll/resize/IntersectionObserver listeners cleaned up via a `window.__qmLandingCleanup` hook the script exposes. `flipRoot.unmount()` is deferred via `setTimeout(0)` to avoid a React commit collision when the parent unmounts. `src/components/DemoCard.tsx` left on disk but no longer imported.
+
+#### Task 66: Copy softening (handoff → honest)
+Same rewrite policy as Task 22. Changes inside the body markup AND inside the canvas/Visual1 builders (which the script paints as text):
+- "Bloom's taxonomy — recall, application, analysis" → "Easy / Medium / Hard"
+- "trained on what your teacher actually hands out" → removed; replaced with "PDF, DOCX, or just paste the text"
+- "traced back to the exact sentence in your source" → removed
+- Canvas Stage C label `BLOOM TAXONOMY` → `DIFFICULTY MIX`
+- CTA fine print "Free forever. No account needed." → "Free. Login with Gmail."
+- Removed dead "Watch demo" ghost button (no demo to link to)
+
+#### Task 67: Polish iterations from screenshots
+- Removed the hero "SCROLL ↓" cue (user: "cringe").
+- Removed the `01 INGEST · 02 PARSE · 03 GRADE · 04 QUIZ` step indicators below the canvas (user: "unnecessary"). The script's `updateStorySteps` still runs but `querySelectorAll('.story-step')` returns empty — harmless.
+- `.story-sticky` top padding `8vh` → `120px` so the "✦ HOW IT WORKS" eyebrow clears the fixed nav at all viewport heights.
+- Hero h1 descenders were clipped (the `y` in "Any" overlapped by the next line; the `y` in "Instantly studyable." eaten by `hero { overflow: hidden }`). Three-pronged fix: line-height `0.88` → `1.05`, `.line` gets `padding-bottom: 0.18em`, and `.gradient` (the italic mint clip-text line) gets extra `padding-bottom: 0.22em` because `-webkit-background-clip: text` only paints inside the line box.
+- Light-mode `--text` `#0A0A0C` → `#1A1713` (warm near-black), matching the rest of the app's light palette from Task 39. Same swap inside the canvas `drawStory` so the sketched doc/quiz text reads correctly.
+
+#### Task 68: Production-only bug — CSP blocks dynamic script eval
+First deploy at `quizmint-g5d9hxbqv-...` rendered the nav and aurora blobs but every `.reveal` element stayed hidden and the canvas/parallax never ran. Root cause: the animation script was stored as a template-literal `ANIM_SCRIPT` string and run via `new Function(ANIM_SCRIPT)()`. Production CSP in `vercel.json` is `script-src 'self'` with no `'unsafe-eval'` (Task 35) — the Function constructor was silently rejected. Vite dev didn't enforce the deployed CSP so it looked fine locally.
+
+Fix: extracted the script into `src/components/LandingPage.animations.js` (plain JS, not TS, to keep DOM access loose) exporting `runLandingAnimations()`. Imported normally and called directly from the `useEffect`. No CSP relaxation. Saved a memory at `feedback_csp_no_eval.md`.
+
+#### Task 69: Production-only bug — UTF-8 file corrupted by PowerShell
+While extracting the script, I truncated `LandingPage.tsx` from 1311 → 729 lines using `(Get-Content -TotalCount 729) | Set-Content -Encoding UTF8`. PowerShell's read used the system codepage (cp1252) and decoded the file's UTF-8 bytes as Latin-1, then re-encoded as UTF-8 — every emoji in the body markup turned into mojibake. User caught it: "✦" rendered as "âœ¦", "→" as "â†'", etc.
+
+Fix: ten `Edit replace_all` passes for each unique mojibake → real character, plus one byte-level Python replace for `⏸` (which had an invisible C1 control byte the Edit tool couldn't match). Saved a memory at `feedback_no_powershell_truncate.md`.
+
+#### Task 70: Bullet glyphs rendering as tofu boxes (`●` followed by invisible C1 control byte)
+After Task 69's mojibake sweep, the four parallax `Q1`–`Q4` cards still showed a tofu/missing-glyph box right after each `●`. Bytes were `e2 97 8f c2 8f` — the first three are the legitimate `●` (U+25CF), the trailing `c2 8f` is U+008F (a C1 control char) that the browser renders as a missing glyph. Root cause: the original mojibake of `●` was `c3 a2 c2 97 c2 8f` (3 cp1252 chars: `â`, `—`, `<C1-undefined>`), and my Task 69 `replace_all "â—" → "●"` only matched the first 4 bytes (`c3 a2 c2 97`), leaving the orphaned `c2 8f` after every bullet. Stripped via Python byte-replace.
+
+#### Task 71: Replace landing nav theme button with the dashboard's
+The handoff used a text-glyph button (`<button>☀</button>` / `☾`) which (a) didn't visually match the rest of the app and (b) was rendering inconsistently (font fallback issues on the `☾` moon glyph). Swapped for the same React component shape used in `Dashboard.tsx`: a Tailwind-styled button (`p-2 rounded-lg border border-[var(--c-border)] hover:bg-[var(--c-hover)]`) with lucide `Sun` / `Moon` icons. Mounted via `createRoot` into a `<span id="qm-theme-mount">` slot inside the dangerouslySetInnerHTML markup; a `useEffect [theme, onToggleTheme]` re-renders the React tree whenever the prop changes so the icon stays in sync. Cleanup unmounts the theme root alongside the flip-clock root, both deferred via `setTimeout(0)` to avoid a React commit collision on parent unmount.
+
+#### Task 72: Nav anchors landing on blank entry zones
+`#story` (700vh sticky) and `#features` (3 × 280vh sticky) both have entrance fade-ins on the sticky content — clicking the nav links jumped to the section top, which is a blank entry zone before the animation triggers. Fixed by hijacking `.nav-links a[href^="#"]` clicks: instead of native anchor jump, smooth-scroll to `target.offsetTop + offsetVh * window.innerHeight`. Per-anchor offset table: `story: 1.5vh`, `features: 1.2vh`, `timer: 0` (timer isn't sticky). Numbers picked so the click lands mid stage-A (doc visible in canvas) for story, and past the entrance fade for feature 01.
+
+### URLs
+- **Production:** https://quizmint.me
+- Latest deploy: `quizmint-iouluzz8a-yashrajs-projects-82d81fc8.vercel.app`
+
+---
+
 ## Session: 2026-04-25
 
 ### Summary
