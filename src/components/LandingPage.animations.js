@@ -464,75 +464,129 @@ export function runLandingAnimations() {
       ctx.restore();
     }
 
+    // ------- Stage D: Quiz card (mirrors QuizPlayer styling) -------
     if (quizVis > 0.001) {
-      const qW = 480,
-        qH = 340;
+      const qW = 540,
+        qH = 380;
       const qX = cx - qW / 2;
       const qY = cy - qH / 2;
-      const sc = lerp(0.92, 1, ease(quizVis));
+      const sc = lerp(0.96, 1, ease(quizVis));
       ctx.save();
       ctx.globalAlpha = quizVis;
       ctx.translate(cx, cy);
       ctx.scale(sc, sc);
       ctx.translate(-cx, -cy);
-      ctx.shadowColor = 'rgba(16,185,129,0.3)';
-      ctx.shadowBlur = 32;
-      roundRect(ctx, qX, qY, qW, qH, 20);
+
+      // Card frame — surface + hairline border (no mint glow; matches in-app)
+      roundRect(ctx, qX, qY, qW, qH, 16);
       ctx.fillStyle = surface;
       ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(16,185,129,0.5)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = 'rgba(16,185,129,0.18)';
-      roundRect(ctx, qX + 28, qY + 28, 116, 26, 13);
-      ctx.fill();
+
+      // Top-edge progress bar (full width, partial emerald fill — like QuizPlayer)
+      ctx.save();
+      ctx.beginPath();
+      roundRect(ctx, qX, qY, qW, qH, 16);
+      ctx.clip();
+      ctx.fillStyle = border;
+      ctx.fillRect(qX, qY, qW, 4);
       ctx.fillStyle = mint;
-      ctx.font = 'bold 10px "JetBrains Mono", monospace';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('● BIOLOGY · Q7', qX + 40, qY + 41);
-      ctx.fillStyle = text;
-      ctx.font = 'italic 600 22px "Fraunces", serif';
+      // Bar holds at ~30% while the user "reads" + sees the correct answer reveal,
+      // then animates 30% → 100% once "CORRECT ANSWER" is shown (quizReveal 0.85→1.0)
+      const fillRamp = clamp((quizReveal - 0.85) / 0.15, 0, 1);
+      const progressW = qW * (0.30 + 0.70 * ease(fillRamp));
+      ctx.fillRect(qX, qY, progressW, 4);
+      ctx.restore();
+
+      // "Question 07" eyebrow — emerald, semibold
+      ctx.fillStyle = mint;
+      ctx.font = '600 14px "Inter", sans-serif';
       ctx.textBaseline = 'top';
+      ctx.textAlign = 'left';
+      ctx.fillText('Question 07', qX + 32, qY + 32);
+
+      // Question — Inter, medium, larger (matches text-[28px] font-medium)
+      ctx.fillStyle = text;
+      ctx.font = '500 24px "Inter", sans-serif';
       const qText = 'Which organ regulates blood sugar?';
-      const maxQW = qW - 56;
+      const maxQW = qW - 64;
       const words = qText.split(' ');
       let line = '',
         lines = [];
       for (const w of words) {
-        const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxQW && line) {
+        const t = line ? line + ' ' + w : w;
+        if (ctx.measureText(t).width > maxQW && line) {
           lines.push(line);
           line = w;
         } else {
-          line = test;
+          line = t;
         }
       }
       if (line) lines.push(line);
-      lines.forEach((ln, li) => ctx.fillText(ln, qX + 28, qY + 76 + li * 28));
-      const opts = ['A.   Pancreas', 'B.   Liver', 'C.   Kidney', 'D.   Heart'];
-      ctx.font = '500 14px "Inter", sans-serif';
+      lines.forEach((ln, li) => ctx.fillText(ln, qX + 32, qY + 60 + li * 32));
+
+      // Option pills
+      const opts = [
+        { id: 'A', txt: 'Pancreas', correct: true },
+        { id: 'B', txt: 'Liver', correct: false },
+        { id: 'C', txt: 'Kidney', correct: false },
+        { id: 'D', txt: 'Heart', correct: false },
+      ];
+      const optY0 = qY + 60 + lines.length * 32 + 24;
+      const optH = 48;
+      const optGap = 10;
       opts.forEach((opt, i) => {
-        const yy = qY + 140 + i * 36;
+        const yy = optY0 + i * (optH + optGap);
         const oa = clamp(quizReveal * 2 - i * 0.2, 0, 1);
         ctx.globalAlpha = quizVis * oa;
-        const correct = i === 0;
-        if (correct && quizReveal > 0.5) {
-          ctx.fillStyle = 'rgba(16,185,129,0.18)';
-          roundRect(ctx, qX + 28, yy - 8, qW - 56, 28, 8);
+
+        const revealed = quizReveal > 0.5;
+        const isCorrect = opt.correct && revealed;
+        const isFaded = revealed && !opt.correct;
+
+        // Pill background
+        if (isCorrect) {
+          ctx.fillStyle = 'rgba(16,185,129,0.05)';
+          roundRect(ctx, qX + 32, yy, qW - 64, optH, 12);
           ctx.fill();
-          ctx.fillStyle = mint;
+          ctx.strokeStyle = mint;
         } else {
-          ctx.fillStyle = muted;
+          ctx.fillStyle = surface;
+          roundRect(ctx, qX + 32, yy, qW - 64, optH, 12);
+          ctx.fill();
+          ctx.strokeStyle = border;
         }
-        ctx.fillText(opt, qX + 40, yy);
-        if (correct && quizReveal > 0.75) {
+        ctx.lineWidth = 1;
+        roundRect(ctx, qX + 32, yy, qW - 64, optH, 12);
+        ctx.stroke();
+
+        // Option text — "A) Pancreas" format
+        ctx.globalAlpha = quizVis * oa * (isFaded ? 0.5 : 1);
+        ctx.fillStyle = text;
+        ctx.font = '400 16px "Inter", sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${opt.id}) ${opt.txt}`, qX + 56, yy + optH / 2);
+
+        // "Correct Answer" pill on the right when revealed
+        if (isCorrect && quizReveal > 0.7) {
+          ctx.globalAlpha = quizVis * oa;
+          ctx.font = '700 11px "Inter", sans-serif';
+          const label = 'CORRECT ANSWER';
+          const lw = ctx.measureText(label).width + 16;
+          const lx = qX + qW - 32 - lw - 16;
+          const ly = yy + optH / 2 - 12;
+          ctx.strokeStyle = mint;
+          ctx.lineWidth = 1;
+          roundRect(ctx, lx, ly, lw, 24, 4);
+          ctx.stroke();
           ctx.fillStyle = mint;
-          ctx.font = 'bold 14px "Inter", sans-serif';
-          ctx.fillText('✓', qX + qW - 42, yy);
-          ctx.font = '500 14px "Inter", sans-serif';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, lx + 8, ly + 12);
         }
       });
+
       ctx.globalAlpha = quizVis;
       ctx.restore();
     }
@@ -731,44 +785,48 @@ export function runLandingAnimations() {
       <div style="
         width:100%; height:100%;
         background: var(--surface); border:1px solid var(--border);
-        border-radius:20px; padding:32px;
-        display:flex; flex-direction:column; gap:14px;
+        border-radius:16px; padding:28px;
+        display:flex; flex-direction:column; gap:12px;
         box-shadow: 0 24px 48px -12px rgba(0,0,0,0.4);
+        overflow: hidden;
       ">
-        <span class="mono mint" style="font-size:11px; letter-spacing:0.2em; font-weight:700;">● QUESTION 7 · ORGANIC CHEM</span>
-        <h4 class="serif" style="font-size:24px; margin:0; line-height:1.2; letter-spacing:-0.02em;">
+        <div style="font-size:13px; font-weight:600; color: var(--mint);">Question 07</div>
+        <h4 style="
+          font-family: 'Inter', sans-serif;
+          font-size:21px; font-weight:500;
+          margin:0; line-height:1.3; color: var(--text);
+          letter-spacing:-0.01em;">
           The SN1 reaction proceeds through which intermediate?
         </h4>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+        <div style="display:flex; flex-direction:column; gap:7px; margin-top:2px;">
           ${['Carbocation', 'Free radical', 'Carbanion', 'Concerted transition state']
             .map((opt, i) => {
               const correct = i === 0;
               return `<div style="
                 padding:10px 14px; border-radius:10px;
-                background: ${correct ? 'color-mix(in oklab, var(--mint) 14%, transparent)' : 'transparent'};
-                border: 1px solid ${correct ? 'color-mix(in oklab, var(--mint) 60%, transparent)' : 'var(--border)'};
-                font-size:13px;
-                color: ${correct ? 'var(--mint)' : 'var(--muted)'};
-                font-weight: ${correct ? 600 : 500};
+                background: ${correct ? 'rgba(16,185,129,0.05)' : 'var(--surface)'};
+                border: 1px solid ${correct ? 'var(--mint)' : 'var(--border)'};
+                font-family: 'Inter', sans-serif;
+                font-size:13px; font-weight:400;
+                color: ${correct ? 'var(--text)' : 'var(--muted)'};
+                opacity: ${correct ? 1 : 0.55};
                 display:flex; justify-content:space-between; align-items:center;">
-                <span>${String.fromCharCode(65 + i)}. ${opt}</span>
-                ${correct ? '<span style="font-size:12px;">✓</span>' : ''}
+                <span>${String.fromCharCode(65 + i)}) ${opt}</span>
+                ${correct ? '<span style="font-size:9px; font-weight:700; letter-spacing:0.05em; padding:3px 7px; border-radius:4px; color: var(--mint); border:1px solid var(--mint);">CORRECT ANSWER</span>' : ''}
               </div>`;
             })
             .join('')}
         </div>
         <div data-explain style="
-          margin-top:4px; padding:16px; border-radius:12px;
-          background: color-mix(in oklab, var(--bg) 80%, var(--bg2));
-          border: 1px dashed color-mix(in oklab, var(--mint) 60%, transparent);
+          margin-top:2px; padding:12px 14px; border-radius:10px;
+          background: rgba(16,185,129,0.10);
+          border: 1px solid rgba(16,185,129,0.20);
           opacity: 0; transform: translateY(16px);
           transition: opacity 0.6s ease, transform 0.6s ease;">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-            <span class="mono mint" style="font-size:10px; letter-spacing:0.2em; font-weight:700;">WHY ↓</span>
-          </div>
-          <p style="margin:0; font-size:13px; line-height:1.55; color:var(--text);">
-            SN1 is unimolecular: the leaving group departs first, forming a planar
-            <em class="italic mint">carbocation</em> intermediate before the nucleophile attacks.
+          <p style="margin:0; font-family:'Inter', sans-serif; font-size:12.5px; line-height:1.5; color:var(--text);">
+            <span style="font-weight:600; color: var(--mint);">Explanation:</span>
+            SN1 is unimolecular — the leaving group departs first, forming a planar
+            carbocation intermediate before the nucleophile attacks.
           </p>
         </div>
       </div>`;

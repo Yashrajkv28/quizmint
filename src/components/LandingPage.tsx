@@ -357,7 +357,7 @@ body { overflow-x: hidden; }
 }
 
 /* ---------- PINNED FEATURE ---------- */
-.qm-landing .feature { position: relative; height: 280vh; }
+.qm-landing .feature { position: relative; height: 380vh; }
 .qm-landing .feature-sticky {
   position: sticky; top: 0; height: 100vh;
   display: grid; grid-template-columns: 1fr 1fr;
@@ -375,11 +375,11 @@ body { overflow-x: hidden; }
   margin-top: 24px; font-size: 19px; line-height: 1.55;
   color: var(--muted); max-width: 520px;
 }
-.qm-landing .feature-visual { position: relative; height: 480px; will-change: transform, opacity; }
+.qm-landing .feature-visual { position: relative; height: 420px; will-change: transform, opacity; }
 @media (max-width: 900px) {
   .qm-landing .feature-sticky { grid-template-columns: 1fr; gap: 40px; padding: 80px 32px; }
-  .qm-landing .feature-visual { height: 360px; }
-  .qm-landing .feature { height: 220vh; }
+  .qm-landing .feature-visual { height: 340px; }
+  .qm-landing .feature { height: 300vh; }
 }
 
 /* ---------- PARALLAX SHOWCASE ---------- */
@@ -403,19 +403,19 @@ body { overflow-x: hidden; }
 .qm-landing .parallax-mid { position: relative; z-index: 2; text-align: center; padding: 0 32px; will-change: transform; }
 .qm-landing .parallax-front { position: absolute; inset: 0; pointer-events: none; will-change: transform; }
 .qm-landing .parallax-card {
-  position: absolute; width: 200px; padding: 16px;
+  position: absolute; width: 280px; padding: 24px;
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 16px 32px -8px rgba(0,0,0,0.4);
 }
 html.light .qm-landing .parallax-card { box-shadow: 0 16px 32px -8px rgba(0,0,0,0.1); }
 .qm-landing .parallax-card .tag {
-  font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
   letter-spacing: 0.2em;
 }
 .qm-landing .parallax-card .q {
-  font-family: 'Fraunces', serif; font-size: 14px;
-  margin-top: 6px; line-height: 1.3; color: var(--text);
+  font-family: 'Fraunces', serif; font-size: 19px;
+  margin-top: 10px; line-height: 1.3; color: var(--text);
 }
 
 /* ---------- TIMER STORY ---------- */
