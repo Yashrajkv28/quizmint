@@ -38,7 +38,8 @@ export interface BattleAnswer {
 export type BattleBroadcast =
   | { type: 'question_start'; questionIndex: number; endsAt: number }
   | { type: 'question_end'; questionIndex: number; correctOptionId: string }
-  | { type: 'game_finish' };
+  | { type: 'game_finish' }
+  | { type: 'rematch'; newRoomId: string; newRoomCode: string };
 
 // Per-question scoring window
 export const QUESTION_WINDOW_MS = 10_000;

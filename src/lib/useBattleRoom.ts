@@ -68,8 +68,21 @@ export function useBattleRoom({ roomId, roomCode, playerId, displayName }: Param
           });
         })
       .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'room_answers', filter: `room_id=eq.${roomId}` },
-        (payload) => { setAnswers((prev) => [...prev, payload.new as BattleAnswer]); })
+        { event: '*', schema: 'public', table: 'room_answers', filter: `room_id=eq.${roomId}` },
+        (payload) => {
+          // INSERT: a player just answered. DELETE: a player left and their
+          // answers cascaded out (room_answers.player_id ON DELETE CASCADE) —
+          // we have to mirror that locally or auto-reveal will fire early
+          // because answered/totalPlayers gets out of sync. Default replica
+          // identity only includes the primary key in payload.old on DELETE,
+          // which is enough to filter by id.
+          if (payload.eventType === 'INSERT') {
+            setAnswers((prev) => [...prev, payload.new as BattleAnswer]);
+          } else if (payload.eventType === 'DELETE') {
+            const oldId = (payload.old as Partial<BattleAnswer>)?.id;
+            if (oldId) setAnswers((prev) => prev.filter((x) => x.id !== oldId));
+          }
+        })
       .on('broadcast', { event: 'battle' }, ({ payload }) => {
         setLastBroadcast(payload as BattleBroadcast);
       })

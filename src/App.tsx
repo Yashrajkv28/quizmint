@@ -143,7 +143,7 @@ export default function App() {
         <BattleRoute
           quizData={quizData}
           onNeedQuiz={() => setView('app')}
-          onExit={() => setView('dashboard')}
+          onExit={() => { setQuizData(null); setView('dashboard'); }}
         />
       </Suspense>
     );
@@ -225,6 +225,7 @@ export default function App() {
             <QuizPlayer
               questions={quizData.questions}
               onReset={() => setQuizData(null)}
+              onHostBattle={() => setView('battle')}
             />
           ) : (
             <QuizGenerator

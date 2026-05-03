@@ -4,11 +4,16 @@ import type { BattlePlayer } from '../../types/battle';
 interface Props {
   players: BattlePlayer[];
   myPlayerId: string | null;
-  onPlayAgain: () => void;
+  isHost: boolean;
+  rematching: boolean;
+  rematchError: string | null;
+  onRematch: () => void;
   onExit: () => void;
 }
 
-export function BattleResults({ players, myPlayerId, onPlayAgain, onExit }: Props) {
+export function BattleResults({
+  players, myPlayerId, isHost, rematching, rematchError, onRematch, onExit,
+}: Props) {
   const ranked = [...players].sort((a, b) => b.score - a.score);
   const [first, second, third] = ranked;
 
@@ -51,21 +56,29 @@ export function BattleResults({ players, myPlayerId, onPlayAgain, onExit }: Prop
       </ol>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          type="button"
-          onClick={onPlayAgain}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-[#0A0A0C] font-semibold text-[14px] hover:bg-emerald-400 transition-colors"
-        >
-          <Repeat className="w-4 h-4" /> Play again
-        </button>
+        {isHost ? (
+          <button
+            type="button"
+            disabled={rematching}
+            onClick={onRematch}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-[#0A0A0C] font-semibold text-[14px] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-400 transition-colors"
+          >
+            <Repeat className="w-4 h-4" /> {rematching ? 'Setting up rematch…' : 'Rematch'}
+          </button>
+        ) : (
+          <div className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-[var(--c-border)] text-[var(--c-text-subtle)] text-[13px]">
+            Waiting for host to rematch…
+          </div>
+        )}
         <button
           type="button"
           onClick={onExit}
           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--c-border)] text-[var(--c-text)] font-semibold text-[14px] hover:bg-[var(--c-hover)] transition-colors"
         >
-          <Home className="w-4 h-4" /> Back to dashboard
+          <Home className="w-4 h-4" /> Exit
         </button>
       </div>
+      {rematchError && <p className="text-[13px] text-red-500 text-center">{rematchError}</p>}
     </div>
   );
 }

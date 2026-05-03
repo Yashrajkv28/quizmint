@@ -44,4 +44,13 @@ export const battleApi = {
     ),
   abandon: (roomId: string) =>
     post<{ status: 'finished' }>('/api/rooms/abandon', { roomId }),
+  rematch: (roomId: string) =>
+    post<{ roomId: string; roomCode: string; playerId: string }>(
+      '/api/rooms/rematch',
+      { roomId },
+    ),
+  destroy: (roomId: string) =>
+    post<{ ok: true }>('/api/rooms/destroy', { roomId }),
+  leave: (roomId: string) =>
+    post<{ ok: true }>('/api/rooms/leave', { roomId }),
 };

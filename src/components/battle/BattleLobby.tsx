@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, LogOut } from 'lucide-react';
 import type { BattlePlayer } from '../../types/battle';
 import { battleApi } from '../../lib/battleApi';
 
@@ -9,11 +9,13 @@ interface Props {
   isHost: boolean;
   players: BattlePlayer[];
   connected: boolean;
+  onLeave: () => void;
 }
 
-export function BattleLobby({ roomCode, roomId, isHost, players, connected }: Props) {
+export function BattleLobby({ roomCode, roomId, isHost, players, connected, onLeave }: Props) {
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const copy = async () => {
@@ -28,8 +30,35 @@ export function BattleLobby({ roomCode, roomId, isHost, players, connected }: Pr
     catch (e: any) { setError(e.message); setStarting(false); }
   };
 
+  // Host's cancel calls abandon() — flips room status to 'finished' so any
+  // non-host participants in the lobby gracefully transition to BattleResults
+  // instead of being stranded on "Loading room…" if we hard-deleted. The room
+  // row itself is reaped by the 30-min cleanup cron.
+  // Non-host's leave calls /leave so their player row is removed cleanly —
+  // the lobby's player count, the active-phase denominator, and the
+  // leaderboard all recompute correctly via the postgres_changes DELETE
+  // subscription in useBattleRoom.
+  const leave = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    try {
+      if (isHost) await battleApi.abandon(roomId);
+      else        await battleApi.leave(roomId);
+    } catch { /* idempotent / room may already be gone */ }
+    onLeave();
+  };
+
   return (
     <div className="w-full max-w-[720px] mx-auto px-4 py-10 flex flex-col items-center gap-8">
+      <button
+        type="button"
+        onClick={leave}
+        disabled={leaving}
+        className="self-start inline-flex items-center gap-2 text-[12px] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] disabled:opacity-50 transition-colors"
+      >
+        <LogOut className="w-3.5 h-3.5" /> {isHost ? 'Cancel room' : 'Leave lobby'}
+      </button>
+
       <div className="flex flex-col items-center gap-3">
         <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--c-text-faint)]">Room code</p>
         <button

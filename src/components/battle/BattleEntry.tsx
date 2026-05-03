@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Swords, Users } from 'lucide-react';
+import { ArrowLeft, Swords, Users } from 'lucide-react';
 import type { QuizData } from '../../types';
 import { useAuth } from '../../lib/auth';
 import { battleApi } from '../../lib/battleApi';
@@ -9,6 +9,7 @@ interface Props {
   onHosted: (args: { roomId: string; roomCode: string; playerId: string; displayName: string }) => void;
   onJoined: (args: { roomId: string; roomCode: string; playerId: string; displayName: string }) => void;
   onNeedQuiz: () => void;
+  onBack: () => void;
 }
 
 // Local-part of an email address, capped at the display-name length.
@@ -18,7 +19,7 @@ function emailLocal(email: string | null | undefined): string {
   return (at > 0 ? email.slice(0, at) : email).slice(0, 32);
 }
 
-export function BattleEntry({ quizData, onHosted, onJoined, onNeedQuiz }: Props) {
+export function BattleEntry({ quizData, onHosted, onJoined, onNeedQuiz, onBack }: Props) {
   const { user } = useAuth();
   const [code, setCode] = useState('');
   const [name, setName] = useState(() => emailLocal(user?.email));
@@ -47,6 +48,14 @@ export function BattleEntry({ quizData, onHosted, onJoined, onNeedQuiz }: Props)
 
   return (
     <div className="w-full max-w-[900px] mx-auto px-4 py-10 flex flex-col gap-6">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex items-center gap-2 text-[12px] text-[var(--c-text-subtle)] hover:text-[var(--c-text)] transition-colors self-start"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+      </button>
+
       <label className="flex flex-col gap-1.5 max-w-md mx-auto w-full">
         <span className="text-[11px] uppercase tracking-wider text-[var(--c-text-faint)]">Your battle name</span>
         <input

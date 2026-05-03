@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { LogOut } from 'lucide-react';
 import type { Question } from '../../types';
 import type { BattleAnswer } from '../../types/battle';
 import { QUESTION_WINDOW_MS } from '../../types/battle';
@@ -22,11 +23,16 @@ interface Props {
   // how many of their opponents are still deciding.
   answersReceived: number;
   totalPlayers: number;
+  // Host can't leave mid-battle (would strand other players); only non-hosts
+  // get a Leave affordance here. Host disconnect is handled by the existing
+  // presence-based abandon flow in BattleRoute.
+  canLeave: boolean;
+  onLeave: () => void;
 }
 
 export function BattleQuestion({
   roomId, playerId, question, questionIndex, questionStartTime, existingAnswer,
-  answersReceived, totalPlayers,
+  answersReceived, totalPlayers, canLeave, onLeave,
 }: Props) {
   // endsAt is derived from the SERVER's question_start_time, but `now` is local
   // Date.now(). If the client's clock is skewed, the visible countdown drifts,
@@ -77,12 +83,24 @@ export function BattleQuestion({
 
   return (
     <div className="w-full max-w-[820px] mx-auto px-4 py-6 flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--c-text-faint)]">Question {questionIndex + 1}</p>
         <div className="flex items-center gap-3 text-[13px] font-mono tabular-nums text-[var(--c-text-subtle)]">
           <span>{answersReceived}/{totalPlayers} answered</span>
           <span className="text-[var(--c-text-faint)]">·</span>
           <span>{(remaining / 1000).toFixed(1)}s</span>
+          {canLeave && (
+            <>
+              <span className="text-[var(--c-text-faint)]">·</span>
+              <button
+                type="button"
+                onClick={onLeave}
+                className="inline-flex items-center gap-1 text-[var(--c-text-subtle)] hover:text-red-400 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" /> Leave
+              </button>
+            </>
+          )}
         </div>
       </div>
 

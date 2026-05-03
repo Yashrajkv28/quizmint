@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Swords } from 'lucide-react';
 import { Question } from '../types';
 import { shuffleQuestionOptions } from '../lib/shuffle';
 
 interface QuizPlayerProps {
   questions: Question[];
   onReset: () => void;
+  onHostBattle?: () => void;
 }
 
-export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
+export function QuizPlayer({ questions, onReset, onHostBattle }: QuizPlayerProps) {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   // Bumping attemptKey re-runs the shuffle on Restart / Retry.
   const [attemptKey, setAttemptKey] = useState(0);
@@ -56,6 +57,15 @@ export function QuizPlayer({ questions, onReset }: QuizPlayerProps) {
             className="px-4 py-2 text-[13px] font-medium text-[var(--c-text-subtle)] hover:text-[var(--c-text)] bg-[var(--c-surface)] hover:bg-[var(--c-border)] border border-[var(--c-border)] hover:border-slate-500 rounded-lg transition-colors"
           >
             Restart Output
+          </button>
+        )}
+        {onHostBattle && (
+          <button
+            onClick={onHostBattle}
+            className="px-4 py-2 text-[13px] font-semibold text-[#0A0A0C] bg-emerald-500 hover:bg-emerald-400 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Swords className="w-3.5 h-3.5" />
+            Host a battle
           </button>
         )}
         <button

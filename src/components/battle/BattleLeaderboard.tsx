@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Crown, Medal, Award } from 'lucide-react';
+import { Crown, Medal, Award, LogOut } from 'lucide-react';
 import type { BattlePlayer } from '../../types/battle';
 import { battleApi } from '../../lib/battleApi';
 
 // How long the leaderboard sits between questions before auto-advancing.
 // Host's browser is the only one that fires the API call; non-hosts just
-// run a local countdown for visual feedback. If the host disconnects the
-// room stalls (and is reaped by pg_cron after 2h) — accepted tradeoff.
+// run a local countdown for visual feedback. If the host disconnects, the
+// presence-based abandon flow in BattleRoute (HOST_GRACE_MS = 20s) flips
+// the room to 'finished' so participants aren't stuck — and the status-aware
+// cleanup cron reaps the row 30 min after the last activity.
 const REVEAL_HOLD_MS = 6000;
 
 interface Props {
@@ -17,6 +19,11 @@ interface Props {
   currentQuestion: number;
   totalQuestions: number;
   myPlayerId: string | null;
+  // Non-hosts get a Leave affordance between questions; host can't bail
+  // mid-battle without ending it for everyone (presence-based abandon
+  // handles host disconnect separately).
+  canLeave: boolean;
+  onLeave: () => void;
 }
 
 // Up to 3 retries on /api/rooms/next, with linear backoff. Server is
@@ -41,6 +48,7 @@ async function advanceWithRetry(roomId: string, fromQuestion: number): Promise<v
 
 export function BattleLeaderboard({
   roomId, players, isHost, isLastQuestion, currentQuestion, totalQuestions, myPlayerId,
+  canLeave, onLeave,
 }: Props) {
   const [secondsLeft, setSecondsLeft] = useState(Math.ceil(REVEAL_HOLD_MS / 1000));
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +112,16 @@ export function BattleLeaderboard({
         <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
         <span>{isLastQuestion ? 'Final results' : 'Next question'} in {secondsLeft}s…</span>
       </div>
+
+      {canLeave && (
+        <button
+          type="button"
+          onClick={onLeave}
+          className="self-center inline-flex items-center gap-1.5 text-[12px] text-[var(--c-text-subtle)] hover:text-red-400 transition-colors"
+        >
+          <LogOut className="w-3.5 h-3.5" /> Leave battle
+        </button>
+      )}
 
       {error && <p className="text-[13px] text-red-500 text-center">{error}</p>}
     </div>
